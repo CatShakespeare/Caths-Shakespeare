@@ -181,6 +181,51 @@ a{text-decoration:none;color:inherit}
 .account-tabs{display:flex;gap:4px;background:#F4F0EC;padding:4px;border-radius:10px;margin:14px 0}.tab{flex:1;border:0;background:transparent;padding:9px;border-radius:8px;color:#7C6F67;font-weight:750}.tab.active{background:#fff;color:var(--wine);box-shadow:0 3px 10px rgba(36,27,23,.06)}
 .google{width:100%;border:1px solid var(--line);background:#fff;padding:11px;border-radius:10px;color:var(--wine);font-weight:750;display:flex;justify-content:center;align-items:center;gap:9px}.divider{display:flex;align-items:center;gap:10px;color:#A0968E;font-size:.68rem;margin:14px 0}.divider:before,.divider:after{content:"";height:1px;background:var(--line);flex:1}
 .toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--wine);color:#fff;padding:11px 15px;border-radius:10px;font-size:.75rem;font-weight:700;z-index:250;transition:.25s}.toast.show{opacity:1;transform:translate(-50%,0)}
+.search-trigger{width:auto;min-width:40px;padding:0 12px;display:flex;gap:8px;align-items:center;justify-content:center;font-size:.75rem;font-weight:800}
+.search-trigger svg{width:16px;height:16px;flex:none}
+.search-modal .modal-box{width:min(760px,100%);padding:22px}
+.search-modal .search{margin:16px 0 10px}
+.search-results{display:grid;gap:9px;max-height:min(58vh,520px);overflow:auto;padding-right:3px}
+.search-result{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px;border:1px solid var(--line);border-radius:13px;background:#fff;transition:.2s var(--ease)}
+.search-result:hover{background:#FBF8F5;transform:translateY(-1px)}
+.search-result-main{display:flex;align-items:center;gap:11px;min-width:0}
+.search-result-copy{min-width:0}
+.search-result-copy strong{display:block;color:var(--wine);font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.search-result-copy span{display:block;color:#958A83;font-size:.68rem;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.result-kind{font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;color:var(--gold);font-weight:800;margin-bottom:3px}
+.result-link{border:0;background:transparent;text-align:left;padding:0;min-width:0;flex:1}
+.result-link:hover strong{text-decoration:underline}
+.search-group{display:grid;gap:8px}
+.search-group-head{display:flex;justify-content:space-between;align-items:center;margin:7px 2px 0}
+.search-group-head strong{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#958A83}
+.profile-hero{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding:22px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 10px 26px rgba(36,27,23,.045)}
+.profile-big-avatar{width:92px;height:92px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:linear-gradient(145deg,#8A5E63,#32191B);color:#F7EAD6;font:800 1.45rem Inter,Arial,sans-serif}
+.profile-big-avatar img{width:100%;height:100%;object-fit:cover}
+.profile-copy h2{font:600 clamp(2.6rem,5vw,4.7rem)/.88 "Cormorant Garamond",serif;color:var(--wine);margin:0}
+.profile-copy p{color:var(--muted);margin:8px 0 0;line-height:1.7}
+.profile-handle{color:#9A9089!important;font-size:.8rem!important;margin-top:5px!important}
+.profile-stats{display:flex;gap:18px;flex-wrap:wrap;margin-top:13px}
+.profile-stat strong{display:block;color:var(--wine);font:700 1.65rem "Cormorant Garamond",serif}
+.profile-stat span{display:block;color:#958B84;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase}
+.profile-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.author-link{border:0;background:transparent;color:var(--wine);padding:0;font:inherit;font-weight:800;cursor:pointer;text-align:left}
+.author-link:hover{text-decoration:underline}
+.follow:disabled{opacity:.55;cursor:not-allowed}
+.profile-work-head{display:flex;justify-content:space-between;align-items:end;gap:20px}
+.following-control{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:0 0 14px;padding:8px;border:1px solid var(--line);border-radius:15px;background:#FBFAF8}
+.feed-tabs{display:inline-flex;gap:5px;padding:4px;background:#F1ECE7;border:1px solid #E5DDD5;border-radius:13px}
+.feed-tab{display:flex;align-items:center;gap:9px;min-width:156px;border:0;background:transparent;color:#6E625A;border-radius:10px;padding:9px 12px;text-align:left;transition:.2s var(--ease)}
+.feed-tab:hover{color:var(--wine);background:rgba(255,255,255,.62)}
+.feed-tab.active{background:#fff;color:var(--wine);box-shadow:0 6px 16px rgba(36,27,23,.08)}
+.feed-tab-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#EEE5DD;flex:none}.feed-tab.active .feed-tab-icon{background:#F3E9DE;color:var(--burgundy)}
+.feed-tab-icon svg{width:16px;height:16px}
+.feed-tab strong{display:block;font-size:.76rem;line-height:1.1}.feed-tab small{display:block;color:#9B9089;font-size:.61rem;margin-top:3px;font-weight:600}
+.following-control-copy{font-size:.72rem;color:#8C8179;max-width:360px;text-align:right;line-height:1.5}
+.following-insight{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.following-insight .insight-card{flex:1;min-width:180px;padding:13px 15px;border:1px solid var(--line);border-radius:13px;background:#fff;box-shadow:0 8px 18px rgba(36,27,23,.035)}
+.insight-kicker{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:800}.insight-value{display:block;color:var(--wine);font:600 1.35rem/1.1 "Cormorant Garamond",serif;margin-top:4px}.insight-note{display:block;color:#958A83;font-size:.63rem;margin-top:3px}
+@media(max-width:760px){.following-control{align-items:stretch;flex-direction:column}.feed-tabs{width:100%}.feed-tab{flex:1;min-width:0}.following-control-copy{text-align:left;max-width:none;padding:0 4px 2px}}
+
 .empty{padding:35px;text-align:center;color:#8D827B}.empty h4{font:600 2rem "Cormorant Garamond",serif;color:var(--wine);margin:0 0 6px}
 .menu-open .sidebar{box-shadow:8px 0 30px rgba(36,27,23,.12)}
 .mobile-overlay{display:none}
@@ -194,7 +239,7 @@ a{text-decoration:none;color:inherit}
   .sidebar{width:82px;padding:15px 9px}.brand{justify-content:center;padding:4px 0 20px}.brand-copy,.nav-title,.nav-btn span,.profile-mini strong,.profile-mini span{display:none}.nav-btn{justify-content:center;padding:12px}.profile-mini{justify-content:center;padding:8px}.main{margin-left:82px}.topbar{padding:0 15px}.page-title p{display:none}.menu-toggle{display:grid}.content{padding:22px 16px 45px}.hero{padding-top:10px}.hero h2{font-size:4.1rem}.book{width:250px}.orbit{width:300px;height:300px}.section{padding:32px 0}.grid3,.journal-grid,.authors{grid-template-columns:1fr}.section-head{flex-direction:column;align-items:flex-start}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.gallery{columns:2 190px}
 }
 @media(max-width:480px){
-  .sidebar{width:64px}.main{margin-left:64px}.brand-mark{width:36px;height:36px}.brand-mark svg{width:22px}.topbar{height:64px}.page-title h1{font-size:1.65rem}.hero h2{font-size:3.3rem}.hero p{font-size:.91rem}.metrics{gap:15px}.metric strong{font-size:1.7rem}.metric span{font-size:.59rem}.book{width:220px}.orbit{width:260px;height:260px}.f1,.f2{display:none}.gallery{columns:1}
+  .sidebar{width:64px}.main{margin-left:64px}.brand-mark{width:36px;height:36px}.profile-hero{grid-template-columns:1fr;text-align:center}.profile-actions{justify-content:center}.profile-big-avatar{margin:auto}.profile-stats{justify-content:center}.brand-mark svg{width:22px}.topbar{height:64px}.page-title h1{font-size:1.65rem}.hero h2{font-size:3.3rem}.hero p{font-size:.91rem}.metrics{gap:15px}.metric strong{font-size:1.7rem}.metric span{font-size:.59rem}.book{width:220px}.orbit{width:260px;height:260px}.f1,.f2{display:none}.gallery{columns:1}
 }
 </style>
 </head>
@@ -219,6 +264,9 @@ a{text-decoration:none;color:inherit}
       <button class="nav-btn" data-page="create" onclick="showPage('create')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Create Literature</span></button>
       <button class="nav-btn" data-page="myworks" onclick="showPage('myworks')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M6 3h10l3 3v15H6V3Zm10 0v4h4" stroke="currentColor" stroke-width="1.5"/><path d="M9 11h6M9 15h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><span>My Works</span></button>
       <button class="nav-btn" data-page="saved" onclick="showPage('saved')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="m12 17-6 4V5.5A2.5 2.5 0 0 1 8.5 3h7A2.5 2.5 0 0 1 18 5.5V21l-6-4Z" stroke="currentColor" stroke-width="1.5"/></svg><span>Saved Works</span></button>
+      <button class="nav-btn" data-page="following" onclick="showPage('following')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 20c.8-3.3 3-5 5.5-5s4.7 1.7 5.5 5M16 12h5M18.5 9.5V14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Following Feed</span></button>
+      <button class="nav-btn" data-page="profile" onclick="openOwnProfile()"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/><path d="M5 20c.9-3.7 3.3-5.6 7-5.6s6.1 1.9 7 5.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M18 4.5h2.5M19.25 3.25v2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span>My Profile</span></button>
+      <button class="nav-btn" data-page="history" onclick="showPage('history')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Reading History</span></button>
     </nav>
 
     <div class="nav-title">Archive</div>
@@ -232,7 +280,7 @@ a{text-decoration:none;color:inherit}
     </nav>
 
     <div class="sidebar-bottom">
-      <button class="profile-mini" style="width:100%;border:1px solid var(--line);background:#fff;text-align:left" onclick="openAccount()">
+      <button class="profile-mini" style="width:100%;border:1px solid var(--line);background:#fff;text-align:left" onclick="openOwnProfile()">
         <div class="avatar" id="sideAvatar"><span>12</span></div>
         <div><strong id="sideName">Guest Reader</strong><span id="sideHandle">Not signed in</span></div>
       </button>
@@ -248,8 +296,13 @@ a{text-decoration:none;color:inherit}
         <div><h1 id="topTitle">Home</h1><p id="topSub">The Literary Archive of a Class in Motion</p></div>
       </div>
       <div class="top-actions">
-        <button class="icon-btn" onclick="showToast('Notifications will appear here once your account is connected.')">
+        <button class="icon-btn search-trigger" onclick="openGlobalSearch()" aria-label="Search works and student profiles">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.7"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span>Search</span>
+        </button>
+        <button class="icon-btn" onclick="openNotifications()" aria-label="Notifications" style="position:relative">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span id="notificationBadge" class="notification-badge hidden" style="position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--burgundy);color:#fff;font-size:.55rem;display:grid;place-items:center">0</span>
         </button>
         <button class="profile-btn" onclick="openAccount()" aria-label="Profile"><div class="avatar" id="topAvatar"><span>12</span></div></button>
       </div>
@@ -267,8 +320,8 @@ a{text-decoration:none;color:inherit}
               <button class="secondary" onclick="showPage('library')">Browse the Library</button>
             </div>
             <div class="metrics">
-              <div class="metric"><strong id="worksCount">25+</strong><span>Published Works</span></div>
-              <div class="metric"><strong id="authorsCount">15+</strong><span>Authors</span></div>
+              <div class="metric"><strong id="worksCount">0</strong><span>Published Works</span></div>
+              <div class="metric"><strong id="authorsCount">0</strong><span>Authors</span></div>
               <div class="metric"><strong>03</strong><span>Journal Issues</span></div>
             </div>
           </div>
@@ -330,6 +383,7 @@ a{text-decoration:none;color:inherit}
             <div class="field full"><label>Title</label><input id="postTitle" required placeholder="Your literature title"></div>
             <div class="field"><label>Genre</label><select id="postGenre" required><option>Poetry</option><option>Short Story</option><option>Essay</option><option>Drama</option><option>Creative Nonfiction</option><option>Literary Analysis</option></select></div>
             <div class="field"><label>Tags</label><input id="postTags" placeholder="memory, identity, youth"></div>
+            <div class="field"><label>Visibility</label><select id="postPrivacy"><option value="public">Public — everyone can read</option><option value="followers">Followers only — people who follow you</option><option value="private">Private — only you</option></select></div>
             <div class="field full"><label>Excerpt</label><textarea id="postExcerpt" required placeholder="A short introduction readers will see in the feed..."></textarea></div>
             <div class="field full"><label>Full Literary Work</label><textarea id="postContent" required placeholder="Write your complete work here..."></textarea></div>
             <div class="field full"><label>Cover image URL (optional)</label><input id="postCover" placeholder="https://..."></div>
@@ -342,6 +396,30 @@ a{text-decoration:none;color:inherit}
       <section class="page" id="page-myworks">
         <div class="section-head"><div><div class="kicker">Your writing</div><h3>My Works</h3></div><p>Manage your drafts and published literature.</p></div>
         <div class="panel" id="myWorksPanel"></div>
+      </section>
+
+      <section class="page" id="page-following">
+        <div class="section-head"><div><div class="kicker">Your circle</div><h3>Following Feed</h3></div><p>New public and followers-only literature from students you follow.</p></div>
+        <div class="following-control">
+          <div class="feed-tabs" role="tablist" aria-label="Following feed sort">
+            <button class="feed-tab active" id="followingLatestTab" role="tab" aria-selected="true" onclick="setFollowingMode('latest',this)">
+              <span class="feed-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 6h14M5 12h10M5 18h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="18" cy="12" r="2.5" stroke="currentColor" stroke-width="1.5"/></svg></span>
+              <span><strong>Latest</strong><small>Newest first</small></span>
+            </button>
+            <button class="feed-tab" id="followingPopularTab" role="tab" aria-selected="false" onclick="setFollowingMode('popular',this)">
+              <span class="feed-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 18 10 13l3 3 6-7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 9h4v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span><strong>Popular</strong><small>Most engaged</small></span>
+            </button>
+          </div>
+          <div class="following-control-copy" id="followingSortMeta">Newest posts from students you follow appear first.</div>
+        </div>
+        <div class="following-insight" id="followingInsight"></div>
+        <div class="panel" id="followingList"></div>
+      </section>
+
+      <section class="page" id="page-history">
+        <div class="section-head"><div><div class="kicker">Your reading trail</div><h3>Reading History</h3></div><button class="secondary" onclick="clearHistory()">Clear History</button></div>
+        <div class="panel"><div class="grid3" id="historyGrid"></div></div>
       </section>
 
       <section class="page" id="page-saved">
@@ -368,7 +446,7 @@ a{text-decoration:none;color:inherit}
           </div>
           <div class="panel"><div class="kicker">Community guidelines</div><h3 style="font:600 2.4rem 'Cormorant Garamond',serif;color:var(--wine);margin:8px 0">Keep the page literary.</h3><p style="color:var(--muted);line-height:1.7">Respect authors, critique ideas rather than people, and keep responses connected to the work.</p></div>
         </div>
-        <div class="section"><div class="section-head"><div><div class="kicker">Featured authors</div><h3>Writers in the Archive</h3></div></div><div class="authors" id="authorGrid"></div></div>
+        <div class="section"><div class="section-head"><div><div class="kicker">Discover writers</div><h3>Writers in the Archive</h3></div><button class="secondary" onclick="openGlobalSearch()">Find a Student</button></div><div class="authors" id="authorGrid"></div></div>
       </section>
 
       <section class="page" id="page-gallery">
@@ -400,7 +478,7 @@ a{text-decoration:none;color:inherit}
             <div class="field full"><label>Screenshot (optional)</label><input type="file" accept="image/*"></div>
             <div class="actions"><button class="primary">Submit Feedback</button></div>
           </form>
-          <div class="panel"><div class="kicker">Feedback Wall</div><h3 style="font:600 2.5rem 'Cormorant Garamond',serif;color:var(--wine);margin:8px 0 18px">What readers say</h3><div class="feed-post"><div class="post-title" style="font-size:1.55rem">“The archive makes student writing feel lasting.”</div><div class="author"><div class="avatar">MS</div><div><strong>Maria Santos</strong><span>@mariasantos</span></div></div></div><div class="feed-post"><div class="post-title" style="font-size:1.55rem">“It feels like a real publication, not just a folder.”</div><div class="author"><div class="avatar">AC</div><div><strong>Andrei Cruz</strong><span>@andreicruz</span></div></div></div></div>
+          <div class="panel"><div class="kicker">Feedback Wall</div><h3 style="font:600 2.5rem 'Cormorant Garamond',serif;color:var(--wine);margin:8px 0 18px">Reader feedback</h3><div class="empty"><h4>No feedback yet</h4><p>Submitted feedback can appear here once a shared backend is connected.</p></div></div>
         </div>
       </section>
 
@@ -412,17 +490,44 @@ a{text-decoration:none;color:inherit}
         </div>
       </section>
 
+      <section class="page" id="page-profile">
+        <div id="profilePage"></div>
+      </section>
+
       <section class="page" id="page-reader">
         <div class="reader">
           <div class="reader-meta" id="readerGenre">POETRY</div>
-          <h2 id="readerTitle">The Last Page</h2>
-          <div class="reader-by" id="readerBy">by Maria Santos · 2026</div>
-          <div class="reader-tools"><button onclick="changeReaderSize(1)">A+</button><button onclick="changeReaderSize(-1)">A−</button><button onclick="saveCurrentReader()">Save</button><button onclick="showToast('Share link copied.')">Share</button></div>
+          <h2 id="readerTitle">Select a Work</h2>
+          <div class="reader-by" id="readerBy">Open a published student work to begin reading.</div>
+          <div class="reader-tools"><button onclick="changeReaderSize(1)">A+</button><button onclick="changeReaderSize(-1)">A−</button></div>
+          <div class="reader-social" id="readerSocial"></div>
+          <div class="reader-submeta" id="readerSubmeta"></div>
           <div class="reader-body" id="readerBody"></div>
+          <div class="comments"><div class="kicker">Conversation</div><h3 style="font:600 2.4rem 'Cormorant Garamond',serif;color:var(--wine);margin:6px 0">Comments</h3><div id="commentArea"></div></div>
           <div class="actions" style="justify-content:center"><button class="secondary" onclick="showPage('library')">Back to Library</button></div>
         </div>
       </section>
     </main>
+  </div>
+</div>
+
+<div class="modal search-modal" id="globalSearchModal" onclick="outsideModal(event,this)">
+  <div class="modal-box">
+    <div class="modal-head"><div><div class="kicker">Archive search</div><h3>Find a work or student</h3></div><button class="close" onclick="closeModal('globalSearchModal')">×</button></div>
+    <div class="search">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.7"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <input id="globalSearchInput" aria-label="Search works and student profiles" placeholder="Search a work, post, student name, or @username..." oninput="renderGlobalSearch()" onkeydown="handleGlobalSearchKey(event)">
+      <button onclick="renderGlobalSearch()">Search</button>
+    </div>
+    <div id="globalSearchResults" class="search-results"></div>
+  </div>
+</div>
+
+<div class="modal" id="notificationsModal" onclick="outsideModal(event,this)">
+  <div class="modal-box">
+    <div class="modal-head"><div><div class="kicker">Your activity</div><h3>Notifications</h3></div><button class="close" onclick="closeModal('notificationsModal')">×</button></div>
+    <div class="actions" style="justify-content:flex-end;margin:10px 0"><button class="secondary" onclick="markNotificationsRead()">Mark all read</button></div>
+    <div id="notificationsList" class="notifications-list"></div>
   </div>
 </div>
 
@@ -447,27 +552,66 @@ a{text-decoration:none;color:inherit}
     </div>
     <div id="loggedInArea" class="hidden">
       <div class="author" style="margin:10px 0 20px"><div class="avatar" id="modalAvatar" style="width:54px;height:54px"><span>12</span></div><div><strong id="modalName">Reader</strong><span id="modalHandle">@reader</span></div></div>
-      <div class="actions"><button class="secondary" onclick="showPage('myworks');closeModal('accountModal')">My Works</button><button class="secondary" onclick="showPage('saved');closeModal('accountModal')">Saved Works</button><button class="primary" onclick="logout()">Log Out</button></div>
+      <div class="profile-menu"><button onclick="openProfile(currentUser.email);closeModal('accountModal')">View Profile</button><button onclick="showPage('myworks');closeModal('accountModal')">My Works</button><button onclick="showPage('saved');closeModal('accountModal')">Saved</button><button onclick="showPage('following');closeModal('accountModal')">Following</button><button onclick="showPage('history');closeModal('accountModal')">History</button><button onclick="openEditProfile();closeModal('accountModal')">Edit Profile</button><button onclick="toggleDarkMode()">Dark Mode</button></div><div class="actions"><button class="primary" onclick="logout()">Log Out</button></div>
     </div>
+  </div>
+</div>
+
+<div class="modal" id="editProfileModal" onclick="outsideModal(event,this)">
+  <div class="modal-box">
+    <div class="modal-head"><div><div class="kicker">Your identity</div><h3>Edit Profile</h3></div><button class="close" onclick="closeModal('editProfileModal')">×</button></div>
+    <form class="form-grid edit-grid" id="editProfileForm" onsubmit="saveProfile(event)">
+      <div class="field full"><label>Full Name</label><input id="editName" required></div>
+      <div class="field"><label>Username</label><input id="editUsername" required placeholder="@username"></div>
+      <div class="field"><label>Profile Picture</label><input id="editPhoto" type="file" accept="image/*"></div>
+      <div class="field full"><label>Bio</label><textarea id="editBio" placeholder="Tell readers a little about yourself..."></textarea></div>
+      <div class="actions full"><button class="secondary" type="button" onclick="closeModal('editProfileModal')">Cancel</button><button class="primary" type="submit">Save Profile</button></div>
+    </form>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const seedWorks = [
- {id:'seed-1',title:'The Last Page',author:'Maria Santos',email:'maria@example.com',genre:'Poetry',excerpt:'A quiet meditation on endings, memory, and the courage to turn another page.',content:'Some endings do not arrive with noise. They come quietly, resting their hands on the edge of a page while the room stays still. We call them endings because we do not yet know what comes after.\\n\\nIn the late afternoon, the light moves across the desk and makes everything look older than it was. A notebook becomes an archive. A sentence becomes a small piece of evidence that we were here, thinking, remembering, trying.\\n\\nMaybe that is why writing feels like leaving a lamp on. Somewhere, someone will read what we placed in the dark. Somewhere, a page will continue even after the hand that wrote it has stopped.\\n\\nSo I turn the page. Not because the story is over, but because there is still another one waiting.',tags:['memory','endings']},
- {id:'seed-2',title:'When the Streetlights Came On',author:'Andrei Cruz',email:'andrei@example.com',genre:'Short Story',excerpt:'A coming-of-age story about late afternoons, small choices, and growing up quietly.',content:'The street looked different when evening arrived, as if the ordinary had suddenly learned how to remember.\\n\\nI watched the first streetlight flicker on and realized how many endings a single afternoon could hold. A game was over. A friend had gone home. A promise had been made without the right words.\\n\\nThe road was still the same road, but I was already carrying it differently.',tags:['memory','coming-of-age']},
- {id:'seed-3',title:'What a Classroom Teaches Beyond Books',author:'Carmela Reyes',email:'carmela@example.com',genre:'Essay',excerpt:'A reflective essay on learning as experience, relationship, and transformation.',content:'A classroom teaches more than the lesson written on the board. It teaches patience, disagreement, attention, and the strange courage of being seen trying.\\n\\nThe subjects matter, but so do the people who make us question them. A school year leaves us with notebooks, deadlines, and facts, but also with voices we remember long after the bell.',tags:['school','learning']}
-];
+const LEGACY_DEMO_EMAILS = new Set(['maria@example.com','andrei@example.com','carmela@example.com']);
+const LEGACY_DEMO_IDS = new Set(['seed-1','seed-2','seed-3']);
 
-let works = JSON.parse(localStorage.getItem('shkWorks') || 'null') || seedWorks;
-let currentUser = JSON.parse(localStorage.getItem('shkUser') || 'null');
-let saved = JSON.parse(localStorage.getItem('shkSaved') || '[]');
-let drafts = JSON.parse(localStorage.getItem('shkDrafts') || '[]');
+function readJSON(key,fallback){
+  try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch{return fallback}
+}
+function normalizeUser(user){
+  if(!user)return null;
+  return {...user,followers:Array.isArray(user.followers)?user.followers:[],following:Array.isArray(user.following)?user.following:[],username:(user.username||'').replace(/^@/,'')};
+}
+function normalizeWork(work){
+  if(!work)return null;
+  return {...work,likes:Array.isArray(work.likes)?work.likes:[],comments:Array.isArray(work.comments)?work.comments:[],views:Number(work.views||0),privacy:work.privacy||'public',createdAt:work.createdAt||Date.now()};
+}
+function persistSessionData(){
+  localStorage.setItem('shkNotifications',JSON.stringify(notifications));
+  localStorage.setItem('shkHistory',JSON.stringify(history));
+  localStorage.setItem('shkDarkMode',JSON.stringify(darkMode));
+}
+
+let users = readJSON('shkUsers',[]).filter(u=>u&&u.email&&!LEGACY_DEMO_EMAILS.has(String(u.email).toLowerCase())).map(normalizeUser);
+let works = readJSON('shkWorks',[]).filter(w=>w&&!LEGACY_DEMO_IDS.has(w.id)&&!LEGACY_DEMO_EMAILS.has(String(w.email||'').toLowerCase())).map(normalizeWork);
+let currentUser = normalizeUser(readJSON('shkUser',null));
+let notifications = readJSON('shkNotifications',[]).filter(n=>n&&n.to);
+let history = readJSON('shkHistory',{});
+let darkMode = !!readJSON('shkDarkMode',false);
+let followingMode = 'latest';
+if(currentUser && LEGACY_DEMO_EMAILS.has(String(currentUser.email||'').toLowerCase())) currentUser=null;
+if(currentUser){
+  const idx=users.findIndex(u=>u.email===currentUser.email);
+  if(idx>=0) currentUser=normalizeUser({...users[idx],...currentUser});
+  else users.push(normalizeUser(currentUser));
+}
+let saved = readJSON('shkSaved',[]).filter(id=>!LEGACY_DEMO_IDS.has(id));
+let drafts = readJSON('shkDrafts',[]).filter(d=>d&&!LEGACY_DEMO_EMAILS.has(String(d.email||'').toLowerCase()));
 let authMode = 'login';
 let feedFilter = 'all';
 let readerWork = null;
+let profileEmail = null;
 
 const titleMap = {
  home:['Home','The Literary Archive of a Class in Motion'],
@@ -482,16 +626,25 @@ const titleMap = {
  shakespeare:['Shakespeare','Study corner'],
  feedback:['Feedback','Help shape the platform'],
  about:['About','The story behind 12-Shakespeare'],
+ following:['Following Feed','New work from students you follow'],
+ history:['Reading History','Your recently opened literature'],
+ profile:['Student Profile','Works, follows, and writing by this student'],
  reader:['Reading','A focused literary reading experience']
 };
 
 function getName(){return currentUser?.name || 'Guest Reader'}
 function userKey(){return (currentUser?.email || '').toLowerCase()}
+function usernameOf(user){return (user?.username||'').replace(/^@/,'') || (user?.email||'student').split('@')[0].toLowerCase()}
+function initialsOf(name){return String(name||'Student').trim().slice(0,2).toUpperCase()}
+function findUser(email){return users.find(u=>u.email===email)||null}
+function getUserWorks(email){return works.filter(w=>w.email===email)}
 function saveState(){
  localStorage.setItem('shkWorks',JSON.stringify(works));
+ localStorage.setItem('shkUsers',JSON.stringify(users));
  localStorage.setItem('shkSaved',JSON.stringify(saved));
  localStorage.setItem('shkDrafts',JSON.stringify(drafts));
  if(currentUser)localStorage.setItem('shkUser',JSON.stringify(currentUser));else localStorage.removeItem('shkUser');
+ persistSessionData();
 }
 
 function showPage(name){
@@ -507,68 +660,184 @@ function showPage(name){
 }
 
 function renderAll(){
- updateProfileUI(); renderHome(); renderFeed(); renderLibrary(); renderSaved(); renderMyWorks(); renderAuthors(); toggleCreateGate();
+ updateProfileUI(); renderHome(); renderFeed(); renderLibrary(); renderSaved(); renderMyWorks(); renderAuthors(); renderProfile(); renderFollowing(); renderHistory(); toggleCreateGate(); renderNotificationsBadge(); applyDarkMode();
 }
 function updateProfileUI(){
  const set=(id,name,photo)=>{
   const el=document.getElementById(id); if(!el)return;
-  if(photo)el.innerHTML='<img src="'+photo+'" alt="Profile picture">';
-  else el.innerHTML='<span>'+((name||'12').trim().slice(0,2).toUpperCase())+'</span>';
+  if(photo)el.innerHTML='<img src="'+escapeAttr(photo)+'" alt="Profile picture">';
+  else el.innerHTML='<span>'+escapeHTML(initialsOf(name))+'</span>';
  };
  set('sideAvatar',getName(),currentUser?.photo);set('topAvatar',getName(),currentUser?.photo);set('modalAvatar',getName(),currentUser?.photo);
  document.getElementById('sideName').textContent=getName();
- document.getElementById('sideHandle').textContent=currentUser?(currentUser.username?'@'+currentUser.username.replace(/^@/,''):currentUser.email):'Not signed in';
+ document.getElementById('sideHandle').textContent=currentUser?('@'+usernameOf(currentUser)):'Not signed in';
  document.getElementById('modalName').textContent=getName();
- document.getElementById('modalHandle').textContent=currentUser?(currentUser.username?'@'+currentUser.username.replace(/^@/,''):currentUser.email):'@reader';
+ document.getElementById('modalHandle').textContent=currentUser?('@'+usernameOf(currentUser)):'@reader';
  document.getElementById('loggedOutArea').classList.toggle('hidden',!!currentUser);
  document.getElementById('loggedInArea').classList.toggle('hidden',!currentUser);
 }
 function renderHome(){
- document.getElementById('featuredWorks').innerHTML=works.slice(0,3).map(cardHTML).join('');
+ document.getElementById('featuredWorks').innerHTML=works.slice(0,3).map(cardHTML).join('') || '<div class="empty"><h4>No published works yet</h4><p>Student literature will appear here after an account publishes a post.</p></div>';
  const latest=works.slice(0,3);
- document.getElementById('homeFeed').innerHTML=latest.length?latest.map(feedHTML).join(''):'<div class="empty"><h4>No literature yet</h4><p>Be the first student to publish.</p></div>';
- const custom=Math.max(0,works.length-seedWorks.length);
- document.getElementById('worksCount').textContent=(25+custom)+'+';
- document.getElementById('authorsCount').textContent=(15+new Set(works.map(w=>w.author)).size-Math.min(seedWorks.length,15))+'+';
+ document.getElementById('homeFeed').innerHTML=latest.length?latest.map(feedHTML).join(''):'<div class="empty"><h4>No literature yet</h4><p>Student posts will appear here after they are published.</p></div>';
+ document.getElementById('worksCount').textContent=String(works.length);
+ document.getElementById('authorsCount').textContent=String(users.length);
 }
 function cardHTML(w){
- const cls=w.id==='seed-2'?'two':w.id==='seed-3'?'three':'';
- return '<article class="card"><div class="card-art '+cls+'">'+(w.cover?'<div style="position:absolute;inset:0;background:url('+escapeAttr(w.cover)+') center/cover;opacity:.9"></div>':'')+'<div style="position:relative"><small>'+escapeHTML(w.genre)+'</small><strong>'+escapeHTML(w.title)+'</strong></div></div><div class="card-body"><div class="meta"><span>'+escapeHTML(w.author)+'</span><span class="tag">'+escapeHTML(w.genre)+'</span></div><h4>'+escapeHTML(w.title)+'</h4><p>'+escapeHTML(w.excerpt)+'</p><div class="card-foot"><button class="link-btn" onclick="openReader(\''+w.id+'\')">Read Work</button><div class="icon-pair"><button class="mini" onclick="toggleSaved(\''+w.id+'\',this)" title="Save">☆</button></div></div></div></article>';
+ const owner=currentUser?.email===w.email;
+ const likeOn=!!currentUser&&w.likes.includes(currentUser.email);
+ const tags=(w.tags||[]).map(t=>`<button class="tag" onclick="searchTag('${escapeAttr(t)}')">#${escapeHTML(t)}</button>`).join('');
+ const manage=owner?`<div class="work-management"><button class="secondary" onclick="editWork('${escapeAttr(w.id)}')">Edit</button><button class="danger-btn" onclick="deleteWork('${escapeAttr(w.id)}')">Delete</button></div>`:'';
+ return `<article class="card"><div class="card-art">${w.cover?`<div style="position:absolute;inset:0;background:url(${escapeAttr(w.cover)}) center/cover;opacity:.9"></div>`:''}<div style="position:relative"><small>${escapeHTML(w.genre)}</small><strong>${escapeHTML(w.title)}</strong></div></div><div class="card-body"><div class="meta"><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button><span class="tag">${escapeHTML(w.genre)}</span></div><h4>${escapeHTML(w.title)}</h4><p>${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions"><button class="social-btn ${likeOn?'on':''}" onclick="toggleLike('${escapeAttr(w.id)}',this)">♥ <span class="count">${w.likes.length}</span></button><button class="social-btn" onclick="openReader('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button></div><div class="card-foot"><button class="link-btn" onclick="openReader('${escapeAttr(w.id)}')">Read Work</button><span style="font-size:.63rem;color:#A09791">${w.views||0} views</span></div>${manage}</div></article>`;
 }
 function feedHTML(w){
- return `<article class="feed-post"><div class="author"><div class="avatar">${escapeHTML(w.author.slice(0,2).toUpperCase())}</div><div><strong>${escapeHTML(w.author)}</strong><span>@${escapeHTML((w.author||'reader').toLowerCase().replace(/\s+/g,''))} · ${escapeHTML(w.genre)}</span></div></div><div class="post-title">${escapeHTML(w.title)}</div><p class="post-text">${escapeHTML(w.excerpt)}</p><div class="post-actions"><button class="post-action" onclick="openReader('${w.id}')">Read Full Work</button><button class="post-action" onclick="toggleSaved('${w.id}',this)">Save</button><button class="post-action" onclick="showToast('Comments can be connected to Firestore later.')">Comment</button></div></article>`;
+ const author=findUser(w.email); const likeOn=!!currentUser&&w.likes.includes(currentUser.email);
+ const tags=(w.tags||[]).slice(0,6).map(t=>`<button class="tag" onclick="searchTag('${escapeAttr(t)}')">#${escapeHTML(t)}</button>`).join('');
+ return `<article class="feed-post"><div class="author"><div class="avatar">${author?.photo?`<img src="${escapeAttr(author.photo)}" alt="">`:escapeHTML(initialsOf(w.author))}</div><div><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button><span>@${escapeHTML(usernameOf(author||{name:w.author,email:w.email||''}))} · ${escapeHTML(w.genre)}</span></div></div><div class="post-title">${escapeHTML(w.title)}</div><p class="post-text">${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions"><button class="social-btn ${likeOn?'on':''}" onclick="toggleLike('${escapeAttr(w.id)}',this)">♥ <span class="count">${w.likes.length}</span></button><button class="social-btn" onclick="openReader('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button><button class="social-btn" onclick="shareWork('${escapeAttr(w.id)}')">Share</button></div><div class="post-actions"><button class="post-action" onclick="openReader('${escapeAttr(w.id)}')">Read Full Work</button></div></article>`;
 }
 function renderFeed(){
- const q=(document.getElementById('feedSearch')?.value||'').toLowerCase();
- const arr=works.filter(w=>(feedFilter==='all'||w.genre===feedFilter)&&[w.title,w.author,w.genre,w.excerpt,(w.tags||[]).join(' ')].join(' ').toLowerCase().includes(q));
+ const q=(document.getElementById('feedSearch')?.value||'').toLowerCase().trim();
+ const arr=works.filter(w=>canReadWork(w)&&(feedFilter==='all'||w.genre===feedFilter)&&[w.title,w.author,w.genre,w.excerpt,w.content,(w.tags||[]).join(' ')].join(' ').toLowerCase().includes(q));
  document.getElementById('feedList').innerHTML=arr.length?arr.map(feedHTML).join(''):'<div class="empty"><h4>No works found</h4><p>Try another search or category.</p></div>';
 }
 function renderLibrary(){
- const q=(document.getElementById('librarySearch')?.value||'').toLowerCase();
- const arr=works.filter(w=>[w.title,w.author,w.genre,w.excerpt].join(' ').toLowerCase().includes(q));
- document.getElementById('libraryGrid').innerHTML=arr.length?arr.map(cardHTML).join(''):'<div class="empty"><h4>No works found</h4></div>';
+ const q=(document.getElementById('librarySearch')?.value||'').toLowerCase().trim();
+ const arr=works.filter(w=>canReadWork(w)&&[w.title,w.author,w.genre,w.excerpt,w.content,(w.tags||[]).join(' ')].join(' ').toLowerCase().includes(q));
+ document.getElementById('libraryGrid').innerHTML=arr.length?arr.map(cardHTML).join(''):'<div class="empty"><h4>No works found</h4><p>The library shows only published student works.</p></div>';
 }
 function renderSaved(){
  const arr=works.filter(w=>saved.includes(w.id));
  document.getElementById('savedGrid').innerHTML=arr.length?arr.map(cardHTML).join(''):'<div class="empty"><h4>Your saved library is empty</h4><p>Save a literature work and it will appear here.</p></div>';
 }
+function canReadWork(w){
+ if(!w)return false;
+ if(w.email===currentUser?.email || w.privacy==='public')return true;
+ return w.privacy==='followers' && !!currentUser && currentUser.following.includes(w.email);
+}
+function ageDays(w){return Math.max(0,(Date.now()-(w.createdAt||Date.now()))/86400000)}
+function workPopularity(w){
+ const likes=(w.likes?.length||0),comments=(w.comments?.length||0),views=(w.views||0);
+ const engagement=likes*5+comments*8+views;
+ const freshness=1+Math.max(0,1-ageDays(w)/30)*6;
+ return engagement*freshness;
+}
+function followingTimeLabel(w){
+ const d=ageDays(w);
+ if(d<1)return 'Today';
+ if(d<2)return 'Yesterday';
+ if(d<7)return Math.floor(d)+' days ago';
+ return new Date(w.createdAt||Date.now()).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+}
+function renderFollowing(){
+ const root=document.getElementById('followingList'); if(!root)return;
+ const insight=document.getElementById('followingInsight');
+ const meta=document.getElementById('followingSortMeta');
+ if(!currentUser){
+   if(insight)insight.innerHTML='';
+   if(meta)meta.textContent='Sign in and follow student writers to build a personalized feed.';
+   root.innerHTML='<div class="empty"><h4>Follow students to build your feed</h4><p>Open a student profile and follow their work.</p><button class="primary" onclick="openGlobalSearch()">Find Students</button></div>';
+   return;
+ }
+ let arr=works.filter(w=>currentUser.following.includes(w.email)&&canReadWork(w));
+ if(followingMode==='popular')arr.sort((a,b)=>{const diff=workPopularity(b)-workPopularity(a);return Math.abs(diff)<.001?(b.createdAt||0)-(a.createdAt||0):diff});
+ else arr.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+ const writerCount=new Set(arr.map(w=>w.email)).size;
+ const totalViews=arr.reduce((n,w)=>n+(w.views||0),0);
+ const totalLikes=arr.reduce((n,w)=>n+(w.likes?.length||0),0);
+ const newest=arr[0];
+ if(meta)meta.textContent=followingMode==='popular'?'Ranked by reader engagement with a freshness boost for recent posts.':'Newest posts from students you follow appear first.';
+ if(insight){
+   const lead=followingMode==='popular'?'Popular right now':'Fresh from your circle';
+   const leadNote=followingMode==='popular'?'Likes, comments, views + recency':'Newest publication date';
+   insight.innerHTML=`<div class="insight-card"><span class="insight-kicker">${lead}</span><strong class="insight-value">${arr.length} work${arr.length===1?'':'s'}</strong><span class="insight-note">${writerCount} writer${writerCount===1?'':'s'} in your following list</span></div><div class="insight-card"><span class="insight-kicker">Engagement</span><strong class="insight-value">${totalLikes} like${totalLikes===1?'':'s'} · ${totalViews} view${totalViews===1?'':'s'}</strong><span class="insight-note">Activity across these followed works</span></div><div class="insight-card"><span class="insight-kicker">${leadNote}</span><strong class="insight-value">${newest?followingTimeLabel(newest):'—'}</strong><span class="insight-note">${newest?escapeHTML(newest.title):'No followed posts yet'}</span></div>`;
+ }
+ root.innerHTML=arr.length?arr.map(feedHTML).join(''):'<div class="empty"><h4>Your following feed is empty</h4><p>Follow student writers to see their latest work and public activity here.</p><button class="secondary" onclick="openGlobalSearch()">Discover Writers</button></div>';
+ document.querySelectorAll('.feed-tab').forEach(x=>x.setAttribute('aria-selected',x.classList.contains('active')?'true':'false'));
+}
+function setFollowingMode(mode,btn){followingMode=mode;document.querySelectorAll('.feed-tab').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});btn.classList.add('active');btn.setAttribute('aria-selected','true');renderFollowing()}
+function historyKey(){return userKey()||'guest'}
+function renderHistory(){
+ const root=document.getElementById('historyGrid'); if(!root)return;
+ const ids=(history[historyKey()]||[]).slice().sort((a,b)=>(b.at||0)-(a.at||0)).map(x=>x.id);
+ const arr=ids.map(id=>works.find(w=>w.id===id)).filter(Boolean);
+ root.innerHTML=arr.length?arr.map(cardHTML).join(''):'<div class="empty"><h4>No reading history yet</h4><p>Open a published work and it will appear here.</p></div>';
+}
+function rememberRead(work){
+ const key=historyKey(); const list=Array.isArray(history[key])?history[key]:[];
+ history[key]=[{id:work.id,at:Date.now()},...list.filter(x=>x.id!==work.id)].slice(0,25); persistSessionData();
+}
+function clearHistory(){history[historyKey()]=[];persistSessionData();renderHistory();showToast('Reading history cleared.')}
+
 function renderMyWorks(){
  const mine=currentUser?works.filter(w=>w.email===currentUser.email):[];
  const mineDrafts=currentUser?drafts.filter(d=>d.email===currentUser.email):[];
  let html='';
  if(!currentUser){html='<div class="empty"><h4>Sign in to view My Works</h4><p>Your drafts and published literature will appear here.</p><button class="primary" onclick="openAccount()">Open Account</button></div>';document.getElementById('myWorksPanel').innerHTML=html;return}
  if(mine.length)html+='<div class="grid3">'+mine.map(cardHTML).join('')+'</div>';else html+='<div class="empty"><h4>No published works yet</h4><p>Create your first literature post.</p></div>';
- if(mineDrafts.length)html+='<div class="section"><div class="kicker">Drafts</div><div class="grid3">'+mineDrafts.map(d=>'<article class="card"><div class="card-body"><div class="meta"><span>Draft</span><span class="tag">'+escapeHTML(d.genre)+'</span></div><h4>'+escapeHTML(d.title||'Untitled')+'</h4><p>'+escapeHTML(d.excerpt||'')+'</p></div></article>').join('')+'</div></div>';
+ if(mineDrafts.length)html+='<div class="section"><div class="kicker">Drafts</div><div class="grid3">'+mineDrafts.map(d=>`<article class="card"><div class="card-body"><div class="meta"><span>Draft</span><span class="tag">${escapeHTML(d.genre)}</span></div><h4>${escapeHTML(d.title||'Untitled')}</h4><p>${escapeHTML(d.excerpt||'')}</p><div class="work-management"><button class="secondary" onclick="loadDraft('${escapeAttr(d.id)}')">Continue Writing</button><button class="danger-btn" onclick="deleteDraft('${escapeAttr(d.id)}')">Delete Draft</button></div></div></article>`).join('')+'</div></div>';
  document.getElementById('myWorksPanel').innerHTML=html;
 }
+function loadDraft(id){const d=drafts.find(x=>x.id===id);if(!d||!currentUser)return;editingWorkId=null;document.getElementById('postTitle').value=d.title||'';document.getElementById('postGenre').value=d.genre||'Poetry';document.getElementById('postTags').value=(d.tags||[]).join(', ');document.getElementById('postExcerpt').value=d.excerpt||'';document.getElementById('postContent').value=d.content||'';document.getElementById('postCover').value=d.cover||'';showPage('create');showToast('Draft loaded.');}
+function deleteDraft(id){drafts=drafts.filter(d=>d.id!==id);saveState();renderMyWorks();showToast('Draft deleted.')}
+
 function renderAuthors(){
- const names=[...new Set(works.map(w=>w.author))].slice(0,8);
- document.getElementById('authorGrid').innerHTML=names.map(n=>{
-   const count=works.filter(w=>w.author===n).length;
-   const initials=escapeHTML(n.slice(0,2).toUpperCase());
-   return `<article class="author-card"><div class="author-big">${initials}</div><h4>${escapeHTML(n)}</h4><p>${count} published work${count===1?'':'s'}</p><button class="follow" onclick="this.classList.toggle('on');this.textContent=this.classList.contains('on')?'Following':'Follow Author'">Follow Author</button></article>`;
+ if(!users.length){document.getElementById('authorGrid').innerHTML='<div class="empty"><h4>No student profiles yet</h4><p>Create an account to appear in the community.</p></div>';return}
+ document.getElementById('authorGrid').innerHTML=users.slice(0,12).map(user=>{
+   const count=getUserWorks(user.email).length;
+   const following=!!currentUser&&currentUser.following.includes(user.email);
+   const self=currentUser&&currentUser.email===user.email;
+   return `<article class="author-card"><button class="result-link" onclick="openProfile('${escapeAttr(user.email)}')"><div class="author-big">${user.photo?`<img src="${escapeAttr(user.photo)}" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:escapeHTML(initialsOf(user.name))}</div><h4>${escapeHTML(user.name)}</h4><p>@${escapeHTML(usernameOf(user))} · ${count} published work${count===1?'':'s'}</p></button><button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${self?'You':(following?'Following':'Follow')}</button></article>`;
  }).join('');
 }
+function renderProfile(){
+ const root=document.getElementById('profilePage'); if(!root)return;
+ if(!profileEmail){
+   if(currentUser){profileEmail=currentUser.email;}
+   else {root.innerHTML='<div class="empty"><h4>Sign in to view your profile</h4><p>Your works, followers, following, saved reading, and profile details will appear here.</p><button class="primary" onclick="openAccount()">Open Account</button></div>';return;}
+ }
+ const user=findUser(profileEmail);
+ if(!user){root.innerHTML='<div class="empty"><h4>Profile not found</h4><p>This student profile is no longer available.</p></div>';return;}
+ const allUserWorks=getUserWorks(user.email);
+ const following=currentUser?.following.includes(user.email);
+ const self=currentUser?.email===user.email;
+ const canSeeWorks=self||following||allUserWorks.every(w=>w.privacy==='public');
+ const userWorks=canSeeWorks?allUserWorks.filter(w=>canReadWork(w)):[];
+ const followLabel=self?'This is you':(following?'Following':'Follow');
+ root.innerHTML=`<div class="profile-hero"><div class="profile-big-avatar">${user.photo?`<img src="${escapeAttr(user.photo)}" alt="Profile picture">`:escapeHTML(initialsOf(user.name))}</div><div class="profile-copy"><div class="kicker">Shakespeare Student</div><h2>${escapeHTML(user.name)}</h2><p class="profile-handle">@${escapeHTML(usernameOf(user))}</p><p>${escapeHTML(user.bio||'Student writer building a personal literature shelf in 12-SHAKESPEARE.')}</p><div class="profile-stats"><div class="profile-stat"><strong>${userWorks.length}</strong><span>Works</span></div><div class="profile-stat"><strong>${user.followers.length}</strong><span>Followers</span></div><div class="profile-stat"><strong>${user.following.length}</strong><span>Following</span></div></div></div><div class="profile-actions"><button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${followLabel}</button><button class="secondary" onclick="openGlobalSearch()">Search</button></div></div><div class="section"><div class="profile-work-head"><div><div class="kicker">Published shelf</div><h3 style="font:600 3rem 'Cormorant Garamond',serif;color:var(--wine);margin:7px 0">${escapeHTML(user.name)}'s Works</h3></div><p style="color:var(--muted);margin:0">Only literature this student has made visible to you appears here.</p></div><div class="grid3" style="margin-top:20px">${userWorks.length?userWorks.map(cardHTML).join(''):'<div class="empty"><h4>No published works yet</h4><p>This student has not published a work.</p></div>'}</div></div>`;
+}
+function openProfile(email){
+ const user=findUser(email); if(!user){showToast('Student profile not found.');return;}
+ profileEmail=user.email; showPage('profile');
+}
+function openOwnProfile(){
+ if(!currentUser){showToast('Sign in to view your profile.');openAccount();return;}
+ profileEmail=currentUser.email; showPage('profile');
+}
+function toggleFollow(email,btn){
+ if(!currentUser){showToast('Sign in to follow a student.');openAccount();return;}
+ if(currentUser.email===email){showToast('You cannot follow your own profile.');return;}
+ const targetIndex=users.findIndex(u=>u.email===email);
+ const meIndex=users.findIndex(u=>u.email===currentUser.email);
+ if(targetIndex<0||meIndex<0)return;
+ users[targetIndex]=normalizeUser(users[targetIndex]); users[meIndex]=normalizeUser(users[meIndex]);
+ const isFollowing=currentUser.following.includes(email);
+ if(isFollowing){
+   currentUser.following=currentUser.following.filter(x=>x!==email);
+   users[meIndex].following=currentUser.following.slice();
+   users[targetIndex].followers=users[targetIndex].followers.filter(x=>x!==currentUser.email);
+   if(btn){btn.classList.remove('on');btn.textContent='Follow';}
+   showToast('Unfollowed @'+usernameOf(users[targetIndex])+'.');
+ }else{
+   currentUser.following=[...new Set([...currentUser.following,email])];
+   users[meIndex].following=currentUser.following.slice();
+   users[targetIndex].followers=[...new Set([...users[targetIndex].followers,currentUser.email])];
+   addNotification(users[targetIndex].email,`${currentUser.name} followed you`,'');
+   if(btn){btn.classList.add('on');btn.textContent='Following';}
+   showToast('Following @'+usernameOf(users[targetIndex])+'.');
+ }
+ currentUser=normalizeUser({...users[meIndex]}); saveState(); renderAuthors(); renderProfile(); renderGlobalSearch(); updateProfileUI();
+}
+
 function toggleCreateGate(){
  document.getElementById('createForm').classList.toggle('hidden',!currentUser);
  document.getElementById('loginCreateNote').classList.toggle('hidden',!!currentUser);
@@ -584,19 +853,79 @@ function saveDraft(){
  const draft={id:'draft-'+Date.now(),email:currentUser.email,title:document.getElementById('postTitle').value||'Untitled',genre:document.getElementById('postGenre').value,excerpt:document.getElementById('postExcerpt').value||'',content:document.getElementById('postContent').value||''};
  drafts.unshift(draft);saveState();renderMyWorks();showToast('Draft saved.');showPage('myworks');
 }
+let editingWorkId=null;
 document.getElementById('createForm').addEventListener('submit',function(e){
  e.preventDefault();if(!currentUser){openAccount();return}
- const work={id:'work-'+Date.now(),title:document.getElementById('postTitle').value,author:currentUser.name,email:currentUser.email,genre:document.getElementById('postGenre').value,excerpt:document.getElementById('postExcerpt').value,content:document.getElementById('postContent').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),cover:document.getElementById('postCover').value||''};
- works.unshift(work);saveState();this.reset();renderAll();showToast('Your literature has been published.');showPage('feed');
+ const now=Date.now();
+ const payload={title:document.getElementById('postTitle').value.trim(),author:currentUser.name,email:currentUser.email,genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
+ if(editingWorkId){const idx=works.findIndex(w=>w.id===editingWorkId&&w.email===currentUser.email);if(idx<0){showToast('Work not found.');return}works[idx]=normalizeWork({...works[idx],...payload,updatedAt:now});showToast('Your work was updated.');editingWorkId=null;}else{works.unshift(normalizeWork({id:'work-'+now,...payload,likes:[],comments:[],views:0,createdAt:now}));showToast('Your literature has been published.');}
+ saveState();this.reset();document.getElementById('postPrivacy').value='public';renderAll();showPage('feed');
 });
+function editWork(id){const w=works.find(x=>x.id===id&&x.email===currentUser?.email);if(!w){showToast('You can only edit your own work.');return;}editingWorkId=w.id;document.getElementById('postTitle').value=w.title;document.getElementById('postGenre').value=w.genre;document.getElementById('postTags').value=(w.tags||[]).join(', ');document.getElementById('postExcerpt').value=w.excerpt;document.getElementById('postContent').value=w.content;document.getElementById('postCover').value=w.cover||'';document.getElementById('postPrivacy').value=w.privacy||'public';showPage('create');showToast('Edit mode enabled.');}
+function deleteWork(id){const w=works.find(x=>x.id===id);if(!w||w.email!==currentUser?.email){showToast('You can only delete your own work.');return;}if(!confirm('Delete this published work? This cannot be undone.'))return;works=works.filter(x=>x.id!==id);saved=saved.filter(x=>x!==id);saveState();renderAll();showToast('Work deleted.')}
+
 function openReader(id){
- const w=works.find(x=>x.id===id);if(!w)return;
- readerWork=w;document.getElementById('readerGenre').textContent=w.genre.toUpperCase();document.getElementById('readerTitle').textContent=w.title;document.getElementById('readerBy').textContent='by '+w.author+' · 2026';
+ const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
+ if(!canReadWork(w)){showToast('This work is not currently visible to your account.');return;}
+ readerWork=w;w.views=(w.views||0)+1;rememberRead(w);saveState();
+ document.getElementById('readerGenre').textContent=w.genre.toUpperCase();document.getElementById('readerTitle').textContent=w.title;document.getElementById('readerBy').textContent='by '+w.author+' · '+new Date(w.createdAt||Date.now()).getFullYear();
+ document.getElementById('readerSubmeta').textContent=`${w.views||0} views · ${w.likes.length} likes · ${w.comments.length} comments · ${w.privacy==='followers'?'Followers only':w.privacy==='private'?'Private':'Public'}`;
  document.getElementById('readerBody').innerHTML=w.content.split(/\\n+/).map(p=>'<p>'+escapeHTML(p)+'</p>').join('');
- showPage('reader');
+ renderReaderSocial();renderComments();showPage('reader');
 }
-function changeReaderSize(delta){const el=document.getElementById('readerBody');const now=parseFloat(getComputedStyle(el).fontSize);el.style.fontSize=Math.max(16,Math.min(28,now+delta))+'px'}
-function saveCurrentReader(){if(readerWork)toggleSaved(readerWork.id,null)}
+function renderReaderSocial(){
+ const root=document.getElementById('readerSocial');if(!root||!readerWork)return;const liked=currentUser&&readerWork.likes.includes(currentUser.email);const isSaved=saved.includes(readerWork.id);root.innerHTML=`<button class="social-btn ${liked?'on':''}" onclick="toggleLike('${escapeAttr(readerWork.id)}')">♥ <span class="count">${readerWork.likes.length}</span></button><button class="social-btn ${isSaved?'on':''}" onclick="toggleSaved('${escapeAttr(readerWork.id)}')">${isSaved?'Saved':'Save'}</button><button class="social-btn" onclick="shareWork('${escapeAttr(readerWork.id)}')">Share</button><button class="social-btn" onclick="showToast('Use the same report flow as the school moderation system.')">Report</button>`;
+}
+function toggleLike(id,btn){
+ if(!currentUser){showToast('Sign in to like a work.');openAccount();return}let w=works.find(x=>x.id===id);if(!w)return;w=normalizeWork(w);const on=w.likes.includes(currentUser.email);if(on)w.likes=w.likes.filter(x=>x!==currentUser.email);else{w.likes=[...new Set([...w.likes,currentUser.email])];if(w.email!==currentUser.email)addNotification(w.email,`${currentUser.name} liked your work`,w.title);}
+ const idx=works.findIndex(x=>x.id===id);works[idx]=w;saveState();if(btn){btn.classList.toggle('on',!on);btn.querySelector('.count')?.replaceChildren(document.createTextNode(String(w.likes.length)));}renderReaderSocial();renderHome();renderFeed();renderLibrary();renderFollowing();
+}
+function renderComments(){
+ const root=document.getElementById('commentArea');if(!root||!readerWork)return;const comments=readerWork.comments||[];const list=comments.length?comments.map(c=>`<div class="comment"><div class="comment-head"><strong>${escapeHTML(c.name||'Student')}</strong><span>${escapeHTML(new Date(c.at||Date.now()).toLocaleString())}</span></div><p>${escapeHTML(c.text)}</p></div>`).join(''):'<div class="empty" style="padding:20px 0"><h4>No comments yet</h4><p>Start the conversation around this work.</p></div>';
+ root.innerHTML=list+`<form class="comment-form" onsubmit="submitComment(event)"><input id="commentInput" ${currentUser?'':'disabled'} placeholder="${currentUser?'Write a thoughtful comment...':'Sign in to comment'}"><button class="primary" ${currentUser?'':'disabled'}>Comment</button></form>`;
+}
+function submitComment(e){e.preventDefault();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:currentUser.name,text,at:Date.now()};works[idx].comments=[...(works[idx].comments||[]),comment];readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.email,`${currentUser.name} commented on your work`,readerWork.title);saveState();renderComments();renderReaderSocial();showToast('Comment posted.')}
+function shareWork(id){const url=location.href.split('#')[0]+'#work='+encodeURIComponent(id);if(navigator.clipboard)navigator.clipboard.writeText(url).catch(()=>{});history.replaceState(null,'','#work='+encodeURIComponent(id));showToast('Share link copied.')}
+function saveCurrentReader(){if(readerWork)toggleSaved(readerWork.id)}
+function searchTag(tag){openGlobalSearch();setTimeout(()=>{const input=document.getElementById('globalSearchInput');input.value=tag;renderGlobalSearch()},60)}
+
+function openGlobalSearch(){
+ const modal=document.getElementById('globalSearchModal');
+ modal.classList.add('open');
+ const input=document.getElementById('globalSearchInput');
+ input.value=''; renderGlobalSearch(); setTimeout(()=>input.focus(),50);
+}
+function renderGlobalSearch(){
+ const root=document.getElementById('globalSearchResults'); if(!root)return;
+ const q=(document.getElementById('globalSearchInput')?.value||'').toLowerCase().trim();
+ if(!q){const recent=readJSON('shkRecentSearches',[]);root.innerHTML=`<div class="empty"><h4>Search the archive</h4><p>Search published works by title, text, genre, tags, or author — or find a student profile by name or username.</p>${recent.length?'<div class="post-tags" style="justify-content:center;margin-top:14px">'+recent.slice(0,6).map(x=>`<button class="tag" onclick="useRecentSearch('${escapeAttr(x)}')">${escapeHTML(x)}</button>`).join('')+'</div>':''}</div>`;return;}
+
+ const foundUsers=users.filter(u=>[u.name,u.username,u.bio].join(' ').toLowerCase().includes(q)).slice(0,6);
+ const foundWorks=works.filter(w=>canReadWork(w)&&[w.title,w.author,w.genre,w.excerpt,w.content,(w.tags||[]).join(' ')].join(' ').toLowerCase().includes(q)).slice(0,10);
+ let html='';
+ if(foundUsers.length){
+   html+='<div class="search-group"><div class="search-group-head"><strong>Student profiles</strong><span>'+foundUsers.length+' result'+(foundUsers.length===1?'':'s')+'</span></div>';
+   html+=foundUsers.map(u=>{const followed=currentUser?.following.includes(u.email);const self=currentUser?.email===u.email;return `<div class="search-result"><button class="result-link" onclick="openProfile('${escapeAttr(u.email)}');closeModal('globalSearchModal')"><div class="search-result-main"><div class="avatar">${u.photo?`<img src="${escapeAttr(u.photo)}" alt="">`:escapeHTML(initialsOf(u.name))}</div><div class="search-result-copy"><div class="result-kind">Student profile</div><strong>${escapeHTML(u.name)}</strong><span>@${escapeHTML(usernameOf(u))} · ${getUserWorks(u.email).length} work${getUserWorks(u.email).length===1?'':'s'}</span></div></div></button><button class="follow ${followed?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(u.email)}',this)">${self?'You':(followed?'Following':'Follow')}</button></div>`}).join('')+'</div>';
+ }
+ if(foundWorks.length){
+   html+='<div class="search-group"><div class="search-group-head"><strong>Works & posts</strong><span>'+foundWorks.length+' result'+(foundWorks.length===1?'':'s')+'</span></div>';
+   html+=foundWorks.map(w=>`<div class="search-result"><button class="result-link" onclick="closeModal('globalSearchModal');openReader('${escapeAttr(w.id)}')"><div class="search-result-copy"><div class="result-kind">${escapeHTML(w.genre)}</div><strong>${escapeHTML(w.title)}</strong><span>by ${escapeHTML(w.author)} · ${escapeHTML(w.excerpt)}</span></div></button><button class="secondary" style="padding:8px 10px;font-size:.7rem" onclick="openProfile('${escapeAttr(w.email||'')}');closeModal('globalSearchModal')">Profile</button></div>`).join('')+'</div>';
+ }
+ root.innerHTML=html||'<div class="empty"><h4>No matches found</h4><p>Try a different title, keyword, student name, or @username.</p></div>';
+}
+function useRecentSearch(q){const input=document.getElementById('globalSearchInput');if(!input)return;input.value=q;renderGlobalSearch();input.focus()}
+function handleGlobalSearchKey(e){if(e.key==='Enter'){e.preventDefault();renderGlobalSearch()}}
+
+function addNotification(to,text,workTitle){notifications.unshift({id:'n-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),to,text,workTitle,at:Date.now(),read:false});notifications=notifications.slice(0,100);persistSessionData();renderNotificationsBadge()}
+function renderNotificationsBadge(){const badge=document.getElementById('notificationBadge');if(!badge)return;const count=currentUser?notifications.filter(n=>n.to===currentUser.email&&!n.read).length:0;badge.textContent=count>9?'9+':String(count);badge.classList.toggle('hidden',count===0)}
+function openNotifications(){if(!currentUser){showToast('Sign in to view notifications.');openAccount();return}renderNotifications();document.getElementById('notificationsModal').classList.add('open')}
+function renderNotifications(){const root=document.getElementById('notificationsList');if(!root)return;const list=notifications.filter(n=>n.to===currentUser?.email).sort((a,b)=>(b.at||0)-(a.at||0));root.innerHTML=list.length?list.map(n=>`<div class="notification ${n.read?'':'unread'}"><div class="avatar">12</div><div class="notification-copy"><strong>${escapeHTML(n.text)}</strong><span>${escapeHTML(n.workTitle||'')}</span></div><div class="notification-time">${escapeHTML(new Date(n.at||Date.now()).toLocaleDateString())}</div></div>`).join(''):'<div class="empty"><h4>No notifications</h4><p>You are all caught up.</p></div>'}
+function markNotificationsRead(){if(!currentUser)return;notifications=notifications.map(n=>n.to===currentUser.email?{...n,read:true}:n);persistSessionData();renderNotifications();renderNotificationsBadge()}
+function applyDarkMode(){document.documentElement.classList.toggle('dark',darkMode)}
+function toggleDarkMode(){darkMode=!darkMode;persistSessionData();applyDarkMode();showToast(darkMode?'Dark mode enabled.':'Light mode enabled.')}
+function openEditProfile(){if(!currentUser){openAccount();return}document.getElementById('editName').value=currentUser.name||'';document.getElementById('editUsername').value='@'+usernameOf(currentUser);document.getElementById('editBio').value=currentUser.bio||'';document.getElementById('editPhoto').value='';document.getElementById('editProfileModal').classList.add('open')}
+async function saveProfile(e){e.preventDefault();if(!currentUser)return;const email=currentUser.email;const name=document.getElementById('editName').value.trim();const username=document.getElementById('editUsername').value.trim().replace(/^@/,'');const bio=document.getElementById('editBio').value.trim();if(!name||!username){showToast('Name and username are required.');return}const clash=users.find(u=>u.email!==email&&usernameOf(u).toLowerCase()===username.toLowerCase());if(clash){showToast('That username is already in use.');return}let photo=currentUser.photo||'';const file=document.getElementById('editPhoto').files[0];if(file)photo=await fileToDataURL(file);const idx=users.findIndex(u=>u.email===email);if(idx<0)return;users[idx]=normalizeUser({...users[idx],name,username,bio,photo});currentUser=normalizeUser({...users[idx]});works=works.map(w=>w.email===email?{...w,author:name}:w);saveState();closeModal('editProfileModal');renderAll();showToast('Profile updated.')}
+
 function openAccount(){document.getElementById('accountModal').classList.add('open');updateProfileUI()}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 function outsideModal(e,m){if(e.target===m)closeModal(m.id)}
@@ -607,19 +936,18 @@ function switchAuth(mode){
 async function submitAuth(e){
  e.preventDefault();
  const email=document.getElementById('authEmail').value.trim().toLowerCase(),pass=document.getElementById('authPassword').value;
- const users=JSON.parse(localStorage.getItem('shkUsers')||'[]');
  if(authMode==='signup'){
    if(users.some(u=>u.email===email)){showToast('An account with this email already exists.');return}
    const photoInput=document.getElementById('authPhoto');let photo='';
    if(photoInput.files[0])photo=await fileToDataURL(photoInput.files[0]);
-   const user={name:document.getElementById('authName').value.trim()||'Student Author',username:document.getElementById('authUsername').value.trim().replace(/^@/,''),email,password:pass,photo};
-   users.push(user);localStorage.setItem('shkUsers',JSON.stringify(users));currentUser={...user};saveState();closeModal('accountModal');renderAll();showToast('Account created.');return;
+   const user={name:document.getElementById('authName').value.trim()||'Student Author',username:document.getElementById('authUsername').value.trim().replace(/^@/,''),email,password:pass,photo,bio:'Student writer in 12-SHAKESPEARE.',followers:[],following:[]};
+   users.push(user);currentUser=normalizeUser(user);saveState();closeModal('accountModal');renderAll();showToast('Account created.');return;
  }
  const user=users.find(u=>u.email===email&&u.password===pass);
  if(!user){showToast('Email or password is incorrect.');return}
- currentUser={...user};saveState();closeModal('accountModal');renderAll();showToast('Welcome back.');
+ currentUser=normalizeUser(user);saveState();closeModal('accountModal');renderAll();showToast('Welcome back.');
 }
-function googleLogin(){showToast('Google sign-in needs Firebase Authentication configuration. The interface is ready.')}
+function googleLogin(){showToast('Google sign-in needs Firebase Authentication configuration.')}
 function logout(){currentUser=null;saveState();closeModal('accountModal');renderAll();showToast('You are signed out.')}
 function submitFeedback(e){e.preventDefault();e.target.reset();showToast('Feedback submitted.')}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.remove('show'),2300)}
@@ -628,7 +956,7 @@ function fileToDataURL(file){return new Promise((resolve,reject)=>{const r=new F
 function escapeHTML(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function escapeAttr(v){return escapeHTML(v).replace(/`/g,'&#096;')}
 function switchAuthDefault(){switchAuth('login')}
-switchAuthDefault();renderAll();
+switchAuthDefault();applyDarkMode();renderAll();
 </script>
 </body>
 </html>
