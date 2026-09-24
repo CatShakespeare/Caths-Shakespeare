@@ -650,25 +650,37 @@ a{text-decoration:none;color:inherit}
 <div class="toast" id="toast"></div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-  const firebaseConfig = {
-    apiKey: "AIzaSyDlfOgtbipWy83ItjN7rVVp-guAYEVkIy0",
-    authDomain: "shakespeare-e3ab7.firebaseapp.com",
-    projectId: "shakespeare-e3ab7",
-    storageBucket: "shakespeare-e3ab7.firebasestorage.app",
-    messagingSenderId: "2421428582",
-    appId: "1:2421428582:web:6a0ab1f097ff651a82b8a7",
-    measurementId: "G-KT8FNQB04J"
-  };
-  const firebaseApp = initializeApp(firebaseConfig);
-  const firebaseAuth = getAuth(firebaseApp);
-  const firebaseGoogleProvider = new GoogleAuthProvider();
-  window.firebaseApp = firebaseApp;
-  window.firebaseAuth = firebaseAuth;
-  window.firebaseGoogleProvider = firebaseGoogleProvider;
-  window.firebaseSignInWithPopup = signInWithPopup;
-  window.firebaseSignOut = signOut;
+  // Firebase loader: expose a readiness promise so Google sign-in can wait
+  // for the SDK even if the module is still loading when the page opens.
+  window.firebaseReady = (async () => {
+    try {
+      const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js");
+      const { getAuth, GoogleAuthProvider, signInWithPopup, signOut } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
+      const firebaseConfig = {
+        apiKey: "AIzaSyDlfOgtbipWy83ItjN7rVVp-guAYEVkIy0",
+        authDomain: "shakespeare-e3ab7.firebaseapp.com",
+        projectId: "shakespeare-e3ab7",
+        storageBucket: "shakespeare-e3ab7.firebasestorage.app",
+        messagingSenderId: "2421428582",
+        appId: "1:2421428582:web:6a0ab1f097ff651a82b8a7",
+        measurementId: "G-KT8FNQB04J"
+      };
+      const firebaseApp = initializeApp(firebaseConfig);
+      const firebaseAuth = getAuth(firebaseApp);
+      const firebaseGoogleProvider = new GoogleAuthProvider();
+      window.firebaseApp = firebaseApp;
+      window.firebaseAuth = firebaseAuth;
+      window.firebaseGoogleProvider = firebaseGoogleProvider;
+      window.firebaseSignInWithPopup = signInWithPopup;
+      window.firebaseSignOut = signOut;
+      window.firebaseReadyState = {ok:true,projectId:firebaseConfig.projectId};
+      return {firebaseApp,firebaseAuth,firebaseGoogleProvider,signInWithPopup,signOut};
+    } catch(error) {
+      window.firebaseReadyState = {ok:false,error:error?.message||String(error)};
+      console.error("Firebase initialization failed:",error);
+      throw error;
+    }
+  })();
 </script>
 
 <script>
@@ -1115,18 +1127,40 @@ async function submitAuth(e){
  pendingAuthUser=normalizeUser(user); closeModal('accountModal'); openPinGate(user.pinHash?'enter':'setup',pendingAuthUser);
 }
 async function googleLogin(){
-  if(!window.firebaseAuth||!window.firebaseSignInWithPopup||!window.firebaseGoogleProvider){showToast('Google login is ready for Firebase, but Firebase Auth is not connected yet.');return}
   closeModal('accountModal');
   try{
+    if(window.firebaseReady) await window.firebaseReady;
+    if(!window.firebaseAuth||!window.firebaseSignInWithPopup||!window.firebaseGoogleProvider){
+      throw Object.assign(new Error('Firebase Authentication SDK is unavailable.'),{code:'firebase/not-initialized'});
+    }
     const credential=await window.firebaseSignInWithPopup(window.firebaseAuth,window.firebaseGoogleProvider);
     const g=credential.user;
-    const existing=users.find(u=>u.email===String(g.email||'').toLowerCase());
-    const usernameBase=(g.email||'student').split('@')[0].toLowerCase().replace(/[^a-z0-9_]+/g,'').slice(0,18)||'student';
+    const email=String(g.email||'').toLowerCase();
+    if(!email) throw Object.assign(new Error('Google did not return an email address.'),{code:'auth/missing-email'});
+    const existing=users.find(u=>u.email===email);
+    const usernameBase=(email.split('@')[0]||'student').toLowerCase().replace(/[^a-z0-9_]+/g,'').slice(0,18)||'student';
     let username=existing?usernameOf(existing):usernameBase;
-    let n=2;while(users.some(u=>u.email!==(g.email||'').toLowerCase()&&usernameOf(u).toLowerCase()===username.toLowerCase())){username=usernameBase+n;n++;}
-    pendingAuthUser=normalizeUser({...existing,...existing,name:g.displayName||existing?.name||'Student Author',username,email:String(g.email||'').toLowerCase(),photoURL:g.photoURL||existing?.photoURL||existing?.photo||'',photo:g.photoURL||existing?.photo||'',provider:'google',uid:g.uid,bio:existing?.bio||'Student writer in 12-SHAKESPEARE.',followers:existing?.followers||[],following:existing?.following||[]});
+    let n=2;
+    while(users.some(u=>u.email!==email&&usernameOf(u).toLowerCase()===username.toLowerCase())){username=usernameBase+n;n++;}
+    pendingAuthUser=normalizeUser({...existing,name:g.displayName||existing?.name||'Student Author',username,email,photoURL:g.photoURL||existing?.photoURL||existing?.photo||'',photo:g.photoURL||existing?.photo||'',provider:'google',uid:g.uid,bio:existing?.bio||'Student writer in 12-SHAKESPEARE.',followers:existing?.followers||[],following:existing?.following||[]});
     openPinGate(pendingAuthUser.pinHash?'enter':'setup',pendingAuthUser);
-  }catch(err){console.error(err);document.getElementById('accountModal').classList.add('open');showToast(err?.code==='auth/popup-closed-by-user'?'Google sign-in was cancelled.':'Google sign-in failed.');}
+  }catch(err){
+    console.error('Google Sign-In Error:',err);
+    document.getElementById('accountModal').classList.add('open');
+    const code=err?.code||'unknown-error';
+    const friendly={
+      'auth/unauthorized-domain':'This website address is not authorized in Firebase. Confirm 127.0.0.1 and localhost are in Authorized domains.',
+      'auth/popup-blocked':'The browser blocked the Google popup. Allow popups for this site and try again.',
+      'auth/popup-closed-by-user':'The Google sign-in window was closed before finishing.',
+      'auth/cancelled-popup-request':'Another Google sign-in popup is already active.',
+      'auth/operation-not-allowed':'Google sign-in is not enabled in Firebase Authentication.',
+      'auth/invalid-api-key':'The Firebase API key in the HTML is invalid.',
+      'auth/invalid-oauth-client-id':'The Google OAuth client configuration needs to be refreshed in Firebase.',
+      'firebase/not-initialized':'Firebase did not initialize. Check the browser internet connection and Firebase configuration.',
+      'auth/internal-error':'Firebase returned an internal authentication error. Check the error details in the message below.'
+    };
+    showToast(friendly[code]||('Firebase error '+code+(err?.message?': '+err.message:'')));
+  }
 }
 async function hashPin(pin){const data=new TextEncoder().encode('12SHAKESPEARE::PIN::'+pin);const digest=await crypto.subtle.digest('SHA-256',data);return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('')}
 function openPinGate(mode,user){
