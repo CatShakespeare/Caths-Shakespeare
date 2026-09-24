@@ -719,7 +719,7 @@ a{text-decoration:none;color:inherit}
   <div class="modal-box">
     <div class="modal-head"><div><div class="kicker">Profile setup</div><h3>Set Your Identity</h3></div><button class="close" onclick="closeModal('identityModal')">×</button></div>
     <div class="identity-panel" style="margin-top:14px">
-      <p style="margin:0;color:var(--muted);line-height:1.65;font-size:.76rem">Choose the identity that matches your account. Until an identity is verified, your profile stays a Reader and cannot publish literature.</p>
+      <p style="margin:0;color:var(--muted);line-height:1.65;font-size:.76rem">Choose an optional identity badge for your profile. Saving drafts and publishing do not require identity verification.</p>
       <div class="identity-options">
         <button type="button" class="identity-option" data-identity="shakespeare" onclick="selectIdentityOption('shakespeare')"><strong>Shakespeare Student</strong><span>For 12-SHAKESPEARE student authors.</span></button>
         <button type="button" class="identity-option" data-identity="teacher" onclick="selectIdentityOption('teacher')"><strong>Ma'am Karen</strong><span>Teacher identity.</span></button>
@@ -843,7 +843,7 @@ const IDENTITY_OPTIONS={
 };
 function normalizeIdentity(value){return IDENTITY_OPTIONS[value]?value:'reader'}
 function identityLabelOf(user){return IDENTITY_OPTIONS[normalizeIdentity(user?.identity)]?.label||'Reader'}
-function canPublish(user){return !!user&&normalizeIdentity(user.identity)!=='reader'}
+function canPublish(user){return !!user}
 function normalizeUser(user){
   if(!user)return null;
   const identity=normalizeIdentity(user.identity);
@@ -962,15 +962,20 @@ let pendingAuthUser = null;
 let pinMode = 'enter';
 let pinFirst = '';
 let pinBusy = false;
+let editingWorkId = null;
+let editingDraftId = null;
+let pendingDeleteWorkId = null;
 
 if(currentUser && LEGACY_DEMO_EMAILS.has(String(currentUser.email||'').toLowerCase())) currentUser=null;
 if(currentUser){
-  const idx=users.findIndex(u=>u.email===currentUser.email);
+  const idx=users.findIndex(u=>canonicalEmail(u.email)===canonicalEmail(currentUser.email));
   if(idx>=0) currentUser=normalizeUser({...users[idx],...currentUser});
   else users.push(normalizeUser(currentUser));
 }
+// Keep the signed-in content identity available after a page refresh so public
+// actions (drafts, publishing, reactions, comments) do not silently stop
+// working. The PIN still protects the Account panel itself.
 sessionUnlocked=!!currentUser&&sessionStorage.getItem('shkSessionUnlocked')==='1';
-if(currentUser&&!sessionUnlocked){currentUser=null;profileEmail=null;}
 migratePinRecords();
 
 function sanitizePublicIdentities(){
@@ -1006,6 +1011,15 @@ const titleMap = {
 function getName(){return currentUser?publicNameOf(currentUser):'Guest Reader'}
 function userKey(){return (currentUser?.email || '').toLowerCase()}
 function usernameOf(user){return (user?.username||'').replace(/^@/,'').trim() || 'reader'}
+function contentUser(){
+  if(currentUser)return currentUser;
+  const stored=normalizeUser(readJSON('shkUser',null));
+  if(!stored?.email)return null;
+  const idx=users.findIndex(u=>canonicalEmail(u.email)===canonicalEmail(stored.email));
+  if(idx>=0)currentUser=normalizeUser({...users[idx],...stored});
+  else {currentUser=stored;users.push(currentUser);}
+  return currentUser;
+}
 function initialsOf(name){return String(name||'Student').trim().slice(0,2).toUpperCase()}
 function findUser(email){return users.find(u=>u.email===email)||null}
 function getUserWorks(email){return works.filter(w=>w.email===email)}
@@ -1382,6 +1396,7 @@ function resetCreateForm(){
  editingDraftId=null;
 }
 function saveDraft(){
+ contentUser();
  if(!currentUser){openAccount();return}
  const payload=collectDraftPayload();
  if(editingDraftId){
@@ -1398,7 +1413,7 @@ function saveDraft(){
  saveState();editingDraftId=null;editingWorkId=null;renderMyWorks();showToast('Draft saved.');showPage('myworks');
 }
 document.getElementById('createForm').addEventListener('submit',function(e){
- e.preventDefault();if(!currentUser){openAccount();return}
+ e.preventDefault();contentUser();if(!currentUser){openAccount();return}
  if(!canPublish(currentUser)){openIdentitySetup();return}
  const now=Date.now();
  const payload={title:document.getElementById('postTitle').value.trim(),author:publicNameOf(currentUser),email:currentUser.email,genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
@@ -1489,6 +1504,7 @@ function toggleReactionPicker(e,id){
 function chooseReaction(e,id,type){
  if(e)e.stopPropagation();
  if(!REACTION_TYPES[type])return;
+ contentUser();
  if(!currentUser){showToast('Sign in to react to a work.');openAccount();return;}
  let w=works.find(x=>x.id===id);if(!w)return;w=normalizeWork(w);
  const email=canonicalEmail(currentUser.email);const before=userReactionOf(w);const r=normalizeReactions(w.reactions);
@@ -1515,8 +1531,9 @@ function renderComments(){
  const root=document.getElementById('commentArea');if(!root||!readerWork)return;const comments=readerWork.comments||[];const list=comments.length?comments.map(c=>`<div class="comment"><div class="comment-head"><strong>${escapeHTML(c.name||'Student')}</strong><span>${escapeHTML(new Date(c.at||Date.now()).toLocaleString())}</span></div><p>${escapeHTML(c.text)}</p></div>`).join(''):'<div class="empty" style="padding:20px 0"><h4>No comments yet</h4><p>Start the conversation around this work.</p></div>';
  root.innerHTML=list+`<form class="comment-form" onsubmit="submitComment(event)"><input id="commentInput" ${currentUser?'':'disabled'} placeholder="${currentUser?'Write a thoughtful comment...':'Sign in to comment'}"><button class="primary" ${currentUser?'':'disabled'}>Comment</button></form>`;
 }
-function submitComment(e){e.preventDefault();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now()};works[idx].comments=[...(works[idx].comments||[]),comment];readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title);saveState();renderComments();renderReaderSocial();showToast('Comment posted.')}
+function submitComment(e){e.preventDefault();contentUser();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now()};works[idx].comments=[...(works[idx].comments||[]),comment];readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title);saveState();renderComments();renderReaderSocial();showToast('Comment posted.')}
 function openCommentModal(id){
+ contentUser();
  const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
  if(!canReadWork(w)){showToast('This work is not currently visible to your account.');return;}
  commentModalWork=w;
@@ -1543,6 +1560,7 @@ function renderCommentModal(){
 }
 function submitPopupComment(e){
  e.preventDefault();
+ contentUser();
  if(!currentUser){showToast('Sign in to comment.');openAccount();return;}
  if(!commentModalWork)return;
  const input=document.getElementById('commentPopupInput');const text=String(input?.value||'').trim();if(!text)return;
