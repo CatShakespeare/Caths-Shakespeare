@@ -134,8 +134,10 @@ a{text-decoration:none;color:inherit}
 .reader-social-bottom .social-btn:first-child{min-width:64px}
 
 .reaction-wrap{position:relative;display:inline-flex;align-items:center}
-.reaction-picker{position:absolute;left:0;bottom:calc(100% + 8px);z-index:30;display:none;align-items:center;gap:4px;padding:6px;border:1px solid var(--line);border-radius:13px;background:#fff;box-shadow:0 16px 35px rgba(36,27,23,.12);white-space:nowrap}
+.reaction-picker{position:absolute;left:auto;right:0;bottom:calc(100% + 8px);z-index:30;display:none;align-items:center;gap:4px;padding:6px;border:1px solid var(--line);border-radius:13px;background:#fff;box-shadow:0 16px 35px rgba(36,27,23,.12);white-space:nowrap}
 .reaction-picker.open{display:flex;animation:modal .18s var(--ease)}
+.reaction-picker{min-width:max-content;max-width:min(520px,calc(100vw - 24px));overflow-x:auto;overflow-y:hidden}
+.social-actions,.work-management,.reader-social,.reader-social-bottom{position:relative;z-index:2}
 .reaction-choice{display:flex;align-items:center;gap:4px;border:0;background:#fff;color:var(--wine);border-radius:9px;padding:7px 8px;font-size:.68rem;font-weight:800;transition:.16s var(--ease)}
 .reaction-choice:hover{background:#F7F2ED;transform:translateY(-1px)}
 .reaction-choice.on{background:#EEE6E0;box-shadow:inset 0 0 0 1px #DDD0C4}
@@ -197,9 +199,11 @@ a{text-decoration:none;color:inherit}
 .section-head p{max-width:510px;color:var(--muted);line-height:1.7;margin:0}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:17px}
 .card{
-  background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 10px 26px rgba(36,27,23,.045);
+  background:#fff;border:1px solid var(--line);border-radius:18px;overflow:visible;box-shadow:0 10px 26px rgba(36,27,23,.045);
   transition:.25s var(--ease)
 }
+.card-art{border-radius:17px 17px 0 0;overflow:hidden}
+.card-body{border-radius:0 0 17px 17px}
 .card:hover{transform:translateY(-5px);box-shadow:var(--shadow)}
 .card-art{height:205px;position:relative;background:linear-gradient(145deg,#D7C19C,#75474B);display:flex;align-items:flex-end;padding:18px;color:#fff}
 .card-art.two{background:linear-gradient(145deg,#2E191B,#7C5A4B)}
@@ -887,7 +891,7 @@ function reactionButtonHTML(w){
   const total=totalReactionCount(w);
   const r=normalizeReactions(w.reactions);
   const choices=Object.entries(REACTION_TYPES).map(([key,v])=>`<button class="reaction-choice ${selected===key?'on':''}" type="button" onclick="chooseReaction(event,'${escapeAttr(w.id)}','${key}')" title="${v.label}"><span class="reaction-icon">${v.icon}</span><span>${v.label}</span><span class="reaction-count">${r[key].length}</span></button>`).join('');
-  return `<span class="reaction-wrap"><button class="social-btn ${selected?'on':''}" type="button" onclick="toggleReactionPicker(event,'${escapeAttr(w.id)}')" aria-label="Choose a reaction"><span class="reaction-icon">${icon}</span><span class="count">${total}</span></button><span class="reaction-picker" data-reaction-picker="${escapeAttr(w.id)}">${choices}</span></span>`;
+  return `<span class="reaction-wrap"><button class="social-btn ${selected?'on':''}" type="button" onclick="toggleReactionPicker(event,'${escapeAttr(w.id)}')" aria-label="Choose a reaction: Heart, Like, Dislike, Wow, or Sad" title="Choose a reaction"><span class="reaction-icon">${icon}</span><span class="count">${total}</span></button><span class="reaction-picker" data-reaction-picker="${escapeAttr(w.id)}">${choices}</span></span>`;
 }
 function persistSessionData(){
   localStorage.setItem('shkNotifications',JSON.stringify(notifications));
@@ -1045,6 +1049,7 @@ function showPage(name){
 }
 
 function renderAll(){
+ document.querySelectorAll('.reaction-picker.open').forEach(closeReactionPicker);
  updateProfileUI(); renderHome(); renderFeed(); renderLibrary(); renderSaved(); renderMyWorks(); renderAuthors(); renderProfile(); renderFollowing(); renderHistory(); toggleCreateGate(); renderNotificationsBadge(); applyDarkMode(); const feedbackIdentity=document.getElementById('feedbackIdentity'); if(feedbackIdentity)feedbackIdentity.textContent=identityLabelOf(currentUser).toUpperCase();
 }
 function updateProfileUI(){
@@ -1497,9 +1502,46 @@ function renderReaderSocial(){
 }
 function toggleReactionPicker(e,id){
  if(e)e.stopPropagation();
- document.querySelectorAll('.reaction-picker.open').forEach(el=>{if(el.dataset.reactionPicker!==id)el.classList.remove('open')});
+ document.querySelectorAll('.reaction-picker.open').forEach(el=>{
+   if(el.dataset.reactionPicker!==id) closeReactionPicker(el);
+ });
  const picker=document.querySelector(`.reaction-picker[data-reaction-picker="${CSS.escape(id)}"]`);
- if(picker)picker.classList.toggle('open');
+ if(!picker)return;
+ if(picker.classList.contains('open')){ closeReactionPicker(picker); return; }
+ const button=e?.currentTarget;
+ if(!button)return;
+ // Portal the menu to <body> while open so it can never be clipped by
+ // cards, panels, transforms, sticky containers, or overflow rules.
+ picker._reactionReturnParent=picker.parentNode;
+ picker._reactionReturnNext=picker.nextSibling;
+ document.body.appendChild(picker);
+ picker.classList.add('open');
+ picker.style.position='fixed';
+ picker.style.left='0px';
+ picker.style.right='auto';
+ picker.style.top='0px';
+ picker.style.bottom='auto';
+ const rect=button.getBoundingClientRect();
+ const pickerWidth=Math.min(Math.max(picker.scrollWidth||0,220),window.innerWidth-24);
+ const pickerHeight=picker.offsetHeight||48;
+ const left=Math.max(12,Math.min(rect.left,window.innerWidth-pickerWidth-12));
+ const above=rect.top>=pickerHeight+16;
+ const top=above ? rect.top-pickerHeight-8 : Math.min(window.innerHeight-pickerHeight-12,rect.bottom+8);
+ picker.style.left=`${left}px`;
+ picker.style.top=`${Math.max(12,top)}px`;
+ picker.style.maxWidth=`${Math.max(120,window.innerWidth-24)}px`;
+}
+function closeReactionPicker(picker){
+ if(!picker)return;
+ picker.classList.remove('open');
+ const parent=picker._reactionReturnParent;
+ const next=picker._reactionReturnNext;
+ if(parent && parent.isConnected){
+   if(next && next.parentNode===parent) parent.insertBefore(picker,next); else parent.appendChild(picker);
+ }
+ delete picker._reactionReturnParent;
+ delete picker._reactionReturnNext;
+ picker.style.position='';picker.style.left='';picker.style.right='';picker.style.top='';picker.style.bottom='';picker.style.maxWidth='';
 }
 function chooseReaction(e,id,type){
  if(e)e.stopPropagation();
@@ -1518,7 +1560,7 @@ function chooseReaction(e,id,type){
  renderAll();
  renderReaderSocial();
  renderComments();
- document.querySelectorAll('.reaction-picker.open').forEach(el=>el.classList.remove('open'));
+ document.querySelectorAll('.reaction-picker.open').forEach(closeReactionPicker);
  const label=before===type?'Reaction removed':REACTION_TYPES[type].label+' reaction added';
  showToast(label+'.');
 }
@@ -1576,7 +1618,31 @@ function submitPopupComment(e){
  showToast('Comment posted.');
 }
 
-function shareWork(id){const url=location.href.split('#')[0]+'#work='+encodeURIComponent(id);if(navigator.clipboard)navigator.clipboard.writeText(url).catch(()=>{});history.replaceState(null,'','#work='+encodeURIComponent(id));showToast('Share link copied.')}
+async function copyShareLink(text){
+ try{
+   if(navigator.clipboard && typeof navigator.clipboard.writeText==='function'){
+     await navigator.clipboard.writeText(text);
+     return true;
+   }
+ }catch(_err){}
+ try{
+   const ta=document.createElement('textarea');
+   ta.value=text;ta.setAttribute('readonly','');
+   ta.style.position='fixed';ta.style.opacity='0';ta.style.pointerEvents='none';
+   document.body.appendChild(ta);ta.focus();ta.select();ta.setSelectionRange(0,ta.value.length);
+   const ok=document.execCommand('copy');
+   ta.remove();
+   return ok;
+ }catch(_err){return false}
+}
+async function shareWork(id){
+ const url=new URL(location.href);
+ url.hash='work='+encodeURIComponent(id);
+ const shareUrl=url.toString();
+ try{history.replaceState(null,'',url.hash)}catch(_err){}
+ const copied=await copyShareLink(shareUrl);
+ showToast(copied?'Share link copied to clipboard.':'Could not copy automatically. Please copy the link from the address bar.');
+}
 function saveCurrentReader(){if(readerWork)toggleSaved(readerWork.id)}
 function searchTag(tag){openGlobalSearch();setTimeout(()=>{const input=document.getElementById('globalSearchInput');input.value=tag;renderGlobalSearch()},60)}
 
@@ -2079,7 +2145,7 @@ function initShkNavigationSounds(){
 }
 
 function switchAuthDefault(){switchAuth('login')}
-document.addEventListener('click',(e)=>{if(!e.target.closest('.reaction-wrap'))document.querySelectorAll('.reaction-picker.open').forEach(el=>el.classList.remove('open'));});
+document.addEventListener('click',(e)=>{if(!e.target.closest('.reaction-wrap'))document.querySelectorAll('.reaction-picker.open').forEach(closeReactionPicker);});
 switchAuthDefault();applyDarkMode();renderAll();initShkNavigationSounds();
 </script>
 </body>
