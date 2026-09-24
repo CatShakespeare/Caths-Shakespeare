@@ -1241,10 +1241,10 @@ async function googleLogin(){
       return;
     }
     if(!cloudPin.pinHash){
-      // This is an older/incomplete account that has no PIN record yet.
-      // Do not silently treat it as a brand-new account.
-      document.getElementById('accountModal').classList.add('open');
-      showToast('This existing account has no saved PIN yet. Create its PIN once, then future logins will use PIN only.');
+      // Existing Firebase account with no PIN yet: require PIN setup now.
+      // This is still the same account; only its PIN is missing.
+      pendingAuthUser.pinHash='';
+      openPinGate('setup',pendingAuthUser);
       return;
     }
 
@@ -1428,15 +1428,15 @@ async function processPinEntry(){
   // Existing account: only this branch verifies the saved PIN.
   const expected=storedPinHash(pendingAuthUser);
   if(!expected && pendingAuthUser?.uid){
-    // A Google account without a saved PIN should not be silently reset to a
-    // different flow during normal login. Tell the user to create it only when
-    // the account is truly new, as determined during Google sign-in.
-    modal.classList.add('error');
-    document.getElementById('pinHelp').textContent='No saved PIN was found for this Google account. Please sign in again to set up the PIN.';
+    // Existing Google account with no PIN: require setup instead of showing
+    // an error. After confirmation the PIN is saved to Firestore.
+    pinMode='setup';
+    pinFirst='';
+    pinBusy=false;
+    updatePinScreen();
     document.getElementById('pinInput').value='';
     updatePinSlots('');
-    pinBusy=false;
-    setTimeout(()=>{modal.classList.remove('error');focusPinInput()},450);
+    setTimeout(focusPinInput,90);
     return;
   }
 
