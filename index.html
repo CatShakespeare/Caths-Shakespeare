@@ -232,6 +232,7 @@ a{text-decoration:none;color:inherit}
 .profile-stat strong{display:block;color:var(--wine);font:700 1.65rem "Cormorant Garamond",serif}
 .profile-stat span{display:block;color:#958B84;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase}
 .profile-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.profile-privacy-note{grid-column:1/-1;margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:#FBF8F5;color:#8A7F78;font-size:.68rem;line-height:1.55}
 .identity-badge{display:inline-flex;align-items:center;gap:6px;width:max-content;max-width:100%;padding:6px 10px;border-radius:999px;background:#F2ECE4;color:var(--wine);font-size:.62rem;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
 .identity-badge.reader{background:#F4F1EE;color:#756B65}
 .identity-panel{display:grid;gap:13px}
@@ -617,7 +618,7 @@ a{text-decoration:none;color:inherit}
       <button class="google" onclick="googleLogin()"><svg width="17" viewBox="0 0 24 24"><path d="M21.8 12.2c0-.7-.1-1.3-.2-1.9H12v3.6h5.5a4.7 4.7 0 0 1-2 3.1v2.6h3.2c1.9-1.8 3.1-4.3 3.1-7.4Z" fill="#4285F4"/><path d="M12 22c2.7 0 4.9-.9 6.6-2.4l-3.2-2.6c-.9.6-2 1-3.4 1-2.6 0-4.7-1.8-5.5-4.2H3.2v2.7A10 10 0 0 0 12 22Z" fill="#34A853"/><path d="M6.5 13.8A6.1 6.1 0 0 1 6.2 12c0-.6.1-1.2.3-1.8V7.5H3.2A10 10 0 0 0 2 12c0 1.6.4 3.1 1.2 4.5l3.3-2.7Z" fill="#FBBC05"/><path d="M12 6c1.5 0 2.8.5 3.8 1.4l2.8-2.8C16.9 3 14.7 2 12 2A10 10 0 0 0 3.2 7.5l3.3 2.7C7.3 7.8 9.4 6 12 6Z" fill="#EA4335"/></svg>Continue with Google</button>
       <div class="divider"><span>or</span></div>
       <form id="authForm" onsubmit="submitAuth(event)">
-        <div id="signupOnly" class="field hidden"><label>Full Name</label><input id="authName" placeholder="Your name"></div>
+        <div id="signupOnly" class="field hidden"><label>Account Name <span style="font-weight:600;color:#A0968E;text-transform:none;letter-spacing:0">(private)</span></label><input id="authName" placeholder="Your name"></div>
         <div class="field" style="margin-top:10px"><label>Email</label><input id="authEmail" type="email" required placeholder="you@example.com"></div>
         <div class="field" style="margin-top:10px"><label>Password</label><input id="authPassword" type="password" required placeholder="Your password"></div>
         <div id="signupExtras" class="hidden">
@@ -625,11 +626,11 @@ a{text-decoration:none;color:inherit}
         </div>
         <button class="primary" style="width:100%;margin-top:15px" id="authSubmit">Log In</button>
       </form>
-      <p style="font-size:.67rem;color:#9A9089;line-height:1.5;margin-top:13px">Google sign-in uses the account photo supplied by Google. No profile-photo upload or storage is required.</p>
+      <p style="font-size:.67rem;color:#9A9089;line-height:1.5;margin-top:13px">Your email and private account name are used for account access only. Your public profile uses your pen name, username, and bio.</p>
     </div>
     <div id="loggedInArea" class="hidden">
       <div class="author" style="margin:10px 0 20px"><div class="avatar" id="modalAvatar" style="width:54px;height:54px"><span>12</span></div><div><strong id="modalName">Reader</strong><span id="modalHandle">@reader</span></div></div>
-      <div class="profile-menu"><button onclick="openOwnProfile();closeModal('accountModal')">View Profile</button><button onclick="logout()">Log Out</button></div>
+      <div class="profile-menu"><button onclick="openOwnProfile();closeModal('accountModal')">View Profile</button><button onclick="closeModal('accountModal');openEditProfile()">Edit Profile</button><button onclick="logout()">Log Out</button></div>
     </div>
   </div>
 </div>
@@ -638,9 +639,10 @@ a{text-decoration:none;color:inherit}
   <div class="modal-box">
     <div class="modal-head"><div><div class="kicker">Your identity</div><h3>Edit Profile</h3></div><button class="close" onclick="closeModal('editProfileModal')">×</button></div>
     <form class="form-grid edit-grid" id="editProfileForm" onsubmit="saveProfile(event)">
-      <div class="field full"><label>Full Name</label><input id="editName" required></div>
-      <div class="field"><label>Username</label><input id="editUsername" required placeholder="@username"></div>
-      <div class="field full"><label>Bio</label><textarea id="editBio" placeholder="Tell readers a little about yourself..."></textarea></div>
+      <div class="field full"><label>Pen Name / Surname</label><input id="editPenName" required maxlength="60" placeholder="e.g. Elio M. Reyes"></div>
+      <div class="field"><label>Username</label><input id="editUsername" required maxlength="30" placeholder="@username"></div>
+      <div class="field full"><label>Bio</label><textarea id="editBio" maxlength="280" placeholder="Tell readers a little about yourself..."></textarea></div>
+      <p class="profile-privacy-note">Public author pages show only your pen name, username, bio, and profile photo. Your login email and private account name are not used as your public author identity.</p>
       <div class="actions full"><button class="secondary" type="button" onclick="closeModal('editProfileModal')">Cancel</button><button class="primary" type="submit">Save Profile</button></div>
     </form>
   </div>
@@ -753,7 +755,12 @@ function canPublish(user){return !!user&&normalizeIdentity(user.identity)!=='rea
 function normalizeUser(user){
   if(!user)return null;
   const identity=normalizeIdentity(user.identity);
-  return {...user,followers:Array.isArray(user.followers)?user.followers:[],following:Array.isArray(user.following)?user.following:[],username:(user.username||'').replace(/^@/,''),photoURL:user.photoURL||user.photo||'',photo:user.photo||user.photoURL||'',identity,identityLabel:IDENTITY_OPTIONS[identity].label};
+  const username=(user.username||'').replace(/^@/,'').trim();
+  const penName=String(user.penName||'Anonymous Author').trim()||'Anonymous Author';
+  return {...user,followers:Array.isArray(user.followers)?user.followers:[],following:Array.isArray(user.following)?user.following:[],username,penName,photoURL:user.photoURL||user.photo||'',photo:user.photo||user.photoURL||'',identity,identityLabel:IDENTITY_OPTIONS[identity].label};
+}
+function publicNameOf(user){
+  return String(user?.penName||'Anonymous Author').trim()||'Anonymous Author';
 }
 function normalizeWork(work){
   if(!work)return null;
@@ -842,6 +849,18 @@ sessionUnlocked=!!currentUser&&sessionStorage.getItem('shkSessionUnlocked')==='1
 if(currentUser&&!sessionUnlocked){currentUser=null;profileEmail=null;}
 migratePinRecords();
 
+function sanitizePublicIdentities(){
+  works=works.map(w=>{
+    const owner=findUser(w.email);
+    const comments=(w.comments||[]).map(c=>{
+      const commenter=findUser(c.email);
+      return {...c,name:commenter?publicNameOf(commenter):'Anonymous Reader'};
+    });
+    return normalizeWork({...w,author:owner?publicNameOf(owner):'Anonymous Author',comments});
+  });
+}
+sanitizePublicIdentities();
+
 const titleMap = {
  home:['Home','The Literary Archive of a Class in Motion'],
  feed:['Literature Feed','Discover newly published student writing'],
@@ -860,9 +879,9 @@ const titleMap = {
  reader:['Reading','A focused literary reading experience']
 };
 
-function getName(){return currentUser?.name || 'Guest Reader'}
+function getName(){return currentUser?publicNameOf(currentUser):'Guest Reader'}
 function userKey(){return (currentUser?.email || '').toLowerCase()}
-function usernameOf(user){return (user?.username||'').replace(/^@/,'') || (user?.email||'student').split('@')[0].toLowerCase()}
+function usernameOf(user){return (user?.username||'').replace(/^@/,'').trim() || 'reader'}
 function initialsOf(name){return String(name||'Student').trim().slice(0,2).toUpperCase()}
 function findUser(email){return users.find(u=>u.email===email)||null}
 function getUserWorks(email){return works.filter(w=>w.email===email)}
@@ -1074,7 +1093,7 @@ function renderAuthors(){
    const count=getUserWorks(user.email).length;
    const following=!!currentUser&&currentUser.following.includes(user.email);
    const self=currentUser&&currentUser.email===user.email;
-   return `<article class="author-card"><button class="result-link" onclick="openProfile('${escapeAttr(user.email)}')"><div class="author-big">${user.photo?`<img src="${escapeAttr(user.photo)}" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:escapeHTML(initialsOf(user.name))}</div><h4>${escapeHTML(user.name)}</h4><p>@${escapeHTML(usernameOf(user))} · ${escapeHTML(identityLabelOf(user))} · ${count} published work${count===1?'':'s'}</p></button><button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${self?'You':(following?'Following':'Follow')}</button></article>`;
+   return `<article class="author-card"><button class="result-link" onclick="openProfile('${escapeAttr(user.email)}')"><div class="author-big">${user.photo?`<img src="${escapeAttr(user.photo)}" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:escapeHTML(initialsOf(publicNameOf(user)))}</div><h4>${escapeHTML(publicNameOf(user))}</h4><p>@${escapeHTML(usernameOf(user))} · ${escapeHTML(identityLabelOf(user))} · ${count} published work${count===1?'':'s'}</p></button><button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${self?'You':(following?'Following':'Follow')}</button></article>`;
  }).join('');
 }
 function openIdentitySetup(){
@@ -1144,8 +1163,9 @@ function renderProfile(){
  const identityClass=normalizeIdentity(user.identity)==='reader'?'reader':'';
  const followLabel=self?'This is you':(following?'Following':'Follow');
  const identityAction=self&&normalizeIdentity(user.identity)==='reader'?'<button class="primary" onclick="openIdentitySetup()">Set Up Identity</button>':'';
+ const editAction=self?'<button class="secondary" onclick="openEditProfile()">Edit Profile</button>':'';
  const publishNote=normalizeIdentity(user.identity)==='reader'?'This account is a Reader. Verify an identity to publish literature.':'This profile can publish literature as a verified 12-SHAKESPEARE identity.';
- root.innerHTML=`<div class="profile-hero"><div class="profile-big-avatar">${user.photoURL||user.photo?`<img src="${escapeAttr(user.photoURL||user.photo)}" alt="Profile picture">`:escapeHTML(initialsOf(user.name))}</div><div class="profile-copy"><div class="kicker">Profile identity</div><div class="identity-badge ${identityClass}">${escapeHTML(identity)}</div><h2>${escapeHTML(user.name)}</h2><p class="profile-handle">@${escapeHTML(usernameOf(user))}</p><p>${escapeHTML(user.bio||'A reader in 12-SHAKESPEARE.')}</p><div class="profile-stats"><div class="profile-stat"><strong>${userWorks.length}</strong><span>Works</span></div><div class="profile-stat"><strong>${user.followers.length}</strong><span>Followers</span></div><div class="profile-stat"><strong>${user.following.length}</strong><span>Following</span></div></div></div><div class="profile-actions">${identityAction}<button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${followLabel}</button><button class="secondary" onclick="openGlobalSearch()">Search</button></div></div><div class="section"><div class="profile-work-head"><div><div class="kicker">Published shelf</div><h3 style="font:600 3rem 'Cormorant Garamond',serif;color:var(--wine);margin:7px 0">${escapeHTML(user.name)}'s Works</h3></div><p style="color:var(--muted);margin:0">${escapeHTML(publishNote)}</p></div><div class="grid3" style="margin-top:20px">${userWorks.length?userWorks.map(cardHTML).join(''):'<div class="empty"><h4>No published works yet</h4><p>This student has not published a work.</p></div>'}</div></div>`;
+ root.innerHTML=`<div class="profile-hero"><div class="profile-big-avatar">${user.photoURL||user.photo?`<img src="${escapeAttr(user.photoURL||user.photo)}" alt="Profile picture">`:escapeHTML(initialsOf(publicNameOf(user)))}</div><div class="profile-copy"><div class="kicker">Profile identity</div><div class="identity-badge ${identityClass}">${escapeHTML(identity)}</div><h2>${escapeHTML(publicNameOf(user))}</h2><p class="profile-handle">@${escapeHTML(usernameOf(user))}</p><p>${escapeHTML(user.bio||'A reader in 12-SHAKESPEARE.')}</p><div class="profile-stats"><div class="profile-stat"><strong>${userWorks.length}</strong><span>Works</span></div><div class="profile-stat"><strong>${user.followers.length}</strong><span>Followers</span></div><div class="profile-stat"><strong>${user.following.length}</strong><span>Following</span></div></div></div><div class="profile-actions">${identityAction}${editAction}<button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${followLabel}</button><button class="secondary" onclick="openGlobalSearch()">Search</button></div></div><div class="section"><div class="profile-work-head"><div><div class="kicker">Published shelf</div><h3 style="font:600 3rem 'Cormorant Garamond',serif;color:var(--wine);margin:7px 0">${escapeHTML(publicNameOf(user))}'s Works</h3></div><p style="color:var(--muted);margin:0">${escapeHTML(publishNote)}</p></div><div class="grid3" style="margin-top:20px">${userWorks.length?userWorks.map(cardHTML).join(''):'<div class="empty"><h4>No published works yet</h4><p>This student has not published a work.</p></div>'}</div></div>`;
 }
 function openProfile(email){
  const user=findUser(email); if(!user){showToast('Student profile not found.');return;}
@@ -1173,7 +1193,7 @@ function toggleFollow(email,btn){
    currentUser.following=[...new Set([...currentUser.following,email])];
    users[meIndex].following=currentUser.following.slice();
    users[targetIndex].followers=[...new Set([...users[targetIndex].followers,currentUser.email])];
-   addNotification(users[targetIndex].email,`${currentUser.name} followed you`,'');
+   addNotification(users[targetIndex].email,`${publicNameOf(currentUser)} followed you`,'');
    if(btn){btn.classList.add('on');btn.textContent='Following';}
    showToast('Following @'+usernameOf(users[targetIndex])+'.');
  }
@@ -1218,7 +1238,7 @@ document.getElementById('createForm').addEventListener('submit',function(e){
  e.preventDefault();if(!currentUser){openAccount();return}
  if(!canPublish(currentUser)){openIdentitySetup();return}
  const now=Date.now();
- const payload={title:document.getElementById('postTitle').value.trim(),author:currentUser.name,email:currentUser.email,genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
+ const payload={title:document.getElementById('postTitle').value.trim(),author:publicNameOf(currentUser),email:currentUser.email,genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
  if(editingWorkId){const idx=works.findIndex(w=>w.id===editingWorkId&&w.email===currentUser.email);if(idx<0){showToast('Work not found.');return}works[idx]=normalizeWork({...works[idx],...payload,updatedAt:now});showToast('Your work was updated.');editingWorkId=null;}else{works.unshift(normalizeWork({id:'work-'+now,...payload,likes:[],comments:[],views:0,createdAt:now}));showToast('Your literature has been published.');}
  saveState();this.reset();document.getElementById('postPrivacy').value='public';renderAll();showPage('feed');
 });
@@ -1229,7 +1249,7 @@ function openReader(id){
  const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
  if(!canReadWork(w)){showToast('This work is not currently visible to your account.');return;}
  readerWork=w;w.views=(w.views||0)+1;rememberRead(w);saveState();
- const workAuthor=findUser(w.email)||{};document.getElementById('readerGenre').textContent=w.genre.toUpperCase();document.getElementById('readerIdentity').textContent=identityLabelOf(workAuthor).toUpperCase();document.getElementById('readerIdentity').classList.toggle('reader',normalizeIdentity(workAuthor.identity)==='reader');document.getElementById('readerTitle').textContent=w.title;document.getElementById('readerBy').textContent='by '+w.author+' · '+new Date(w.createdAt||Date.now()).getFullYear();
+ const workAuthor=findUser(w.email)||{};document.getElementById('readerGenre').textContent=w.genre.toUpperCase();document.getElementById('readerIdentity').textContent=identityLabelOf(workAuthor).toUpperCase();document.getElementById('readerIdentity').classList.toggle('reader',normalizeIdentity(workAuthor.identity)==='reader');document.getElementById('readerTitle').textContent=w.title;document.getElementById('readerBy').textContent='by '+(w.author||publicNameOf(workAuthor))+' · '+new Date(w.createdAt||Date.now()).getFullYear();
  document.getElementById('readerSubmeta').textContent=`${w.views||0} views · ${w.likes.length} likes · ${w.comments.length} comments · ${w.privacy==='followers'?'Followers only':w.privacy==='private'?'Private':'Public'}`;
  document.getElementById('readerBody').innerHTML=w.content.split(/\\n+/).map(p=>'<p>'+escapeHTML(p)+'</p>').join('');
  renderReaderSocial();renderComments();showPage('reader');
@@ -1238,14 +1258,14 @@ function renderReaderSocial(){
  const root=document.getElementById('readerSocial');if(!root||!readerWork)return;const liked=currentUser&&readerWork.likes.includes(currentUser.email);const isSaved=saved.includes(readerWork.id);root.innerHTML=`<button class="social-btn ${liked?'on':''}" onclick="toggleLike('${escapeAttr(readerWork.id)}')">♥ <span class="count">${readerWork.likes.length}</span></button><button class="social-btn ${isSaved?'on':''}" onclick="toggleSaved('${escapeAttr(readerWork.id)}')">${isSaved?'Saved':'Save'}</button><button class="social-btn" onclick="shareWork('${escapeAttr(readerWork.id)}')">Share</button><button class="social-btn" onclick="showToast('Use the same report flow as the school moderation system.')">Report</button>`;
 }
 function toggleLike(id,btn){
- if(!currentUser){showToast('Sign in to like a work.');openAccount();return}let w=works.find(x=>x.id===id);if(!w)return;w=normalizeWork(w);const on=w.likes.includes(currentUser.email);if(on)w.likes=w.likes.filter(x=>x!==currentUser.email);else{w.likes=[...new Set([...w.likes,currentUser.email])];if(w.email!==currentUser.email)addNotification(w.email,`${currentUser.name} liked your work`,w.title);}
+ if(!currentUser){showToast('Sign in to like a work.');openAccount();return}let w=works.find(x=>x.id===id);if(!w)return;w=normalizeWork(w);const on=w.likes.includes(currentUser.email);if(on)w.likes=w.likes.filter(x=>x!==currentUser.email);else{w.likes=[...new Set([...w.likes,currentUser.email])];if(w.email!==currentUser.email)addNotification(w.email,`${publicNameOf(currentUser)} liked your work`,w.title);}
  const idx=works.findIndex(x=>x.id===id);works[idx]=w;saveState();if(btn){btn.classList.toggle('on',!on);btn.querySelector('.count')?.replaceChildren(document.createTextNode(String(w.likes.length)));}renderReaderSocial();renderHome();renderFeed();renderLibrary();renderFollowing();
 }
 function renderComments(){
  const root=document.getElementById('commentArea');if(!root||!readerWork)return;const comments=readerWork.comments||[];const list=comments.length?comments.map(c=>`<div class="comment"><div class="comment-head"><strong>${escapeHTML(c.name||'Student')}</strong><span>${escapeHTML(new Date(c.at||Date.now()).toLocaleString())}</span></div><p>${escapeHTML(c.text)}</p></div>`).join(''):'<div class="empty" style="padding:20px 0"><h4>No comments yet</h4><p>Start the conversation around this work.</p></div>';
  root.innerHTML=list+`<form class="comment-form" onsubmit="submitComment(event)"><input id="commentInput" ${currentUser?'':'disabled'} placeholder="${currentUser?'Write a thoughtful comment...':'Sign in to comment'}"><button class="primary" ${currentUser?'':'disabled'}>Comment</button></form>`;
 }
-function submitComment(e){e.preventDefault();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:currentUser.name,text,at:Date.now()};works[idx].comments=[...(works[idx].comments||[]),comment];readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.email,`${currentUser.name} commented on your work`,readerWork.title);saveState();renderComments();renderReaderSocial();showToast('Comment posted.')}
+function submitComment(e){e.preventDefault();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now()};works[idx].comments=[...(works[idx].comments||[]),comment];readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title);saveState();renderComments();renderReaderSocial();showToast('Comment posted.')}
 function shareWork(id){const url=location.href.split('#')[0]+'#work='+encodeURIComponent(id);if(navigator.clipboard)navigator.clipboard.writeText(url).catch(()=>{});history.replaceState(null,'','#work='+encodeURIComponent(id));showToast('Share link copied.')}
 function saveCurrentReader(){if(readerWork)toggleSaved(readerWork.id)}
 function searchTag(tag){openGlobalSearch();setTimeout(()=>{const input=document.getElementById('globalSearchInput');input.value=tag;renderGlobalSearch()},60)}
@@ -1261,12 +1281,12 @@ function renderGlobalSearch(){
  const q=(document.getElementById('globalSearchInput')?.value||'').toLowerCase().trim();
  if(!q){const recent=readJSON('shkRecentSearches',[]);root.innerHTML=`<div class="empty"><h4>Search the archive</h4><p>Search published works by title, text, genre, tags, or author — or find a student profile by name or username.</p>${recent.length?'<div class="post-tags" style="justify-content:center;margin-top:14px">'+recent.slice(0,6).map(x=>`<button class="tag" onclick="useRecentSearch('${escapeAttr(x)}')">${escapeHTML(x)}</button>`).join('')+'</div>':''}</div>`;return;}
 
- const foundUsers=users.filter(u=>[u.name,u.username,u.bio].join(' ').toLowerCase().includes(q)).slice(0,6);
+ const foundUsers=users.filter(u=>[publicNameOf(u),u.username,u.bio].join(' ').toLowerCase().includes(q)).slice(0,6);
  const foundWorks=works.filter(w=>canReadWork(w)&&[w.title,w.author,w.genre,w.excerpt,w.content,(w.tags||[]).join(' ')].join(' ').toLowerCase().includes(q)).slice(0,10);
  let html='';
  if(foundUsers.length){
    html+='<div class="search-group"><div class="search-group-head"><strong>Student profiles</strong><span>'+foundUsers.length+' result'+(foundUsers.length===1?'':'s')+'</span></div>';
-   html+=foundUsers.map(u=>{const followed=currentUser?.following.includes(u.email);const self=currentUser?.email===u.email;return `<div class="search-result"><button class="result-link" onclick="openProfile('${escapeAttr(u.email)}');closeModal('globalSearchModal')"><div class="search-result-main"><div class="avatar">${u.photo?`<img src="${escapeAttr(u.photo)}" alt="">`:escapeHTML(initialsOf(u.name))}</div><div class="search-result-copy"><div class="result-kind">Student profile</div><strong>${escapeHTML(u.name)}</strong><span>@${escapeHTML(usernameOf(u))} · ${escapeHTML(identityLabelOf(u))} · ${getUserWorks(u.email).length} work${getUserWorks(u.email).length===1?'':'s'}</span></div></div></button><button class="follow ${followed?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(u.email)}',this)">${self?'You':(followed?'Following':'Follow')}</button></div>`}).join('')+'</div>';
+   html+=foundUsers.map(u=>{const followed=currentUser?.following.includes(u.email);const self=currentUser?.email===u.email;return `<div class="search-result"><button class="result-link" onclick="openProfile('${escapeAttr(u.email)}');closeModal('globalSearchModal')"><div class="search-result-main"><div class="avatar">${u.photo?`<img src="${escapeAttr(u.photo)}" alt="">`:escapeHTML(initialsOf(publicNameOf(u)))}</div><div class="search-result-copy"><div class="result-kind">Student profile</div><strong>${escapeHTML(publicNameOf(u))}</strong><span>@${escapeHTML(usernameOf(u))} · ${escapeHTML(identityLabelOf(u))} · ${getUserWorks(u.email).length} work${getUserWorks(u.email).length===1?'':'s'}</span></div></div></button><button class="follow ${followed?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(u.email)}',this)">${self?'You':(followed?'Following':'Follow')}</button></div>`}).join('')+'</div>';
  }
  if(foundWorks.length){
    html+='<div class="search-group"><div class="search-group-head"><strong>Works & posts</strong><span>'+foundWorks.length+' result'+(foundWorks.length===1?'':'s')+'</span></div>';
@@ -1284,8 +1304,8 @@ function renderNotifications(){const root=document.getElementById('notifications
 function markNotificationsRead(){if(!currentUser)return;notifications=notifications.map(n=>n.to===currentUser.email?{...n,read:true}:n);persistSessionData();renderNotifications();renderNotificationsBadge()}
 function applyDarkMode(){document.documentElement.classList.toggle('dark',darkMode)}
 function toggleDarkMode(){darkMode=!darkMode;persistSessionData();applyDarkMode();showToast(darkMode?'Dark mode enabled.':'Light mode enabled.')}
-function openEditProfile(){if(!currentUser){openAccount();return}document.getElementById('editName').value=currentUser.name||'';document.getElementById('editUsername').value='@'+usernameOf(currentUser);document.getElementById('editBio').value=currentUser.bio||'';document.getElementById('editProfileModal').classList.add('open')}
-async function saveProfile(e){e.preventDefault();if(!currentUser)return;const email=currentUser.email;const name=document.getElementById('editName').value.trim();const username=document.getElementById('editUsername').value.trim().replace(/^@/,'');const bio=document.getElementById('editBio').value.trim();if(!name||!username){showToast('Name and username are required.');return}const clash=users.find(u=>u.email!==email&&usernameOf(u).toLowerCase()===username.toLowerCase());if(clash){showToast('That username is already in use.');return}const idx=users.findIndex(u=>u.email===email);if(idx<0)return;users[idx]=normalizeUser({...users[idx],name,username,bio,photo:currentUser.photoURL||currentUser.photo||''});currentUser=normalizeUser({...users[idx]});works=works.map(w=>w.email===email?{...w,author:name}:w);saveState();closeModal('editProfileModal');renderAll();showToast('Profile updated.')}
+function openEditProfile(){if(!currentUser){openAccount();return}document.getElementById('editPenName').value=currentUser.penName||publicNameOf(currentUser);document.getElementById('editUsername').value='@'+usernameOf(currentUser);document.getElementById('editBio').value=currentUser.bio||'';document.getElementById('editProfileModal').classList.add('open')}
+async function saveProfile(e){e.preventDefault();if(!currentUser)return;const email=currentUser.email;const penName=document.getElementById('editPenName').value.trim();const username=document.getElementById('editUsername').value.trim().replace(/^@/,'');const bio=document.getElementById('editBio').value.trim();if(!penName||!username){showToast('Pen name and username are required.');return}const clash=users.find(u=>u.email!==email&&usernameOf(u).toLowerCase()===username.toLowerCase());if(clash){showToast('That username is already in use.');return}const idx=users.findIndex(u=>u.email===email);if(idx<0)return;users[idx]=normalizeUser({...users[idx],penName,username,bio,photo:currentUser.photoURL||currentUser.photo||''});currentUser=normalizeUser({...users[idx]});works=works.map(w=>w.email===email?{...w,author:publicNameOf(currentUser)}:w);saveState();closeModal('editProfileModal');renderAll();showToast('Profile updated.')}
 
 function openAccount(){if(!sessionUnlocked&&currentUser){openPinGate('enter',currentUser);return}document.getElementById('accountModal').classList.add('open');updateProfileUI()}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
@@ -1304,7 +1324,7 @@ async function submitAuth(e){
    const username=document.getElementById('authUsername').value.trim().replace(/^@/,'');
    if(!username){showToast('Please choose a username.');return}
    if(users.some(u=>usernameOf(u).toLowerCase()===username.toLowerCase())){showToast('That username is already in use.');return}
-   pendingAuthUser=normalizeUser({name:document.getElementById('authName').value.trim()||'Student Author',username,email,password,bio:'Student writer in 12-SHAKESPEARE.',followers:[],following:[],photo:'',photoURL:'',provider:'password'});
+   pendingAuthUser=normalizeUser({name:document.getElementById('authName').value.trim()||'Student Account',penName:'Anonymous Author',username,email,password,bio:'Student writer in 12-SHAKESPEARE.',followers:[],following:[],photo:'',photoURL:'',provider:'password'});
    closeModal('accountModal'); openPinGate('setup',pendingAuthUser); return;
  }
  const user=users.find(u=>canonicalEmail(u.email)===email&&u.password===password);
@@ -1339,7 +1359,8 @@ async function googleLogin(){
     pendingAuthUser=normalizeUser({
       ...existing,
       ...cloudData,
-      name:g.displayName||existing?.name||cloudData.displayName||'Student Author',
+      name:g.displayName||existing?.name||'Student Account',
+      penName:existing?.penName||cloudData.penName||username||'Anonymous Author',
       username:existing?.username||cloudData.username||username,
       email,
       photoURL:g.photoURL||existing?.photoURL||existing?.photo||cloudData.photoURL||'',
@@ -1469,9 +1490,9 @@ async function saveCloudUserProfile(user){
 
   await window.firebaseSetDoc(ref,{
     uid:user.uid,
-    displayName:user.name||'Student Author',
+    displayName:publicNameOf(user),
+    penName:publicNameOf(user),
     username:usernameOf(user),
-    email:canonicalEmail(user.email),
     photoURL:user.photoURL||user.photo||'',
     provider:user.provider||'google',
     bio:user.bio||'Student writer in 12-SHAKESPEARE.',
