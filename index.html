@@ -1114,11 +1114,13 @@ function normalizeComment(comment){
 function normalizeComments(value){
   return Array.isArray(value)?value.map(normalizeComment).filter(Boolean):[];
 }
-function findCommentInList(list,id){
-  for(const c of (Array.isArray(list)?list:[])){
-    if(c.id===id)return {comment:c,parent:null,index:list.indexOf(c)};
-    const nested=findCommentInList(c.replies||[],id);
-    if(nested){nested.parent=c;return nested;}
+function findCommentInList(list,id,parent=null){
+  const items=Array.isArray(list)?list:[];
+  for(let i=0;i<items.length;i++){
+    const c=items[i];
+    if(c.id===id)return {comment:c,parent,index:i};
+    const nested=findCommentInList(c.replies||[],id,c);
+    if(nested)return nested;
   }
   return null;
 }
