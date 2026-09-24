@@ -26,29 +26,29 @@ a{text-decoration:none;color:inherit}
 .serif{font-family:"Cormorant Garamond",Georgia,serif}
 .app{min-height:100vh}
 .sidebar{
-  position:fixed;left:0;top:0;bottom:0;width:250px;z-index:80;
+  position:fixed;left:0;top:0;bottom:0;width:240px;z-index:80;
   background:var(--sidebar);border-right:1px solid var(--line);
-  display:flex;flex-direction:column;padding:22px 14px;
+  display:flex;flex-direction:column;padding:13px 10px;overflow-y:auto;overflow-x:hidden;
 }
-.brand{display:flex;align-items:center;gap:11px;padding:4px 10px 24px}
+.brand{display:flex;align-items:center;gap:10px;padding:2px 8px 13px}
 .brand-mark{
   width:40px;height:40px;border-radius:12px;background:var(--wine);color:var(--gold2);
   display:grid;place-items:center;box-shadow:0 8px 20px rgba(50,25,27,.13)
 }
 .brand-name{font-size:.9rem;font-weight:800;letter-spacing:.08em;color:var(--wine)}
 .brand-sub{display:block;color:#938880;font:500 .78rem "Cormorant Garamond",serif;margin-top:2px}
-.nav-title{padding:12px 13px 8px;color:#9a918a;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;font-weight:800}
-.nav{display:grid;gap:4px}
+.nav-title{padding:7px 11px 5px;color:#9a918a;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;font-weight:800}
+.nav{display:grid;gap:2px}
 .nav-btn{
-  width:100%;display:flex;align-items:center;gap:12px;padding:11px 12px;border:0;border-radius:12px;
-  background:transparent;color:#665C56;text-align:left;font-size:.87rem;font-weight:650;transition:.2s var(--ease)
+  width:100%;display:flex;align-items:center;gap:12px;padding:8px 10px;border:0;border-radius:10px;
+  background:transparent;color:#665C56;text-align:left;font-size:.81rem;font-weight:650;transition:.2s var(--ease)
 }
 .nav-btn:hover{background:#F0ECE8;color:var(--wine);transform:translateX(2px)}
 .nav-btn.active{background:#EEE6E0;color:var(--wine);box-shadow:inset 3px 0 0 var(--gold)}
-.nav-icon{width:18px;height:18px;flex:none}
-.sidebar-bottom{margin-top:auto;border-top:1px solid var(--line);padding-top:14px}
+.nav-icon{width:16px;height:16px;flex:none}
+.sidebar-bottom{margin-top:auto;border-top:1px solid var(--line);padding-top:9px}
 .profile-mini{
-  display:flex;align-items:center;gap:10px;padding:10px;border-radius:13px;background:#fff;border:1px solid var(--line)
+  display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:11px;background:#fff;border:1px solid var(--line)
 }
 .avatar{
   width:36px;height:36px;border-radius:50%;display:grid;place-items:center;overflow:hidden;
@@ -57,7 +57,7 @@ a{text-decoration:none;color:inherit}
 .avatar img{width:100%;height:100%;object-fit:cover}
 .profile-mini strong{display:block;font-size:.78rem;color:var(--wine);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .profile-mini span{display:block;font-size:.68rem;color:#958A83;margin-top:2px}
-.main{margin-left:250px;min-height:100vh;background:#fff}
+.main{margin-left:240px;min-height:100vh;background:#fff}
 .topbar{
   height:72px;position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);
   backdrop-filter:blur(16px);border-bottom:1px solid var(--line);
@@ -174,7 +174,6 @@ a{text-decoration:none;color:inherit}
 .step{position:relative;margin-bottom:21px}.step:last-child{margin-bottom:0}.step:before{content:"";position:absolute;left:-21px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 5px #F0E7DA}.step strong{display:block;color:var(--wine);font-size:.83rem}.step span{display:block;color:#9A9089;font-size:.68rem;margin-top:3px}.step p{color:var(--muted);font-size:.8rem;line-height:1.55;margin:6px 0 0}
 .journal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.journal{position:relative;min-height:250px;padding:24px;border-radius:18px;color:#F4E8D3;background:linear-gradient(145deg,#351A1D,#6A2C33);overflow:hidden}.journal:nth-child(2){background:linear-gradient(145deg,#2B1719,#644C3B)}.journal:nth-child(3){background:linear-gradient(145deg,#5B3633,#907357)}.journal:before{content:"";position:absolute;right:-80px;top:-80px;width:220px;height:220px;border:1px solid rgba(255,255,255,.17);border-radius:50%}.journal small{letter-spacing:.14em;text-transform:uppercase;font-size:.63rem;color:#D5B77E}.journal h4{font:600 2.5rem/.88 "Cormorant Garamond",serif;margin:13px 0}.journal p{color:#D8C5AA;line-height:1.65;font-size:.81rem;max-width:320px}.journal a{position:absolute;left:24px;bottom:22px;font-weight:800;font-size:.73rem}
 .authors{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.author-card{text-align:center;padding:20px;border:1px solid var(--line);border-radius:17px;background:#fff}.author-big{width:76px;height:76px;margin:0 auto 12px;border-radius:50%;background:linear-gradient(145deg,#C9AB7E,#5D373B);display:grid;place-items:center;color:#fff}.author-card h4{font:600 1.5rem "Cormorant Garamond",serif;color:var(--wine);margin:0}.author-card p{color:#958B84;font-size:.73rem}.follow{border:1px solid var(--line);background:#fff;color:var(--wine);padding:8px 11px;border-radius:9px;font-size:.72rem;font-weight:800}.follow.on{background:var(--wine);color:#fff;border-color:var(--wine)}
-.gallery{columns:3 260px;column-gap:14px}.gallery-card{break-inside:avoid;margin:0 0 14px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#fff}.gallery-art{min-height:210px;padding:17px;display:flex;align-items:flex-end;color:#fff;font:600 2rem "Cormorant Garamond",serif}.g1{background:linear-gradient(145deg,#5F292E,#A47D5E)}.g2{background:linear-gradient(145deg,#2E1A1B,#6F4C40);min-height:275px}.g3{background:linear-gradient(145deg,#D8C09B,#745054)}.g4{background:linear-gradient(145deg,#4A2A2A,#231618);min-height:250px}.g5{background:linear-gradient(145deg,#9C8068,#DDC4A8);min-height:180px}.caption{padding:12px 14px}.caption strong{font-size:.8rem;color:var(--wine)}.caption span{display:block;font-size:.67rem;color:#9B9089;margin-top:4px}
 .reader{max-width:850px;margin:auto}.reader-meta{text-align:center;color:#9A9089;font-size:.67rem;letter-spacing:.15em;text-transform:uppercase}.reader h2{text-align:center;font:600 clamp(3.6rem,7vw,6rem)/.84 "Cormorant Garamond",serif;color:var(--wine);margin:10px 0}.reader-by{text-align:center;color:#8D837C;font-style:italic;font-size:.85rem}.reader-tools{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:24px 0}.reader-tools button{border:1px solid var(--line);background:#fff;color:var(--wine);padding:8px 10px;border-radius:9px;font-weight:700;font-size:.72rem}.reader-body{font:400 1.3rem/1.8 "Cormorant Garamond",serif;color:#43362F}.reader-body p{margin:0 0 20px}.reader-body p:first-child:first-letter{float:left;color:var(--burgundy);font-size:5rem;line-height:.7;padding:.05em .09em 0 0}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{text-transform:uppercase;letter-spacing:.08em;font-size:.67rem;font-weight:800;color:#756961}.field input,.field textarea,.field select{border:1px solid var(--line);border-radius:10px;background:#fff;padding:11px 12px;outline:none;color:var(--ink)}.field textarea{min-height:150px;resize:vertical}.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(179,138,82,.1)}
 .modal{position:fixed;inset:0;background:rgba(30,18,18,.45);backdrop-filter:blur(5px);display:none;place-items:center;z-index:200;padding:18px}.modal.open{display:grid}.modal-box{width:min(520px,100%);background:#fff;border:1px solid var(--line);border-radius:19px;padding:23px;box-shadow:0 30px 90px rgba(0,0,0,.2);animation:modal .3s var(--ease)}.modal-head{display:flex;justify-content:space-between;align-items:center}.modal-head h3{margin:0;font:600 2.25rem "Cormorant Garamond",serif;color:var(--wine)}.close{border:0;background:transparent;color:var(--wine);font-size:1.5rem}
@@ -212,19 +211,36 @@ a{text-decoration:none;color:inherit}
 .author-link:hover{text-decoration:underline}
 .follow:disabled{opacity:.55;cursor:not-allowed}
 .profile-work-head{display:flex;justify-content:space-between;align-items:end;gap:20px}
-.following-control{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:0 0 14px;padding:8px;border:1px solid var(--line);border-radius:15px;background:#FBFAF8}
-.feed-tabs{display:inline-flex;gap:5px;padding:4px;background:#F1ECE7;border:1px solid #E5DDD5;border-radius:13px}
-.feed-tab{display:flex;align-items:center;gap:9px;min-width:156px;border:0;background:transparent;color:#6E625A;border-radius:10px;padding:9px 12px;text-align:left;transition:.2s var(--ease)}
-.feed-tab:hover{color:var(--wine);background:rgba(255,255,255,.62)}
-.feed-tab.active{background:#fff;color:var(--wine);box-shadow:0 6px 16px rgba(36,27,23,.08)}
-.feed-tab-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#EEE5DD;flex:none}.feed-tab.active .feed-tab-icon{background:#F3E9DE;color:var(--burgundy)}
+.following-control{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:0 0 14px;padding:10px;border:1px solid var(--line);border-radius:16px;background:#FBFAF8;box-shadow:0 8px 22px rgba(36,27,23,.035)}
+.feed-tabs{display:inline-flex;gap:5px;padding:4px;background:#F1ECE7;border:1px solid #E5DDD5;border-radius:14px}
+.feed-tab{display:flex;align-items:center;gap:9px;min-width:180px;border:0;background:transparent;color:#6E625A;border-radius:11px;padding:9px 12px;text-align:left;transition:.2s var(--ease);position:relative;overflow:hidden}
+.feed-tab:hover{color:var(--wine);background:rgba(255,255,255,.7);transform:translateY(-1px)}
+.feed-tab.active{background:#fff;color:var(--wine);box-shadow:0 7px 18px rgba(36,27,23,.08)}
+.feed-tab.active:after{content:"";position:absolute;left:12px;right:12px;bottom:3px;height:2px;border-radius:2px;background:var(--gold);opacity:.9}
+.feed-tab-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#EEE5DD;flex:none}.feed-tab.active .feed-tab-icon{background:#F3E9DE;color:var(--burgundy)}
 .feed-tab-icon svg{width:16px;height:16px}
-.feed-tab strong{display:block;font-size:.76rem;line-height:1.1}.feed-tab small{display:block;color:#9B9089;font-size:.61rem;margin-top:3px;font-weight:600}
-.following-control-copy{font-size:.72rem;color:#8C8179;max-width:360px;text-align:right;line-height:1.5}
-.following-insight{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.feed-tab strong{display:block;font-size:.78rem;line-height:1.1}.feed-tab small{display:block;color:#9B9089;font-size:.61rem;margin-top:3px;font-weight:600}
+.feed-tab-badge{display:inline-grid;place-items:center;min-width:22px;height:20px;padding:0 6px;border-radius:999px;background:#F4EEE8;color:var(--wine);font-size:.58rem;font-weight:800;margin-left:auto}
+.feed-tab.active .feed-tab-badge{background:var(--wine);color:#fff}
+.following-control-copy{font-size:.72rem;color:#8C8179;max-width:380px;text-align:right;line-height:1.55}
+.following-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+.following-toolbar-left,.following-toolbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.following-mini-label{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:#9A9089;font-weight:800}
+.following-range{display:inline-flex;gap:4px;padding:3px;background:#F6F2EE;border:1px solid var(--line);border-radius:10px}
+.range-btn{border:0;background:transparent;color:#756B65;border-radius:7px;padding:7px 10px;font-size:.66rem;font-weight:800}
+.range-btn.active{background:#fff;color:var(--wine);box-shadow:0 3px 10px rgba(36,27,23,.06)}
+.following-refresh{border:1px solid var(--line);background:#fff;color:var(--wine);padding:7px 10px;border-radius:9px;font-size:.68rem;font-weight:800}
+.following-refresh:hover{transform:translateY(-1px);box-shadow:0 5px 13px rgba(36,27,23,.06)}
+.following-insight{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;margin:0 0 14px}
 .following-insight .insight-card{flex:1;min-width:180px;padding:13px 15px;border:1px solid var(--line);border-radius:13px;background:#fff;box-shadow:0 8px 18px rgba(36,27,23,.035)}
 .insight-kicker{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:800}.insight-value{display:block;color:var(--wine);font:600 1.35rem/1.1 "Cormorant Garamond",serif;margin-top:4px}.insight-note{display:block;color:#958A83;font-size:.63rem;margin-top:3px}
-@media(max-width:760px){.following-control{align-items:stretch;flex-direction:column}.feed-tabs{width:100%}.feed-tab{flex:1;min-width:0}.following-control-copy{text-align:left;max-width:none;padding:0 4px 2px}}
+.following-post{position:relative}
+.following-post .post-rank{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:#F4EEE8;color:var(--burgundy);font-size:.57rem;font-weight:850;letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px}
+.following-post .post-fresh{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:#F1F6F0;color:#466246;font-size:.57rem;font-weight:850;letter-spacing:.05em;text-transform:uppercase;margin-left:5px}
+.following-post .engagement-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;color:#9A9089;font-size:.66rem;font-weight:650}
+.following-post .engagement-line b{color:var(--wine)}
+.following-post .pop-score{color:var(--gold);font-weight:850}
+@media(max-width:760px){.following-control{align-items:stretch;flex-direction:column}.feed-tabs{width:100%}.feed-tab{flex:1;min-width:0}.following-control-copy{text-align:left;max-width:none;padding:0 4px 2px}.following-toolbar{align-items:stretch;flex-direction:column}.following-toolbar-left,.following-toolbar-right{width:100%}.following-range{width:100%}.range-btn{flex:1}}
 
 .empty{padding:35px;text-align:center;color:#8D827B}.empty h4{font:600 2rem "Cormorant Garamond",serif;color:var(--wine);margin:0 0 6px}
 .menu-open .sidebar{box-shadow:8px 0 30px rgba(36,27,23,.12)}
@@ -232,14 +248,25 @@ a{text-decoration:none;color:inherit}
 @keyframes pageIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 @keyframes spin{to{transform:rotate(360deg)}}@keyframes float{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-11px) rotate(1deg)}}@keyframes drift{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-9px) rotate(3deg)}}@keyframes modal{from{opacity:0;transform:scale(.98) translateY(10px)}to{opacity:1;transform:none}}
 
+@media (min-width:761px) and (max-height:820px){
+  .sidebar{padding-top:9px;padding-bottom:8px}
+  .brand{padding-bottom:9px}
+  .nav-title{padding-top:5px;padding-bottom:3px}
+  .nav{gap:1px}
+  .nav-btn{padding-top:6px;padding-bottom:6px;font-size:.78rem}
+  .nav-icon{width:15px;height:15px}
+  .sidebar-bottom{padding-top:7px}
+  .profile-mini{padding:6px 7px}
+}
+
 @media(max-width:1100px){
-  .sidebar{width:220px}.main{margin-left:220px}.grid3{grid-template-columns:1fr 1fr}.authors{grid-template-columns:1fr 1fr}.hero{grid-template-columns:1fr}.book-zone{min-height:420px}.two-col{grid-template-columns:1fr}
+  .sidebar{width:210px}.main{margin-left:210px}.grid3{grid-template-columns:1fr 1fr}.authors{grid-template-columns:1fr 1fr}.hero{grid-template-columns:1fr}.book-zone{min-height:420px}.two-col{grid-template-columns:1fr}
 }
 @media(max-width:760px){
-  .sidebar{width:82px;padding:15px 9px}.brand{justify-content:center;padding:4px 0 20px}.brand-copy,.nav-title,.nav-btn span,.profile-mini strong,.profile-mini span{display:none}.nav-btn{justify-content:center;padding:12px}.profile-mini{justify-content:center;padding:8px}.main{margin-left:82px}.topbar{padding:0 15px}.page-title p{display:none}.menu-toggle{display:grid}.content{padding:22px 16px 45px}.hero{padding-top:10px}.hero h2{font-size:4.1rem}.book{width:250px}.orbit{width:300px;height:300px}.section{padding:32px 0}.grid3,.journal-grid,.authors{grid-template-columns:1fr}.section-head{flex-direction:column;align-items:flex-start}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.gallery{columns:2 190px}
+  .sidebar{width:82px;padding:15px 9px}.brand{justify-content:center;padding:4px 0 20px}.brand-copy,.nav-title,.nav-btn span,.profile-mini strong,.profile-mini span{display:none}.nav-btn{justify-content:center;padding:12px}.profile-mini{justify-content:center;padding:8px}.main{margin-left:82px}.topbar{padding:0 15px}.page-title p{display:none}.menu-toggle{display:grid}.content{padding:22px 16px 45px}.hero{padding-top:10px}.hero h2{font-size:4.1rem}.book{width:250px}.orbit{width:300px;height:300px}.section{padding:32px 0}.grid3,.journal-grid,.authors{grid-template-columns:1fr}.section-head{flex-direction:column;align-items:flex-start}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}
 }
 @media(max-width:480px){
-  .sidebar{width:64px}.main{margin-left:64px}.brand-mark{width:36px;height:36px}.profile-hero{grid-template-columns:1fr;text-align:center}.profile-actions{justify-content:center}.profile-big-avatar{margin:auto}.profile-stats{justify-content:center}.brand-mark svg{width:22px}.topbar{height:64px}.page-title h1{font-size:1.65rem}.hero h2{font-size:3.3rem}.hero p{font-size:.91rem}.metrics{gap:15px}.metric strong{font-size:1.7rem}.metric span{font-size:.59rem}.book{width:220px}.orbit{width:260px;height:260px}.f1,.f2{display:none}.gallery{columns:1}
+  .sidebar{width:64px}.main{margin-left:64px}.brand-mark{width:36px;height:36px}.profile-hero{grid-template-columns:1fr;text-align:center}.profile-actions{justify-content:center}.profile-big-avatar{margin:auto}.profile-stats{justify-content:center}.brand-mark svg{width:22px}.topbar{height:64px}.page-title h1{font-size:1.65rem}.hero h2{font-size:3.3rem}.hero p{font-size:.91rem}.metrics{gap:15px}.metric strong{font-size:1.7rem}.metric span{font-size:.59rem}.book{width:220px}.orbit{width:260px;height:260px}.f1,.f2{display:none}
 }
 </style>
 </head>
@@ -273,7 +300,6 @@ a{text-decoration:none;color:inherit}
     <nav class="nav">
       <button class="nav-btn" data-page="journal" onclick="showPage('journal')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M6 5h13v15H6a2 2 0 0 1 0-4h13M6 5a2 2 0 0 0 0 4h13" stroke="currentColor" stroke-width="1.5"/></svg><span>Digital Journal</span></button>
       <button class="nav-btn" data-page="community" onclick="showPage('community')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="9" r="3" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 20c.8-3.3 3-5 5.5-5s4.7 1.7 5.5 5M15 15c2.6.2 4.3 1.7 5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Community</span></button>
-      <button class="nav-btn" data-page="gallery" onclick="showPage('gallery')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="9" r="1.5" stroke="currentColor"/><path d="m5.5 17 4.5-4 3.2 2.6 2.3-2.1 3 3.5" stroke="currentColor" stroke-width="1.5"/></svg><span>Gallery</span></button>
       <button class="nav-btn" data-page="shakespeare" onclick="showPage('shakespeare')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 5h6M8 5v11a3 3 0 0 1-3 3M8 12h6M14 8h5M16 8v9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13 19h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Shakespeare</span></button>
       <button class="nav-btn" data-page="feedback" onclick="showPage('feedback')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 5h14v11H9l-4 4V5Z" stroke="currentColor" stroke-width="1.5"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg><span>Feedback</span></button>
       <button class="nav-btn" data-page="about" onclick="showPage('about')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 10v6M12 7.5v.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>About</span></button>
@@ -405,13 +431,31 @@ a{text-decoration:none;color:inherit}
             <button class="feed-tab active" id="followingLatestTab" role="tab" aria-selected="true" onclick="setFollowingMode('latest',this)">
               <span class="feed-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 6h14M5 12h10M5 18h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="18" cy="12" r="2.5" stroke="currentColor" stroke-width="1.5"/></svg></span>
               <span><strong>Latest</strong><small>Newest first</small></span>
+              <span class="feed-tab-badge" id="followingLatestCount">0</span>
             </button>
             <button class="feed-tab" id="followingPopularTab" role="tab" aria-selected="false" onclick="setFollowingMode('popular',this)">
               <span class="feed-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 18 10 13l3 3 6-7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 9h4v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               <span><strong>Popular</strong><small>Most engaged</small></span>
+              <span class="feed-tab-badge" id="followingPopularCount">0</span>
             </button>
           </div>
           <div class="following-control-copy" id="followingSortMeta">Newest posts from students you follow appear first.</div>
+        </div>
+        <div class="following-toolbar">
+          <div class="following-toolbar-left">
+            <span class="following-mini-label">Show</span>
+            <div class="following-range" role="group" aria-label="Following feed time range">
+              <button class="range-btn active" data-days="0" onclick="setFollowingRange(0,this)">All time</button>
+              <button class="range-btn" data-days="7" onclick="setFollowingRange(7,this)">7 days</button>
+              <button class="range-btn" data-days="30" onclick="setFollowingRange(30,this)">30 days</button>
+            </div>
+          </div>
+          <div class="following-toolbar-right">
+            <button class="following-refresh" onclick="renderFollowing();showToast('Following feed refreshed.')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px;margin-right:4px"><path d="M20 11a8 8 0 0 0-14.9-4M4 13a8 8 0 0 0 14.9 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M5 3v4h4M19 21v-4h-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              Refresh
+            </button>
+          </div>
         </div>
         <div class="following-insight" id="followingInsight"></div>
         <div class="panel" id="followingList"></div>
@@ -447,17 +491,6 @@ a{text-decoration:none;color:inherit}
           <div class="panel"><div class="kicker">Community guidelines</div><h3 style="font:600 2.4rem 'Cormorant Garamond',serif;color:var(--wine);margin:8px 0">Keep the page literary.</h3><p style="color:var(--muted);line-height:1.7">Respect authors, critique ideas rather than people, and keep responses connected to the work.</p></div>
         </div>
         <div class="section"><div class="section-head"><div><div class="kicker">Discover writers</div><h3>Writers in the Archive</h3></div><button class="secondary" onclick="openGlobalSearch()">Find a Student</button></div><div class="authors" id="authorGrid"></div></div>
-      </section>
-
-      <section class="page" id="page-gallery">
-        <div class="section-head"><div><div class="kicker">Visual archive</div><h3>Gallery</h3></div><p>Writing sessions, performances, projects, and class memories.</p></div>
-        <div class="gallery">
-          <article class="gallery-card"><div class="gallery-art g1">Writing Sessions</div><div class="caption"><strong>Quiet pages, loud ideas.</strong><span>Archive collection</span></div></article>
-          <article class="gallery-card"><div class="gallery-art g2">Literature Activities</div><div class="caption"><strong>Reading as a shared experience.</strong><span>Class archive</span></div></article>
-          <article class="gallery-card"><div class="gallery-art g3">Performances</div><div class="caption"><strong>Words leave the page.</strong><span>Performance archive</span></div></article>
-          <article class="gallery-card"><div class="gallery-art g4">School Events</div><div class="caption"><strong>Moments between milestones.</strong><span>Event archive</span></div></article>
-          <article class="gallery-card"><div class="gallery-art g5">Class Memories</div><div class="caption"><strong>The people behind the pages.</strong><span>Memory archive</span></div></article>
-        </div>
       </section>
 
       <section class="page" id="page-shakespeare">
@@ -600,6 +633,7 @@ let notifications = readJSON('shkNotifications',[]).filter(n=>n&&n.to);
 let history = readJSON('shkHistory',{});
 let darkMode = !!readJSON('shkDarkMode',false);
 let followingMode = 'latest';
+let followingRangeDays = 0;
 if(currentUser && LEGACY_DEMO_EMAILS.has(String(currentUser.email||'').toLowerCase())) currentUser=null;
 if(currentUser){
   const idx=users.findIndex(u=>u.email===currentUser.email);
@@ -622,7 +656,6 @@ const titleMap = {
  saved:['Saved Works','Your personal reading library'],
  journal:['Digital Journal','Official archive issues'],
  community:['Community','Readers and authors'],
- gallery:['Gallery','Visual class archive'],
  shakespeare:['Shakespeare','Study corner'],
  feedback:['Feedback','Help shape the platform'],
  about:['About','The story behind 12-Shakespeare'],
@@ -726,35 +759,95 @@ function followingTimeLabel(w){
  if(d<1)return 'Today';
  if(d<2)return 'Yesterday';
  if(d<7)return Math.floor(d)+' days ago';
- return new Date(w.createdAt||Date.now()).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+ return new Date(w.createdAt||Date.now()).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+}
+function followingModeLabel(){
+ return followingMode==='popular'
+   ? 'Popular sorts by engagement, with recent activity getting a freshness boost.'
+   : 'Latest puts the newest posts from students you follow at the top.';
+}
+function followingFeedHTML(w,rank){
+ const author=findUser(w.email);
+ const likeOn=!!currentUser&&w.likes.includes(currentUser.email);
+ const tags=(w.tags||[]).slice(0,6).map(t=>`<button class="tag" onclick="searchTag('${escapeAttr(t)}')">#${escapeHTML(t)}</button>`).join('');
+ const fresh=ageDays(w)<2;
+ const rankBadge=followingMode==='popular'?`<span class="post-rank">#${rank||1} · ${workPopularity(w)} trend</span>`:'';
+ const freshBadge=followingMode==='latest'&&fresh?'<span class="post-fresh">Fresh</span>':'';
+ const engagement=`<div class="engagement-line"><span><b>${w.likes.length}</b> likes</span><span><b>${w.comments.length}</b> comments</span><span><b>${w.views||0}</b> views</span>${followingMode==='popular'?`<span class="pop-score">Popularity ${workPopularity(w)}</span>`:`<span>${followingTimeLabel(w)}</span>`}</div>`;
+ return `<article class="feed-post following-post">
+   <div>${rankBadge}${freshBadge}</div>
+   <div class="author">
+     <div class="avatar">${author?.photo?`<img src="${escapeAttr(author.photo)}" alt="">`:escapeHTML(initialsOf(w.author))}</div>
+     <div>
+       <button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button>
+       <span>@${escapeHTML(usernameOf(author||{name:w.author,email:w.email||''}))} · ${escapeHTML(w.genre)} · ${followingTimeLabel(w)}</span>
+     </div>
+   </div>
+   <div class="post-title">${escapeHTML(w.title)}</div>
+   <p class="post-text">${escapeHTML(w.excerpt)}</p>
+   ${tags?`<div class="post-tags">${tags}</div>`:''}
+   ${engagement}
+   <div class="social-actions">
+     <button class="social-btn ${likeOn?'on':''}" onclick="toggleLike('${escapeAttr(w.id)}',this)">♥ <span class="count">${w.likes.length}</span></button>
+     <button class="social-btn" onclick="openReader('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button>
+     <button class="social-btn ${saved.includes(w.id)?'on':''}" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button>
+     <button class="social-btn" onclick="shareWork('${escapeAttr(w.id)}')">Share</button>
+   </div>
+   <div class="post-actions"><button class="post-action" onclick="openReader('${escapeAttr(w.id)}')">Read Full Work</button></div>
+ </article>`;
 }
 function renderFollowing(){
  const root=document.getElementById('followingList'); if(!root)return;
  const insight=document.getElementById('followingInsight');
  const meta=document.getElementById('followingSortMeta');
+ const latestCount=document.getElementById('followingLatestCount');
+ const popularCount=document.getElementById('followingPopularCount');
  if(!currentUser){
    if(insight)insight.innerHTML='';
    if(meta)meta.textContent='Sign in and follow student writers to build a personalized feed.';
+   if(latestCount)latestCount.textContent='0';
+   if(popularCount)popularCount.textContent='0';
    root.innerHTML='<div class="empty"><h4>Follow students to build your feed</h4><p>Open a student profile and follow their work.</p><button class="primary" onclick="openGlobalSearch()">Find Students</button></div>';
    return;
  }
  let arr=works.filter(w=>currentUser.following.includes(w.email)&&canReadWork(w));
- if(followingMode==='popular')arr.sort((a,b)=>{const diff=workPopularity(b)-workPopularity(a);return Math.abs(diff)<.001?(b.createdAt||0)-(a.createdAt||0):diff});
- else arr.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+ if(followingRangeDays>0) arr=arr.filter(w=>ageDays(w)<=followingRangeDays);
+ const eligibleCount=arr.length;
+ if(followingMode==='popular'){
+   arr.sort((a,b)=>{const diff=workPopularity(b)-workPopularity(a);return Math.abs(diff)<.001?(b.createdAt||0)-(a.createdAt||0):diff});
+ }else{
+   arr.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+ }
  const writerCount=new Set(arr.map(w=>w.email)).size;
  const totalViews=arr.reduce((n,w)=>n+(w.views||0),0);
  const totalLikes=arr.reduce((n,w)=>n+(w.likes?.length||0),0);
+ const totalComments=arr.reduce((n,w)=>n+(w.comments?.length||0),0);
  const newest=arr[0];
- if(meta)meta.textContent=followingMode==='popular'?'Ranked by reader engagement with a freshness boost for recent posts.':'Newest posts from students you follow appear first.';
+ if(latestCount)latestCount.textContent=eligibleCount;
+ if(popularCount)popularCount.textContent=eligibleCount;
+ if(meta)meta.textContent=followingModeLabel();
  if(insight){
    const lead=followingMode==='popular'?'Popular right now':'Fresh from your circle';
-   const leadNote=followingMode==='popular'?'Likes, comments, views + recency':'Newest publication date';
-   insight.innerHTML=`<div class="insight-card"><span class="insight-kicker">${lead}</span><strong class="insight-value">${arr.length} work${arr.length===1?'':'s'}</strong><span class="insight-note">${writerCount} writer${writerCount===1?'':'s'} in your following list</span></div><div class="insight-card"><span class="insight-kicker">Engagement</span><strong class="insight-value">${totalLikes} like${totalLikes===1?'':'s'} · ${totalViews} view${totalViews===1?'':'s'}</strong><span class="insight-note">Activity across these followed works</span></div><div class="insight-card"><span class="insight-kicker">${leadNote}</span><strong class="insight-value">${newest?followingTimeLabel(newest):'—'}</strong><span class="insight-note">${newest?escapeHTML(newest.title):'No followed posts yet'}</span></div>`;
+   const leadNote=followingMode==='popular'?'Engagement + recency':'Newest publication date';
+   const rangeLabel=followingRangeDays===0?'All time':`Past ${followingRangeDays} days`;
+   insight.innerHTML=`<div class="insight-card"><span class="insight-kicker">${lead}</span><strong class="insight-value">${arr.length} work${arr.length===1?'':'s'}</strong><span class="insight-note">${writerCount} writer${writerCount===1?'':'s'} · ${rangeLabel}</span></div><div class="insight-card"><span class="insight-kicker">Activity</span><strong class="insight-value">${totalLikes} likes · ${totalComments} comments</strong><span class="insight-note">${totalViews} total views across your followed works</span></div><div class="insight-card"><span class="insight-kicker">${followingMode==='popular'?'Top signal':'Latest post'}</span><strong class="insight-value">${newest?followingMode==='popular'?workPopularity(newest):followingTimeLabel(newest):'—'}</strong><span class="insight-note">${newest?escapeHTML(newest.title):'No followed posts yet'}</span></div>`;
  }
- root.innerHTML=arr.length?arr.map(feedHTML).join(''):'<div class="empty"><h4>Your following feed is empty</h4><p>Follow student writers to see their latest work and public activity here.</p><button class="secondary" onclick="openGlobalSearch()">Discover Writers</button></div>';
+ root.innerHTML=arr.length?arr.map((w,i)=>followingFeedHTML(w,i+1)).join(''):'<div class="empty"><h4>Your following feed is empty</h4><p>Follow student writers to see their latest work and public activity here.</p><button class="secondary" onclick="openGlobalSearch()">Discover Writers</button></div>';
  document.querySelectorAll('.feed-tab').forEach(x=>x.setAttribute('aria-selected',x.classList.contains('active')?'true':'false'));
+ document.querySelectorAll('.range-btn').forEach(x=>x.classList.toggle('active',Number(x.dataset.days||0)===followingRangeDays));
 }
-function setFollowingMode(mode,btn){followingMode=mode;document.querySelectorAll('.feed-tab').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});btn.classList.add('active');btn.setAttribute('aria-selected','true');renderFollowing()}
+function setFollowingMode(mode,btn){
+ followingMode=mode;
+ document.querySelectorAll('.feed-tab').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});
+ btn.classList.add('active');btn.setAttribute('aria-selected','true');
+ renderFollowing();
+}
+function setFollowingRange(days,btn){
+ followingRangeDays=Number(days||0);
+ document.querySelectorAll('.range-btn').forEach(x=>x.classList.remove('active'));
+ btn.classList.add('active');
+ renderFollowing();
+}
 function historyKey(){return userKey()||'guest'}
 function renderHistory(){
  const root=document.getElementById('historyGrid'); if(!root)return;
