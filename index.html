@@ -188,15 +188,11 @@ a{text-decoration:none;color:inherit}
 .pin-kicker{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:800}
 .pin-title{font:600 2.5rem/.95 "Cormorant Garamond",serif;color:var(--wine);margin:8px 0 6px}
 .pin-subtitle{font-size:.72rem;line-height:1.55;color:#8F847D;max-width:285px;margin:0 auto}
-.pin-stage{position:relative;height:190px;margin:12px 0 2px;display:grid;place-items:center}
+.pin-stage{position:relative;height:112px;margin:16px 0 4px;display:grid;place-items:center}
 .pin-input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
-.pin-slots{position:relative;width:270px;height:150px}
-.pin-slot{position:absolute;width:66px;height:54px;border:1px solid #B7B2C1;border-radius:10px;background:#FCFCFF;display:grid;place-items:center;font:600 1.35rem "Inter",sans-serif;color:#3E3340;box-shadow:0 12px 30px rgba(80,66,91,.10);transition:.22s var(--ease);animation:pinFloat 3.8s ease-in-out infinite}
-.pin-slot:nth-child(1){left:12px;top:49px;transform:rotate(-10deg);animation-delay:-.15s}
-.pin-slot:nth-child(2){left:83px;top:13px;transform:rotate(10deg);animation-delay:-.7s}
-.pin-slot:nth-child(3){right:51px;top:48px;transform:rotate(7deg);animation-delay:-1.25s}
-.pin-slot:nth-child(4){right:0;top:95px;transform:rotate(-11deg);animation-delay:-1.8s}
-.pin-slot.filled{border-color:#9A8BA7;background:#fff;box-shadow:0 15px 32px rgba(80,66,91,.15);transform:scale(1.04) rotate(var(--r,0deg))}
+.pin-slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;width:min(300px,100%);height:64px}
+.pin-slot{position:static;width:auto;height:64px;border:1px solid #B7B2C1;border-radius:12px;background:#FCFCFF;display:grid;place-items:center;font:600 1.35rem "Inter",sans-serif;color:#3E3340;box-shadow:0 12px 30px rgba(80,66,91,.10);transition:.18s var(--ease)}
+.pin-slot.filled{border-color:#9A8BA7;background:#fff;box-shadow:0 15px 32px rgba(80,66,91,.15);transform:translateY(-2px)}
 .pin-modal.error .pin-slots{animation:pinShake .42s ease}
 .pin-help{font-size:.66rem;color:#A0968E;line-height:1.5;margin-top:8px}
 .pin-nav{display:flex;justify-content:center;gap:8px;margin-top:10px}
@@ -236,6 +232,23 @@ a{text-decoration:none;color:inherit}
 .profile-stat strong{display:block;color:var(--wine);font:700 1.65rem "Cormorant Garamond",serif}
 .profile-stat span{display:block;color:#958B84;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase}
 .profile-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.identity-badge{display:inline-flex;align-items:center;gap:6px;width:max-content;max-width:100%;padding:6px 10px;border-radius:999px;background:#F2ECE4;color:var(--wine);font-size:.62rem;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+.identity-badge.reader{background:#F4F1EE;color:#756B65}
+.identity-panel{display:grid;gap:13px}
+.identity-options{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.identity-option{border:1px solid var(--line);background:#fff;border-radius:13px;padding:14px;text-align:left;color:var(--wine);transition:.18s var(--ease)}
+.identity-option:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(36,27,23,.06)}
+.identity-option.active{border-color:var(--gold);box-shadow:0 0 0 3px rgba(179,138,82,.12);background:#FFFBF5}
+.identity-option strong{display:block;font-size:.8rem;margin-bottom:4px}
+.identity-option span{display:block;color:#958B84;font-size:.65rem;line-height:1.4}
+.identity-code-note{font-size:.67rem;line-height:1.55;color:#958B84}
+.identity-code{letter-spacing:.12em}
+.reader-identity{text-align:center;margin-top:8px}
+.feedback-identity{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:#FBF8F5;color:#756B65;font-size:.68rem}
+.feedback-identity strong{color:var(--wine)}
+.profile-menu{display:grid;gap:8px;margin-top:8px}
+.profile-menu button{width:100%;border:1px solid var(--line);background:#fff;color:var(--wine);padding:11px 12px;border-radius:10px;text-align:left;font-weight:750;font-size:.76rem}
+.profile-menu button:hover{background:#F7F2ED}
 .author-link{border:0;background:transparent;color:var(--wine);padding:0;font:inherit;font-weight:800;cursor:pointer;text-align:left}
 .author-link:hover{text-decoration:underline}
 .follow:disabled{opacity:.55;cursor:not-allowed}
@@ -292,6 +305,7 @@ a{text-decoration:none;color:inherit}
   .sidebar{width:210px}.main{margin-left:210px}.grid3{grid-template-columns:1fr 1fr}.authors{grid-template-columns:1fr 1fr}.hero{grid-template-columns:1fr}.book-zone{min-height:420px}.two-col{grid-template-columns:1fr}
 }
 @media(max-width:760px){
+  .identity-options{grid-template-columns:1fr}
   .sidebar{width:82px;padding:15px 9px}.brand{justify-content:center;padding:4px 0 20px}.brand-copy,.nav-title,.nav-btn span,.profile-mini strong,.profile-mini span{display:none}.nav-btn{justify-content:center;padding:12px}.profile-mini{justify-content:center;padding:8px}.main{margin-left:82px}.topbar{padding:0 15px}.page-title p{display:none}.menu-toggle{display:grid}.content{padding:22px 16px 45px}.hero{padding-top:10px}.hero h2{font-size:4.1rem}.book{width:250px}.orbit{width:300px;height:300px}.section{padding:32px 0}.grid3,.journal-grid,.authors{grid-template-columns:1fr}.section-head{flex-direction:column;align-items:flex-start}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}
 }
 @media(max-width:480px){
@@ -537,6 +551,7 @@ a{text-decoration:none;color:inherit}
             <div class="field"><label>Name</label><input required placeholder="Your name"></div>
             <div class="field"><label>Category</label><select required><option>Website Design</option><option>Navigation</option><option>Reading Experience</option><option>Literature Library</option><option>Account System</option><option>Bug Report</option><option>Suggestion</option><option>Other</option></select></div>
             <div class="field full"><label>Feedback</label><textarea required placeholder="Tell us what you think..."></textarea></div>
+            <div class="field full"><div class="feedback-identity"><span>Your profile identity:</span><strong id="feedbackIdentity">READER</strong></div></div>
             <div class="field full"><label>Screenshot (optional)</label><input type="file" accept="image/*"></div>
             <div class="actions"><button class="primary">Submit Feedback</button></div>
           </form>
@@ -559,6 +574,7 @@ a{text-decoration:none;color:inherit}
       <section class="page" id="page-reader">
         <div class="reader">
           <div class="reader-meta" id="readerGenre">POETRY</div>
+          <div class="reader-identity"><span class="identity-badge reader" id="readerIdentity">READER</span></div>
           <h2 id="readerTitle">Select a Work</h2>
           <div class="reader-by" id="readerBy">Open a published student work to begin reading.</div>
           <div class="reader-tools"><button onclick="changeReaderSize(1)">A+</button><button onclick="changeReaderSize(-1)">A−</button></div>
@@ -613,7 +629,7 @@ a{text-decoration:none;color:inherit}
     </div>
     <div id="loggedInArea" class="hidden">
       <div class="author" style="margin:10px 0 20px"><div class="avatar" id="modalAvatar" style="width:54px;height:54px"><span>12</span></div><div><strong id="modalName">Reader</strong><span id="modalHandle">@reader</span></div></div>
-      <div class="profile-menu"><button onclick="openProfile(currentUser.email);closeModal('accountModal')">View Profile</button><button onclick="showPage('myworks');closeModal('accountModal')">My Works</button><button onclick="showPage('saved');closeModal('accountModal')">Saved</button><button onclick="showPage('following');closeModal('accountModal')">Following</button><button onclick="showPage('history');closeModal('accountModal')">History</button><button onclick="openEditProfile();closeModal('accountModal')">Edit Profile</button><button onclick="toggleDarkMode()">Dark Mode</button></div><div class="actions"><button class="primary" onclick="logout()">Log Out</button></div>
+      <div class="profile-menu"><button onclick="openOwnProfile();closeModal('accountModal')">View Profile</button><button onclick="logout()">Log Out</button></div>
     </div>
   </div>
 </div>
@@ -627,6 +643,27 @@ a{text-decoration:none;color:inherit}
       <div class="field full"><label>Bio</label><textarea id="editBio" placeholder="Tell readers a little about yourself..."></textarea></div>
       <div class="actions full"><button class="secondary" type="button" onclick="closeModal('editProfileModal')">Cancel</button><button class="primary" type="submit">Save Profile</button></div>
     </form>
+  </div>
+</div>
+
+
+<div class="modal" id="identityModal" onclick="outsideModal(event,this)">
+  <div class="modal-box">
+    <div class="modal-head"><div><div class="kicker">Profile setup</div><h3>Set Your Identity</h3></div><button class="close" onclick="closeModal('identityModal')">×</button></div>
+    <div class="identity-panel" style="margin-top:14px">
+      <p style="margin:0;color:var(--muted);line-height:1.65;font-size:.76rem">Choose the identity that matches your account. Until an identity is verified, your profile stays a Reader and cannot publish literature.</p>
+      <div class="identity-options">
+        <button type="button" class="identity-option" data-identity="shakespeare" onclick="selectIdentityOption('shakespeare')"><strong>Shakespeare Student</strong><span>For 12-SHAKESPEARE student authors.</span></button>
+        <button type="button" class="identity-option" data-identity="teacher" onclick="selectIdentityOption('teacher')"><strong>Ma'am Karen</strong><span>Teacher identity.</span></button>
+        <button type="button" class="identity-option" data-identity="caths" onclick="selectIdentityOption('caths')"><strong>CATHS-MAIN Student</strong><span>For CATHS-MAIN student authors.</span></button>
+      </div>
+      <div class="field">
+        <label>Identity Code</label>
+        <input id="identityCode" class="identity-code" autocomplete="off" placeholder="Enter your verification code">
+      </div>
+      <div class="identity-code-note" id="identityCodeNote">Select an identity, then enter its verification code.</div>
+      <div class="actions" style="justify-content:flex-end"><button class="secondary" type="button" onclick="closeModal('identityModal')">Cancel</button><button class="primary" type="button" onclick="saveIdentitySetup()">Verify Identity</button></div>
+    </div>
   </div>
 </div>
 
@@ -704,9 +741,19 @@ const LEGACY_DEMO_IDS = new Set(['seed-1','seed-2','seed-3']);
 function readJSON(key,fallback){
   try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch{return fallback}
 }
+const IDENTITY_OPTIONS={
+  reader:{label:'Reader',code:''},
+  shakespeare:{label:'Shakespeare Student',code:'Sh4k3sp34re'},
+  teacher:{label:"Ma'am Karen",code:"Ma'am Karen"},
+  caths:{label:'CATHS-MAIN Student',code:'CATHS-MAIN'}
+};
+function normalizeIdentity(value){return IDENTITY_OPTIONS[value]?value:'reader'}
+function identityLabelOf(user){return IDENTITY_OPTIONS[normalizeIdentity(user?.identity)]?.label||'Reader'}
+function canPublish(user){return !!user&&normalizeIdentity(user.identity)!=='reader'}
 function normalizeUser(user){
   if(!user)return null;
-  return {...user,followers:Array.isArray(user.followers)?user.followers:[],following:Array.isArray(user.following)?user.following:[],username:(user.username||'').replace(/^@/,''),photoURL:user.photoURL||user.photo||'',photo:user.photo||user.photoURL||''};
+  const identity=normalizeIdentity(user.identity);
+  return {...user,followers:Array.isArray(user.followers)?user.followers:[],following:Array.isArray(user.following)?user.following:[],username:(user.username||'').replace(/^@/,''),photoURL:user.photoURL||user.photo||'',photo:user.photo||user.photoURL||'',identity,identityLabel:IDENTITY_OPTIONS[identity].label};
 }
 function normalizeWork(work){
   if(!work)return null;
@@ -773,13 +820,6 @@ let history = readJSON('shkHistory',{});
 let darkMode = !!readJSON('shkDarkMode',false);
 let followingMode = 'latest';
 let followingRangeDays = 0;
-if(currentUser && LEGACY_DEMO_EMAILS.has(String(currentUser.email||'').toLowerCase())) currentUser=null;
-if(currentUser){
-  const idx=users.findIndex(u=>u.email===currentUser.email);
-  if(idx>=0) currentUser=normalizeUser({...users[idx],...currentUser});
-  else users.push(normalizeUser(currentUser));
-}
-migratePinRecords();
 let saved = readJSON('shkSaved',[]).filter(id=>!LEGACY_DEMO_IDS.has(id));
 let drafts = readJSON('shkDrafts',[]).filter(d=>d&&!LEGACY_DEMO_EMAILS.has(String(d.email||'').toLowerCase()));
 let authMode = 'login';
@@ -791,6 +831,16 @@ let pendingAuthUser = null;
 let pinMode = 'enter';
 let pinFirst = '';
 let pinBusy = false;
+
+if(currentUser && LEGACY_DEMO_EMAILS.has(String(currentUser.email||'').toLowerCase())) currentUser=null;
+if(currentUser){
+  const idx=users.findIndex(u=>u.email===currentUser.email);
+  if(idx>=0) currentUser=normalizeUser({...users[idx],...currentUser});
+  else users.push(normalizeUser(currentUser));
+}
+sessionUnlocked=!!currentUser&&sessionStorage.getItem('shkSessionUnlocked')==='1';
+if(currentUser&&!sessionUnlocked){currentUser=null;profileEmail=null;}
+migratePinRecords();
 
 const titleMap = {
  home:['Home','The Literary Archive of a Class in Motion'],
@@ -838,7 +888,7 @@ function showPage(name){
 }
 
 function renderAll(){
- updateProfileUI(); renderHome(); renderFeed(); renderLibrary(); renderSaved(); renderMyWorks(); renderAuthors(); renderProfile(); renderFollowing(); renderHistory(); toggleCreateGate(); renderNotificationsBadge(); applyDarkMode();
+ updateProfileUI(); renderHome(); renderFeed(); renderLibrary(); renderSaved(); renderMyWorks(); renderAuthors(); renderProfile(); renderFollowing(); renderHistory(); toggleCreateGate(); renderNotificationsBadge(); applyDarkMode(); const feedbackIdentity=document.getElementById('feedbackIdentity'); if(feedbackIdentity)feedbackIdentity.textContent=identityLabelOf(currentUser).toUpperCase();
 }
 function updateProfileUI(){
  const set=(id,name,photo)=>{
@@ -871,7 +921,7 @@ function cardHTML(w){
 function feedHTML(w){
  const author=findUser(w.email); const likeOn=!!currentUser&&w.likes.includes(currentUser.email);
  const tags=(w.tags||[]).slice(0,6).map(t=>`<button class="tag" onclick="searchTag('${escapeAttr(t)}')">#${escapeHTML(t)}</button>`).join('');
- return `<article class="feed-post"><div class="author"><div class="avatar">${author?.photo?`<img src="${escapeAttr(author.photo)}" alt="">`:escapeHTML(initialsOf(w.author))}</div><div><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button><span>@${escapeHTML(usernameOf(author||{name:w.author,email:w.email||''}))} · ${escapeHTML(w.genre)}</span></div></div><div class="post-title">${escapeHTML(w.title)}</div><p class="post-text">${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions"><button class="social-btn ${likeOn?'on':''}" onclick="toggleLike('${escapeAttr(w.id)}',this)">♥ <span class="count">${w.likes.length}</span></button><button class="social-btn" onclick="openReader('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button><button class="social-btn" onclick="shareWork('${escapeAttr(w.id)}')">Share</button></div><div class="post-actions"><button class="post-action" onclick="openReader('${escapeAttr(w.id)}')">Read Full Work</button></div></article>`;
+ return `<article class="feed-post"><div class="author"><div class="avatar">${author?.photo?`<img src="${escapeAttr(author.photo)}" alt="">`:escapeHTML(initialsOf(w.author))}</div><div><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button><span>@${escapeHTML(usernameOf(author||{name:w.author,email:w.email||''}))} · ${escapeHTML(identityLabelOf(author||{}))} · ${escapeHTML(w.genre)}</span></div></div><div class="post-title">${escapeHTML(w.title)}</div><p class="post-text">${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions"><button class="social-btn ${likeOn?'on':''}" onclick="toggleLike('${escapeAttr(w.id)}',this)">♥ <span class="count">${w.likes.length}</span></button><button class="social-btn" onclick="openReader('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button><button class="social-btn" onclick="shareWork('${escapeAttr(w.id)}')">Share</button></div><div class="post-actions"><button class="post-action" onclick="openReader('${escapeAttr(w.id)}')">Read Full Work</button></div></article>`;
 }
 function renderFeed(){
  const q=(document.getElementById('feedSearch')?.value||'').toLowerCase().trim();
@@ -925,7 +975,7 @@ function followingFeedHTML(w,rank){
      <div class="avatar">${author?.photo?`<img src="${escapeAttr(author.photo)}" alt="">`:escapeHTML(initialsOf(w.author))}</div>
      <div>
        <button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button>
-       <span>@${escapeHTML(usernameOf(author||{name:w.author,email:w.email||''}))} · ${escapeHTML(w.genre)} · ${followingTimeLabel(w)}</span>
+       <span>@${escapeHTML(usernameOf(author||{name:w.author,email:w.email||''}))} · ${escapeHTML(identityLabelOf(author||{}))} · ${escapeHTML(w.genre)} · ${followingTimeLabel(w)}</span>
      </div>
    </div>
    <div class="post-title">${escapeHTML(w.title)}</div>
@@ -1024,9 +1074,59 @@ function renderAuthors(){
    const count=getUserWorks(user.email).length;
    const following=!!currentUser&&currentUser.following.includes(user.email);
    const self=currentUser&&currentUser.email===user.email;
-   return `<article class="author-card"><button class="result-link" onclick="openProfile('${escapeAttr(user.email)}')"><div class="author-big">${user.photo?`<img src="${escapeAttr(user.photo)}" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:escapeHTML(initialsOf(user.name))}</div><h4>${escapeHTML(user.name)}</h4><p>@${escapeHTML(usernameOf(user))} · ${count} published work${count===1?'':'s'}</p></button><button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${self?'You':(following?'Following':'Follow')}</button></article>`;
+   return `<article class="author-card"><button class="result-link" onclick="openProfile('${escapeAttr(user.email)}')"><div class="author-big">${user.photo?`<img src="${escapeAttr(user.photo)}" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:escapeHTML(initialsOf(user.name))}</div><h4>${escapeHTML(user.name)}</h4><p>@${escapeHTML(usernameOf(user))} · ${escapeHTML(identityLabelOf(user))} · ${count} published work${count===1?'':'s'}</p></button><button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${self?'You':(following?'Following':'Follow')}</button></article>`;
  }).join('');
 }
+function openIdentitySetup(){
+ if(!currentUser){openAccount();return;}
+ const modal=document.getElementById('identityModal');
+ const current=normalizeIdentity(currentUser.identity);
+ document.querySelectorAll('.identity-option').forEach(b=>b.classList.toggle('active',b.dataset.identity===current));
+ const first=current==='reader'?'shakespeare':current;
+ if(!document.querySelector('.identity-option.active')||current==='reader')selectIdentityOption(first);
+ else updateIdentityCodeNote();
+ document.getElementById('identityCode').value='';
+ modal.classList.add('open');
+ setTimeout(()=>document.getElementById('identityCode')?.focus(),80);
+}
+function selectIdentityOption(key){
+ if(!IDENTITY_OPTIONS[key]||key==='reader')return;
+ document.querySelectorAll('.identity-option').forEach(b=>b.classList.toggle('active',b.dataset.identity===key));
+ const note=document.getElementById('identityCodeNote');
+ if(note)note.textContent=`Enter the verification code for ${IDENTITY_OPTIONS[key].label}.`;
+ const input=document.getElementById('identityCode');
+ if(input){input.value='';input.focus();}
+}
+function selectedIdentityKey(){return document.querySelector('.identity-option.active')?.dataset.identity||''}
+function updateIdentityCodeNote(){
+ const key=selectedIdentityKey();
+ const note=document.getElementById('identityCodeNote');
+ if(note)note.textContent=key?`Enter the verification code for ${IDENTITY_OPTIONS[key].label}.`:'Select an identity, then enter its verification code.';
+}
+async function saveIdentitySetup(){
+ if(!currentUser){closeModal('identityModal');openAccount();return;}
+ const key=selectedIdentityKey();
+ const input=document.getElementById('identityCode');
+ const code=String(input?.value||'').trim();
+ if(!key){showToast('Choose an identity first.');return;}
+ const expected=IDENTITY_OPTIONS[key].code;
+ if(code.toLowerCase()!==expected.toLowerCase()){
+   if(input){input.value='';input.focus();}
+   showToast('That identity code is not correct.');
+   return;
+ }
+ const identityUser=normalizeUser({...currentUser,identity:key,identityLabel:IDENTITY_OPTIONS[key].label});
+ currentUser=identityUser;
+ const idx=users.findIndex(u=>canonicalEmail(u.email)===canonicalEmail(identityUser.email));
+ if(idx>=0)users[idx]=normalizeUser({...users[idx],...identityUser});
+ else users.push(identityUser);
+ try{if(identityUser.uid)await saveCloudUserProfile(identityUser);}catch(err){console.warn('Identity cloud sync failed:',err)}
+ saveState();
+ closeModal('identityModal');
+ renderAll();
+ showToast('Identity verified: '+IDENTITY_OPTIONS[key].label);
+}
+
 function renderProfile(){
  const root=document.getElementById('profilePage'); if(!root)return;
  if(!profileEmail){
@@ -1036,12 +1136,16 @@ function renderProfile(){
  const user=findUser(profileEmail);
  if(!user){root.innerHTML='<div class="empty"><h4>Profile not found</h4><p>This student profile is no longer available.</p></div>';return;}
  const allUserWorks=getUserWorks(user.email);
- const following=currentUser?.following.includes(user.email);
- const self=currentUser?.email===user.email;
+ const following=!!currentUser&&currentUser.following.includes(user.email);
+ const self=!!currentUser&&currentUser.email===user.email;
  const canSeeWorks=self||following||allUserWorks.every(w=>w.privacy==='public');
  const userWorks=canSeeWorks?allUserWorks.filter(w=>canReadWork(w)):[];
+ const identity=identityLabelOf(user);
+ const identityClass=normalizeIdentity(user.identity)==='reader'?'reader':'';
  const followLabel=self?'This is you':(following?'Following':'Follow');
- root.innerHTML=`<div class="profile-hero"><div class="profile-big-avatar">${user.photo?`<img src="${escapeAttr(user.photo)}" alt="Profile picture">`:escapeHTML(initialsOf(user.name))}</div><div class="profile-copy"><div class="kicker">Shakespeare Student</div><h2>${escapeHTML(user.name)}</h2><p class="profile-handle">@${escapeHTML(usernameOf(user))}</p><p>${escapeHTML(user.bio||'Student writer building a personal literature shelf in 12-SHAKESPEARE.')}</p><div class="profile-stats"><div class="profile-stat"><strong>${userWorks.length}</strong><span>Works</span></div><div class="profile-stat"><strong>${user.followers.length}</strong><span>Followers</span></div><div class="profile-stat"><strong>${user.following.length}</strong><span>Following</span></div></div></div><div class="profile-actions"><button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${followLabel}</button><button class="secondary" onclick="openGlobalSearch()">Search</button></div></div><div class="section"><div class="profile-work-head"><div><div class="kicker">Published shelf</div><h3 style="font:600 3rem 'Cormorant Garamond',serif;color:var(--wine);margin:7px 0">${escapeHTML(user.name)}'s Works</h3></div><p style="color:var(--muted);margin:0">Only literature this student has made visible to you appears here.</p></div><div class="grid3" style="margin-top:20px">${userWorks.length?userWorks.map(cardHTML).join(''):'<div class="empty"><h4>No published works yet</h4><p>This student has not published a work.</p></div>'}</div></div>`;
+ const identityAction=self&&normalizeIdentity(user.identity)==='reader'?'<button class="primary" onclick="openIdentitySetup()">Set Up Identity</button>':'';
+ const publishNote=normalizeIdentity(user.identity)==='reader'?'This account is a Reader. Verify an identity to publish literature.':'This profile can publish literature as a verified 12-SHAKESPEARE identity.';
+ root.innerHTML=`<div class="profile-hero"><div class="profile-big-avatar">${user.photoURL||user.photo?`<img src="${escapeAttr(user.photoURL||user.photo)}" alt="Profile picture">`:escapeHTML(initialsOf(user.name))}</div><div class="profile-copy"><div class="kicker">Profile identity</div><div class="identity-badge ${identityClass}">${escapeHTML(identity)}</div><h2>${escapeHTML(user.name)}</h2><p class="profile-handle">@${escapeHTML(usernameOf(user))}</p><p>${escapeHTML(user.bio||'A reader in 12-SHAKESPEARE.')}</p><div class="profile-stats"><div class="profile-stat"><strong>${userWorks.length}</strong><span>Works</span></div><div class="profile-stat"><strong>${user.followers.length}</strong><span>Followers</span></div><div class="profile-stat"><strong>${user.following.length}</strong><span>Following</span></div></div></div><div class="profile-actions">${identityAction}<button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${followLabel}</button><button class="secondary" onclick="openGlobalSearch()">Search</button></div></div><div class="section"><div class="profile-work-head"><div><div class="kicker">Published shelf</div><h3 style="font:600 3rem 'Cormorant Garamond',serif;color:var(--wine);margin:7px 0">${escapeHTML(user.name)}'s Works</h3></div><p style="color:var(--muted);margin:0">${escapeHTML(publishNote)}</p></div><div class="grid3" style="margin-top:20px">${userWorks.length?userWorks.map(cardHTML).join(''):'<div class="empty"><h4>No published works yet</h4><p>This student has not published a work.</p></div>'}</div></div>`;
 }
 function openProfile(email){
  const user=findUser(email); if(!user){showToast('Student profile not found.');return;}
@@ -1077,9 +1181,26 @@ function toggleFollow(email,btn){
 }
 
 function toggleCreateGate(){
- document.getElementById('createForm').classList.toggle('hidden',!currentUser);
- document.getElementById('loginCreateNote').classList.toggle('hidden',!!currentUser);
+ const ready=canPublish(currentUser);
+ document.getElementById('createForm').classList.toggle('hidden',!ready);
+ const note=document.getElementById('loginCreateNote');
+ note.classList.toggle('hidden',ready);
+ if(note){
+   const h=note.querySelector('h4');
+   const p=note.querySelector('p');
+   const b=note.querySelector('button');
+   if(!currentUser){
+     if(h)h.textContent='Sign in to publish';
+     if(p)p.textContent='Create or sign in to a reader account first, then set up an author identity to publish your work.';
+     if(b)b.textContent='Open Account';
+   }else{
+     if(h)h.textContent='Reader mode — publishing is locked';
+     if(p)p.textContent='Set up a verified identity on your profile before you can post literature.';
+     if(b){b.textContent='Set Up Identity';b.onclick=()=>openIdentitySetup();}
+   }
+ }
 }
+
 function setFeedFilter(btn,val){feedFilter=val;document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderFeed()}
 function toggleSaved(id,btn){
  if(saved.includes(id)){saved=saved.filter(x=>x!==id);if(btn)btn.textContent='☆';showToast('Removed from saved works.')}
@@ -1088,12 +1209,14 @@ function toggleSaved(id,btn){
 }
 function saveDraft(){
  if(!currentUser){openAccount();return}
+ if(!canPublish(currentUser)){openIdentitySetup();return}
  const draft={id:'draft-'+Date.now(),email:currentUser.email,title:document.getElementById('postTitle').value||'Untitled',genre:document.getElementById('postGenre').value,excerpt:document.getElementById('postExcerpt').value||'',content:document.getElementById('postContent').value||''};
  drafts.unshift(draft);saveState();renderMyWorks();showToast('Draft saved.');showPage('myworks');
 }
 let editingWorkId=null;
 document.getElementById('createForm').addEventListener('submit',function(e){
  e.preventDefault();if(!currentUser){openAccount();return}
+ if(!canPublish(currentUser)){openIdentitySetup();return}
  const now=Date.now();
  const payload={title:document.getElementById('postTitle').value.trim(),author:currentUser.name,email:currentUser.email,genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
  if(editingWorkId){const idx=works.findIndex(w=>w.id===editingWorkId&&w.email===currentUser.email);if(idx<0){showToast('Work not found.');return}works[idx]=normalizeWork({...works[idx],...payload,updatedAt:now});showToast('Your work was updated.');editingWorkId=null;}else{works.unshift(normalizeWork({id:'work-'+now,...payload,likes:[],comments:[],views:0,createdAt:now}));showToast('Your literature has been published.');}
@@ -1106,7 +1229,7 @@ function openReader(id){
  const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
  if(!canReadWork(w)){showToast('This work is not currently visible to your account.');return;}
  readerWork=w;w.views=(w.views||0)+1;rememberRead(w);saveState();
- document.getElementById('readerGenre').textContent=w.genre.toUpperCase();document.getElementById('readerTitle').textContent=w.title;document.getElementById('readerBy').textContent='by '+w.author+' · '+new Date(w.createdAt||Date.now()).getFullYear();
+ const workAuthor=findUser(w.email)||{};document.getElementById('readerGenre').textContent=w.genre.toUpperCase();document.getElementById('readerIdentity').textContent=identityLabelOf(workAuthor).toUpperCase();document.getElementById('readerIdentity').classList.toggle('reader',normalizeIdentity(workAuthor.identity)==='reader');document.getElementById('readerTitle').textContent=w.title;document.getElementById('readerBy').textContent='by '+w.author+' · '+new Date(w.createdAt||Date.now()).getFullYear();
  document.getElementById('readerSubmeta').textContent=`${w.views||0} views · ${w.likes.length} likes · ${w.comments.length} comments · ${w.privacy==='followers'?'Followers only':w.privacy==='private'?'Private':'Public'}`;
  document.getElementById('readerBody').innerHTML=w.content.split(/\\n+/).map(p=>'<p>'+escapeHTML(p)+'</p>').join('');
  renderReaderSocial();renderComments();showPage('reader');
@@ -1143,7 +1266,7 @@ function renderGlobalSearch(){
  let html='';
  if(foundUsers.length){
    html+='<div class="search-group"><div class="search-group-head"><strong>Student profiles</strong><span>'+foundUsers.length+' result'+(foundUsers.length===1?'':'s')+'</span></div>';
-   html+=foundUsers.map(u=>{const followed=currentUser?.following.includes(u.email);const self=currentUser?.email===u.email;return `<div class="search-result"><button class="result-link" onclick="openProfile('${escapeAttr(u.email)}');closeModal('globalSearchModal')"><div class="search-result-main"><div class="avatar">${u.photo?`<img src="${escapeAttr(u.photo)}" alt="">`:escapeHTML(initialsOf(u.name))}</div><div class="search-result-copy"><div class="result-kind">Student profile</div><strong>${escapeHTML(u.name)}</strong><span>@${escapeHTML(usernameOf(u))} · ${getUserWorks(u.email).length} work${getUserWorks(u.email).length===1?'':'s'}</span></div></div></button><button class="follow ${followed?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(u.email)}',this)">${self?'You':(followed?'Following':'Follow')}</button></div>`}).join('')+'</div>';
+   html+=foundUsers.map(u=>{const followed=currentUser?.following.includes(u.email);const self=currentUser?.email===u.email;return `<div class="search-result"><button class="result-link" onclick="openProfile('${escapeAttr(u.email)}');closeModal('globalSearchModal')"><div class="search-result-main"><div class="avatar">${u.photo?`<img src="${escapeAttr(u.photo)}" alt="">`:escapeHTML(initialsOf(u.name))}</div><div class="search-result-copy"><div class="result-kind">Student profile</div><strong>${escapeHTML(u.name)}</strong><span>@${escapeHTML(usernameOf(u))} · ${escapeHTML(identityLabelOf(u))} · ${getUserWorks(u.email).length} work${getUserWorks(u.email).length===1?'':'s'}</span></div></div></button><button class="follow ${followed?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(u.email)}',this)">${self?'You':(followed?'Following':'Follow')}</button></div>`}).join('')+'</div>';
  }
  if(foundWorks.length){
    html+='<div class="search-group"><div class="search-group-head"><strong>Works & posts</strong><span>'+foundWorks.length+' result'+(foundWorks.length===1?'':'s')+'</span></div>';
@@ -1211,18 +1334,22 @@ async function googleLogin(){
     let n=2;
     while(users.some(u=>canonicalEmail(u.email)!==email&&usernameOf(u).toLowerCase()===username.toLowerCase())){username=usernameBase+n;n++;}
 
+    const cloudProfile=await readCloudUserProfile(g.uid);
+    const cloudData=cloudProfile.data||{};
     pendingAuthUser=normalizeUser({
       ...existing,
-      name:g.displayName||existing?.name||'Student Author',
-      username,
+      ...cloudData,
+      name:g.displayName||existing?.name||cloudData.displayName||'Student Author',
+      username:existing?.username||cloudData.username||username,
       email,
-      photoURL:g.photoURL||existing?.photoURL||existing?.photo||'',
-      photo:g.photoURL||existing?.photo||'',
+      photoURL:g.photoURL||existing?.photoURL||existing?.photo||cloudData.photoURL||'',
+      photo:g.photoURL||existing?.photo||cloudData.photoURL||'',
       provider:'google',
       uid:g.uid,
-      bio:existing?.bio||'Student writer in 12-SHAKESPEARE.',
+      bio:existing?.bio||cloudData.bio||'Student writer in 12-SHAKESPEARE.',
       followers:existing?.followers||[],
-      following:existing?.following||[]
+      following:existing?.following||[],
+      identity:cloudData.identity||existing?.identity||'reader'
     });
 
     // Firebase tells us whether this Google identity is genuinely new.
@@ -1320,6 +1447,17 @@ async function writeCloudPin(uid,pinHash){
   },{merge:true});
 }
 
+async function readCloudUserProfile(uid){
+  if(!uid||!window.firebaseDB||!window.firebaseDoc||!window.firebaseGetDoc)return {ok:false,data:null};
+  try{
+    const snap=await window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB,'users',uid));
+    return {ok:true,data:snap.exists()?snap.data():null};
+  }catch(err){
+    console.warn('Cloud profile lookup failed:',err);
+    return {ok:false,data:null};
+  }
+}
+
 async function saveCloudUserProfile(user){
   if(!user?.uid || !window.firebaseDB || !window.firebaseDoc || !window.firebaseSetDoc)return;
   const ref=window.firebaseDoc(window.firebaseDB,'users',user.uid);
@@ -1337,6 +1475,8 @@ async function saveCloudUserProfile(user){
     photoURL:user.photoURL||user.photo||'',
     provider:user.provider||'google',
     bio:user.bio||'Student writer in 12-SHAKESPEARE.',
+    identity:normalizeIdentity(user.identity),
+    identityLabel:identityLabelOf(user),
     updatedAt:window.firebaseServerTimestamp(),
     createdAt
   },{merge:true});
@@ -1485,21 +1625,130 @@ async function finishPendingAuth(){
   currentUser=normalizeUser({...u,pinHash:finalHash});
   pendingAuthUser=null;
   sessionUnlocked=true;
+  sessionStorage.setItem('shkSessionUnlocked','1');
   saveState();
   document.getElementById('pinModal').classList.remove('open');
   renderAll();
   showToast('Account ready. Welcome, '+getName()+'!');
 }
 
-function logoutFromPin(){pendingAuthUser=null;pinFirst='';pinBusy=false;sessionUnlocked=false;if(window.firebaseAuth&&window.firebaseSignOut)window.firebaseSignOut(window.firebaseAuth).catch(()=>{});document.getElementById('pinModal').classList.remove('open');document.getElementById('accountModal').classList.add('open');switchAuth('login');}
-function logout(){currentUser=null;pendingAuthUser=null;sessionUnlocked=false;if(window.firebaseAuth&&window.firebaseSignOut)window.firebaseSignOut(window.firebaseAuth).catch(()=>{});saveState();closeModal('accountModal');closeModal('pinModal');renderAll();showToast('You are signed out.')}
+function logoutFromPin(){pendingAuthUser=null;pinFirst='';pinBusy=false;sessionUnlocked=false;sessionStorage.removeItem('shkSessionUnlocked');if(window.firebaseAuth&&window.firebaseSignOut)window.firebaseSignOut(window.firebaseAuth).catch(()=>{});document.getElementById('pinModal').classList.remove('open');document.getElementById('accountModal').classList.add('open');switchAuth('login');}
+function logout(){currentUser=null;pendingAuthUser=null;sessionUnlocked=false;sessionStorage.removeItem('shkSessionUnlocked');if(window.firebaseAuth&&window.firebaseSignOut)window.firebaseSignOut(window.firebaseAuth).catch(()=>{});saveState();closeModal('accountModal');closeModal('pinModal');renderAll();showToast('You are signed out.')}
 function submitFeedback(e){e.preventDefault();e.target.reset();showToast('Feedback submitted.')}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.remove('show'),2300)}
 function toggleSidebar(){document.body.classList.toggle('menu-open')}
 function escapeHTML(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function escapeAttr(v){return escapeHTML(v).replace(/`/g,'&#096;')}
+
+// Richer UI sounds for sidebar navigation.
+// WebAudio is used so no external sound files or storage are required.
+let shkAudioContext=null;
+let shkSoundUnlocked=false;
+let shkLastHoverSound=0;
+
+function getShkAudioContext(){
+  if(!shkAudioContext){
+    const Ctx=window.AudioContext||window.webkitAudioContext;
+    if(!Ctx)return null;
+    try{shkAudioContext=new Ctx()}catch(err){return null}
+  }
+  return shkAudioContext;
+}
+
+async function unlockShkSounds(){
+  const ctx=getShkAudioContext();
+  if(!ctx)return;
+  try{
+    if(ctx.state==='suspended')await ctx.resume();
+    shkSoundUnlocked=ctx.state==='running';
+  }catch(err){
+    shkSoundUnlocked=false;
+  }
+}
+
+function playShkTone(kind){
+  const ctx=getShkAudioContext();
+  if(!ctx||!shkSoundUnlocked||ctx.state!=='running')return;
+  const now=ctx.currentTime;
+
+  if(kind==='hover'){
+    // Brighter, clearly audible navigation tick.
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.type='triangle';
+    osc.frequency.setValueAtTime(780,now);
+    osc.frequency.exponentialRampToValueAtTime(980,now+0.055);
+    gain.gain.setValueAtTime(0.0001,now);
+    gain.gain.exponentialRampToValueAtTime(0.065,now+0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001,now+0.095);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now+0.105);
+    return;
+  }
+
+  // Fuller two-part click for a more noticeable press sound.
+  const osc1=ctx.createOscillator();
+  const gain1=ctx.createGain();
+  osc1.type='square';
+  osc1.frequency.setValueAtTime(360,now);
+  osc1.frequency.exponentialRampToValueAtTime(560,now+0.065);
+  gain1.gain.setValueAtTime(0.0001,now);
+  gain1.gain.exponentialRampToValueAtTime(0.095,now+0.005);
+  gain1.gain.exponentialRampToValueAtTime(0.0001,now+0.11);
+  osc1.connect(gain1);
+  gain1.connect(ctx.destination);
+  osc1.start(now);
+  osc1.stop(now+0.12);
+
+  const osc2=ctx.createOscillator();
+  const gain2=ctx.createGain();
+  osc2.type='sine';
+  osc2.frequency.setValueAtTime(820,now+0.018);
+  osc2.frequency.exponentialRampToValueAtTime(660,now+0.09);
+  gain2.gain.setValueAtTime(0.0001,now+0.018);
+  gain2.gain.exponentialRampToValueAtTime(0.045,now+0.026);
+  gain2.gain.exponentialRampToValueAtTime(0.0001,now+0.13);
+  osc2.connect(gain2);
+  gain2.connect(ctx.destination);
+  osc2.start(now+0.018);
+  osc2.stop(now+0.14);
+}
+
+function initShkNavigationSounds(){
+  const navItems=document.querySelectorAll('.nav-btn');
+  if(!navItems.length)return;
+
+  // The first real interaction unlocks audio in browsers that block autoplay.
+  const unlockOnce=()=>{
+    unlockShkSounds();
+    document.removeEventListener('pointerdown',unlockOnce,true);
+    document.removeEventListener('keydown',unlockOnce,true);
+  };
+  document.addEventListener('pointerdown',unlockOnce,true);
+  document.addEventListener('keydown',unlockOnce,true);
+
+  navItems.forEach(btn=>{
+    btn.addEventListener('pointerenter',()=>{
+      const now=performance.now();
+      if(now-shkLastHoverSound<110)return;
+      shkLastHoverSound=now;
+      playShkTone('hover');
+    });
+  });
+
+  // Capture the click so the feedback tone fires before navigation/rendering.
+  document.addEventListener('click',(e)=>{
+    const btn=e.target.closest?.('.nav-btn');
+    if(!btn)return;
+    unlockShkSounds();
+    playShkTone('click');
+  },true);
+}
+
 function switchAuthDefault(){switchAuth('login')}
-switchAuthDefault();applyDarkMode();renderAll();
+switchAuthDefault();applyDarkMode();renderAll();initShkNavigationSounds();
 </script>
 </body>
 </html>
