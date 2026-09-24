@@ -201,7 +201,7 @@ a{text-decoration:none;color:inherit}
 .pin-help{font-size:.66rem;color:#A0968E;line-height:1.5;margin-top:8px}
 .pin-nav{display:flex;justify-content:center;gap:8px;margin-top:10px}
 .pin-back{border:1px solid var(--line);background:#fff;color:var(--wine);padding:7px 10px;border-radius:9px;font-size:.68rem;font-weight:800}
-.pin-back:hover{transform:translateY(-1px)}
+.pin-back:hover{transform:translateY(-1px);background:#F7F2ED}.pin-back:focus-visible{outline:3px solid rgba(179,138,82,.25);outline-offset:2px}
 .pin-switch{border:0;background:transparent;color:var(--burgundy);font-size:.68rem;font-weight:800;margin-top:8px}
 .pin-lock{width:42px;height:42px;border-radius:12px;margin:0 auto 10px;background:#F4EEE8;color:var(--wine);display:grid;place-items:center}
 @keyframes pinFloat{0%,100%{translate:0 0}50%{translate:0 -5px}}
@@ -647,7 +647,7 @@ a{text-decoration:none;color:inherit}
     </div>
     <div class="pin-help" id="pinHelp">Tap the code area and enter 4 digits.</div>
     <div class="pin-nav">
-      <button class="pin-back hidden" id="pinBack" type="button" onclick="backToCreatePin()">← Back</button>
+      <button class="pin-back hidden" id="pinBack" type="button" onclick="backToCreatePin()" aria-label="Back to Create PIN">← Back to Create PIN</button>
     </div>
     <button class="pin-switch" type="button" onclick="logoutFromPin()">Use another account</button>
   </div>
@@ -661,7 +661,7 @@ a{text-decoration:none;color:inherit}
   window.firebaseReady = (async () => {
     try {
       const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js");
-      const { getAuth, GoogleAuthProvider, signInWithPopup, signOut } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
+      const { getAuth, GoogleAuthProvider, signInWithPopup, signOut, getAdditionalUserInfo } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
       const { getFirestore, doc, getDoc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js");
       const firebaseConfig = {
         apiKey: "AIzaSyDlfOgtbipWy83ItjN7rVVp-guAYEVkIy0",
@@ -686,8 +686,9 @@ a{text-decoration:none;color:inherit}
       window.firebaseGoogleProvider = firebaseGoogleProvider;
       window.firebaseSignInWithPopup = signInWithPopup;
       window.firebaseSignOut = signOut;
+      window.firebaseGetAdditionalUserInfo = getAdditionalUserInfo;
       window.firebaseReadyState = {ok:true,projectId:firebaseConfig.projectId};
-      return {firebaseApp,firebaseAuth,firebaseDB,firebaseGoogleProvider,signInWithPopup,signOut};
+      return {firebaseApp,firebaseAuth,firebaseDB,firebaseGoogleProvider,signInWithPopup,signOut,getAdditionalUserInfo};
     } catch(error) {
       window.firebaseReadyState = {ok:false,error:error?.message||String(error)};
       console.error("Firebase initialization failed:",error);
@@ -1185,82 +1186,160 @@ async function submitAuth(e){
  }
  const user=users.find(u=>canonicalEmail(u.email)===email&&u.password===password);
  if(!user){showToast('Email or password is incorrect.');return}
- pendingAuthUser=normalizeUser(user); const savedHash=storedPinHash(pendingAuthUser); if(savedHash) pendingAuthUser.pinHash=savedHash; closeModal('accountModal'); openPinGate(savedHash?'enter':'setup',pendingAuthUser);
+ pendingAuthUser=normalizeUser(user); const savedHash=storedPinHash(pendingAuthUser); if(savedHash) pendingAuthUser.pinHash=savedHash;
+ closeModal('accountModal');
+ openPinGate(savedHash?'enter':'setup',pendingAuthUser);
 }
 async function googleLogin(){
   closeModal('accountModal');
   try{
     if(window.firebaseReady) await window.firebaseReady;
-    if(!window.firebaseAuth||!window.firebaseSignInWithPopup||!window.firebaseGoogleProvider){
-      throw Object.assign(new Error('Firebase Authentication SDK is unavailable.'),{code:'firebase/not-initialized'});
+    if(!window.firebaseAuth||!window.firebaseSignInWithPopup||!window.firebaseGoogleProvider||!window.firebaseDB){
+      throw Object.assign(new Error('Firebase is not fully initialized.'),{code:'firebase/not-initialized'});
     }
+
     const credential=await window.firebaseSignInWithPopup(window.firebaseAuth,window.firebaseGoogleProvider);
     const g=credential.user;
-    const email=String(g.email||'').toLowerCase();
+    const email=canonicalEmail(g.email);
+    const additionalUserInfo=window.firebaseGetAdditionalUserInfo ? window.firebaseGetAdditionalUserInfo(credential) : null;
+    const isBrandNewAccount=!!additionalUserInfo?.isNewUser;
     if(!email) throw Object.assign(new Error('Google did not return an email address.'),{code:'auth/missing-email'});
+
     const existing=users.find(u=>canonicalEmail(u.email)===email);
     const usernameBase=(email.split('@')[0]||'student').toLowerCase().replace(/[^a-z0-9_]+/g,'').slice(0,18)||'student';
     let username=existing?usernameOf(existing):usernameBase;
     let n=2;
-    while(users.some(u=>u.email!==email&&usernameOf(u).toLowerCase()===username.toLowerCase())){username=usernameBase+n;n++;}
-    pendingAuthUser=normalizeUser({...existing,name:g.displayName||existing?.name||'Student Author',username,email,photoURL:g.photoURL||existing?.photoURL||existing?.photo||'',photo:g.photoURL||existing?.photo||existing?.photo||'',provider:'google',uid:g.uid,bio:existing?.bio||'Student writer in 12-SHAKESPEARE.',followers:existing?.followers||[],following:existing?.following||[]});
+    while(users.some(u=>canonicalEmail(u.email)!==email&&usernameOf(u).toLowerCase()===username.toLowerCase())){username=usernameBase+n;n++;}
+
+    pendingAuthUser=normalizeUser({
+      ...existing,
+      name:g.displayName||existing?.name||'Student Author',
+      username,
+      email,
+      photoURL:g.photoURL||existing?.photoURL||existing?.photo||'',
+      photo:g.photoURL||existing?.photo||'',
+      provider:'google',
+      uid:g.uid,
+      bio:existing?.bio||'Student writer in 12-SHAKESPEARE.',
+      followers:existing?.followers||[],
+      following:existing?.following||[]
+    });
+
+    // Firebase tells us whether this Google identity is genuinely new.
+    // That is the decision point for Create PIN vs Enter PIN.
+    if(isBrandNewAccount){
+      pendingAuthUser.pinHash='';
+      openPinGate('setup',pendingAuthUser);
+      return;
+    }
+
+    // Existing Google account: load the PIN saved in Firestore.
     const cloudPin=await readCloudPin(g.uid,email);
     if(!cloudPin.ok){
       document.getElementById('accountModal').classList.add('open');
-      showToast('Your account is signed in, but the PIN could not be verified. Please try again.');
+      showToast("We couldn't verify this account's PIN right now. Please try again.");
       return;
     }
-    pendingAuthUser.pinHash=cloudPin.pinHash||'';
-    openPinGate(pendingAuthUser.pinHash?'enter':'setup',pendingAuthUser);
+    if(!cloudPin.pinHash){
+      // This is an older/incomplete account that has no PIN record yet.
+      // Do not silently treat it as a brand-new account.
+      document.getElementById('accountModal').classList.add('open');
+      showToast('This existing account has no saved PIN yet. Create its PIN once, then future logins will use PIN only.');
+      return;
+    }
+
+    pendingAuthUser.pinHash=cloudPin.pinHash;
+    openPinGate('enter',pendingAuthUser);
   }catch(err){
     console.error('Google Sign-In Error:',err);
     document.getElementById('accountModal').classList.add('open');
     const code=err?.code||'unknown-error';
     const friendly={
-      'auth/unauthorized-domain':'This website address is not authorized in Firebase. Confirm 127.0.0.1 and localhost are in Authorized domains.',
+      'auth/unauthorized-domain':'This website address is not authorized in Firebase. Confirm catshakespeare.github.io is in Authorized domains.',
       'auth/popup-blocked':'The browser blocked the Google popup. Allow popups for this site and try again.',
       'auth/popup-closed-by-user':'The Google sign-in window was closed before finishing.',
       'auth/cancelled-popup-request':'Another Google sign-in popup is already active.',
       'auth/operation-not-allowed':'Google sign-in is not enabled in Firebase Authentication.',
       'auth/invalid-api-key':'The Firebase API key in the HTML is invalid.',
       'auth/invalid-oauth-client-id':'The Google OAuth client configuration needs to be refreshed in Firebase.',
-      'firebase/not-initialized':'Firebase did not initialize. Check the browser internet connection and Firebase configuration.',
-      'auth/internal-error':'Firebase returned an internal authentication error. Check the error details in the message below.'
+      'firebase/not-initialized':'Firebase did not initialize completely. Refresh the page and try again.',
+      'auth/internal-error':'Firebase returned an internal authentication error.'
     };
     showToast(friendly[code]||('Firebase error '+code+(err?.message?': '+err.message:'')));
   }
 }
+function cloudSecurityRef(uid){
+  return window.firebaseDoc(window.firebaseDB,'users',uid,'private','security');
+}
+
 async function readCloudPin(uid,email){
   if(!uid || !window.firebaseDB || !window.firebaseDoc || !window.firebaseGetDoc){
     return {ok:false,available:false,pinHash:'',error:'Cloud security is not available for this account.'};
   }
   try{
-    const ref=window.firebaseDoc(window.firebaseDB,'users',uid,'private','security','account');
+    const ref=cloudSecurityRef(uid);
     const snap=await window.firebaseGetDoc(ref);
     if(snap.exists()){
       const data=snap.data()||{};
       return {ok:true,available:true,pinHash:String(data.pinHash||'')};
     }
+
+    // One-time migration for any PIN that was previously stored locally.
     const localUser=users.find(u=>canonicalEmail(u.email)===canonicalEmail(email));
     const localHash=String(localUser?.pinHash||storedPinHash(localUser)||'');
-    if(localHash){
+    if(localHash && window.firebaseSetDoc){
       try{
-        await window.firebaseSetDoc(ref,{pinHash:localHash,pinVersion:1,updatedAt:window.firebaseServerTimestamp()},{merge:true});
+        await window.firebaseSetDoc(ref,{
+          pinHash:localHash,
+          pinVersion:1,
+          updatedAt:window.firebaseServerTimestamp()
+        },{merge:true});
         return {ok:true,available:true,pinHash:localHash};
       }catch(migrateErr){
         console.warn('Could not migrate local PIN to Firestore:',migrateErr);
       }
     }
+
+    // No document means this account has never created a PIN.
     return {ok:true,available:true,pinHash:''};
   }catch(err){
     console.error('Firestore PIN lookup failed:',err);
     return {ok:false,available:true,pinHash:'',error:err?.message||String(err)};
   }
 }
+
 async function writeCloudPin(uid,pinHash){
-  if(!uid || !window.firebaseDB || !window.firebaseDoc || !window.firebaseSetDoc) throw new Error('Cloud security is not available.');
-  const ref=window.firebaseDoc(window.firebaseDB,'users',uid,'private','security','account');
-  await window.firebaseSetDoc(ref,{pinHash:String(pinHash),pinVersion:1,updatedAt:window.firebaseServerTimestamp()},{merge:true});
+  if(!uid || !window.firebaseDB || !window.firebaseDoc || !window.firebaseSetDoc){
+    throw new Error('Cloud security is not available.');
+  }
+  const ref=cloudSecurityRef(uid);
+  await window.firebaseSetDoc(ref,{
+    pinHash:String(pinHash),
+    pinVersion:1,
+    updatedAt:window.firebaseServerTimestamp()
+  },{merge:true});
+}
+
+async function saveCloudUserProfile(user){
+  if(!user?.uid || !window.firebaseDB || !window.firebaseDoc || !window.firebaseSetDoc)return;
+  const ref=window.firebaseDoc(window.firebaseDB,'users',user.uid);
+  let createdAt=window.firebaseServerTimestamp();
+  try{
+    const snap=await window.firebaseGetDoc(ref);
+    if(snap.exists()) createdAt=snap.data()?.createdAt || createdAt;
+  }catch(_e){/* profile data is auxiliary; PIN remains the critical step */}
+
+  await window.firebaseSetDoc(ref,{
+    uid:user.uid,
+    displayName:user.name||'Student Author',
+    username:usernameOf(user),
+    email:canonicalEmail(user.email),
+    photoURL:user.photoURL||user.photo||'',
+    provider:user.provider||'google',
+    bio:user.bio||'Student writer in 12-SHAKESPEARE.',
+    updatedAt:window.firebaseServerTimestamp(),
+    createdAt
+  },{merge:true});
 }
 
 async function hashPin(pin){const data=new TextEncoder().encode('12SHAKESPEARE::PIN::'+pin);const digest=await crypto.subtle.digest('SHA-256',data);return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('')}
@@ -1289,45 +1368,111 @@ function focusPinInput(){const i=document.getElementById('pinInput');if(i){i.foc
 function updatePinSlots(value){document.querySelectorAll('.pin-slot').forEach((slot,i)=>{const char=value[i]||'';slot.textContent=char;slot.classList.toggle('filled',!!char)})}
 function handlePinKeydown(e){if(e.key==='Escape'){e.preventDefault();return}if(e.key==='Enter'&&document.getElementById('pinInput').value.length===4)processPinEntry()}
 function handlePinInput(e){const input=e.target;input.value=input.value.replace(/\D/g,'').slice(0,4);updatePinSlots(input.value);if(input.value.length===4&&!pinBusy)setTimeout(processPinEntry,220)}
-async function processPinEntry(){if(pinBusy)return;const pin=document.getElementById('pinInput').value;if(pin.length!==4)return;pinBusy=true;const modal=document.getElementById('pinModal');
+async function processPinEntry(){
+  if(pinBusy)return;
+  const pin=document.getElementById('pinInput').value;
+  if(pin.length!==4)return;
+  pinBusy=true;
+  const modal=document.getElementById('pinModal');
+
   if(pinMode==='setup'){
-    if(!pinFirst){pinFirst=pin;pinMode='confirm';updatePinScreen();document.getElementById('pinInput').value='';updatePinSlots('');pinBusy=false;setTimeout(focusPinInput,120);return}
-    if(pin!==pinFirst){pinFirst='';pinMode='setup';updatePinScreen();modal.classList.add('error');document.getElementById('pinHelp').textContent='The PINs did not match. Create your PIN again, then double-check it.';document.getElementById('pinInput').value='';updatePinSlots('');pinBusy=false;setTimeout(()=>{modal.classList.remove('error');focusPinInput()},430);return}
+    if(!pinFirst){
+      pinFirst=pin;
+      pinMode='confirm';
+      updatePinScreen();
+      document.getElementById('pinInput').value='';
+      updatePinSlots('');
+      pinBusy=false;
+      setTimeout(focusPinInput,120);
+      return;
+    }
+
+    if(pin!==pinFirst){
+      pinFirst='';
+      pinMode='setup';
+      updatePinScreen();
+      modal.classList.add('error');
+      document.getElementById('pinHelp').textContent='The PINs did not match. Create your PIN again, then double-check it.';
+      document.getElementById('pinInput').value='';
+      updatePinSlots('');
+      pinBusy=false;
+      setTimeout(()=>{modal.classList.remove('error');focusPinInput()},430);
+      return;
+    }
+
     const newPinHash=await hashPin(pin);
     try{
-      if(pendingAuthUser?.uid) await writeCloudPin(pendingAuthUser.uid,newPinHash);
+      // Google accounts must save the PIN to Firestore before access is granted.
+      if(pendingAuthUser?.uid){
+        await writeCloudPin(pendingAuthUser.uid,newPinHash);
+      }
       pendingAuthUser.pinHash=newPinHash;
       savePinHash(pendingAuthUser,newPinHash);
       await finishPendingAuth();
     }catch(err){
       console.error('Could not save PIN:',err);
       modal.classList.add('error');
-      document.getElementById('pinHelp').textContent='We could not save your PIN. Check your connection and try again.';
+      document.getElementById('pinHelp').textContent='PIN was not saved yet. Please try again.';
+      document.getElementById('pinInput').value='';
+      updatePinSlots('');
       pinBusy=false;
-      setTimeout(()=>modal.classList.remove('error'),500);
+      setTimeout(()=>{modal.classList.remove('error');focusPinInput()},500);
     }
     return;
   }
+
   const expected=storedPinHash(pendingAuthUser);
-  if(expected){pendingAuthUser.pinHash=expected;}
-  else if(pendingAuthUser?.uid){
-    pinBusy=false;
+  if(!expected && pendingAuthUser?.uid){
+    // A Google account without a saved PIN should not be silently reset to a
+    // different flow during normal login. Tell the user to create it only when
+    // the account is truly new, as determined during Google sign-in.
     modal.classList.add('error');
-    document.getElementById('pinHelp').textContent='No saved PIN was found for this account. Use Create PIN only when setting up a brand-new account.';
-    document.getElementById('pinInput').value='';updatePinSlots('');
+    document.getElementById('pinHelp').textContent='No saved PIN was found for this Google account. Please sign in again to set up the PIN.';
+    document.getElementById('pinInput').value='';
+    updatePinSlots('');
+    pinBusy=false;
+    setTimeout(()=>{modal.classList.remove('error');focusPinInput()},450);
+    return;
+  }
+
+  if(!expected){
+    pinMode='setup';
+    pinFirst='';
+    pinBusy=false;
+    updatePinScreen();
+    document.getElementById('pinInput').value='';
+    updatePinSlots('');
+    setTimeout(focusPinInput,90);
+    return;
+  }
+
+  const actual=await hashPin(pin);
+  if(actual!==expected){
+    modal.classList.add('error');
+    document.getElementById('pinHelp').textContent='Incorrect PIN. Try again.';
+    document.getElementById('pinInput').value='';
+    updatePinSlots('');
+    pinBusy=false;
     setTimeout(()=>{modal.classList.remove('error');focusPinInput()},430);
     return;
   }
-  else {pinMode='setup';pinFirst='';pinBusy=false;updatePinScreen();return}
-  const actual=await hashPin(pin);if(actual!==expected){modal.classList.add('error');document.getElementById('pinHelp').textContent='Incorrect PIN. Try again.';document.getElementById('pinInput').value='';updatePinSlots('');pinBusy=false;setTimeout(()=>{modal.classList.remove('error');focusPinInput()},430);return}
+
   await finishPendingAuth();
 }
+
 async function finishPendingAuth(){
   if(!pendingAuthUser)return;
   const email=canonicalEmail(pendingAuthUser.email);
   const persistedPinHash=storedPinHash(pendingAuthUser);
   const finalHash=persistedPinHash||pendingAuthUser.pinHash||'';
   const u=normalizeUser({...pendingAuthUser,email,pinHash:finalHash});
+
+  // Save the public profile record after the PIN succeeds. This is best-effort;
+  // the PIN gate remains tied to the private security record.
+  if(u.uid){
+    try{await saveCloudUserProfile(u)}catch(err){console.warn('Profile sync failed:',err)}
+  }
+
   if(finalHash)savePinHash(u,finalHash);
   const idx=users.findIndex(x=>canonicalEmail(x.email)===email);
   if(idx>=0)users[idx]=normalizeUser({...users[idx],...u,pinHash:finalHash});
@@ -1338,8 +1483,9 @@ async function finishPendingAuth(){
   saveState();
   document.getElementById('pinModal').classList.remove('open');
   renderAll();
-  showToast('Welcome, '+getName()+'!');
+  showToast('Account ready. Welcome, '+getName()+'!');
 }
+
 function logoutFromPin(){pendingAuthUser=null;pinFirst='';pinBusy=false;sessionUnlocked=false;if(window.firebaseAuth&&window.firebaseSignOut)window.firebaseSignOut(window.firebaseAuth).catch(()=>{});document.getElementById('pinModal').classList.remove('open');document.getElementById('accountModal').classList.add('open');switchAuth('login');}
 function logout(){currentUser=null;pendingAuthUser=null;sessionUnlocked=false;if(window.firebaseAuth&&window.firebaseSignOut)window.firebaseSignOut(window.firebaseAuth).catch(()=>{});saveState();closeModal('accountModal');closeModal('pinModal');renderAll();showToast('You are signed out.')}
 function submitFeedback(e){e.preventDefault();e.target.reset();showToast('Feedback submitted.')}
