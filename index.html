@@ -96,6 +96,7 @@ a{text-decoration:none;color:inherit}
   padding:12px 16px;border-radius:11px;font-weight:750;transition:.2s var(--ease)
 }
 .primary{border:0;background:var(--wine);color:#fff;box-shadow:0 9px 18px rgba(50,25,27,.16)}
+.primary:disabled{opacity:.55;cursor:not-allowed;transform:none!important;box-shadow:none}
 .secondary{border:1px solid var(--line);background:#fff;color:var(--wine)}
 
 /* Unified action-button design: match Edit/Secondary buttons */
@@ -520,7 +521,8 @@ a{text-decoration:none;color:inherit}
             <div class="field full"><label>Excerpt</label><textarea id="postExcerpt" required placeholder="A short introduction readers will see in the feed..."></textarea></div>
             <div class="field full"><label>Full Literary Work</label><textarea id="postContent" required placeholder="Write your complete work here..."></textarea></div>
             <div class="field full"><label>Cover image URL (optional)</label><input id="postCover" placeholder="https://..."></div>
-            <div class="actions"><button class="secondary" type="button" onclick="saveDraft()">Save Draft</button><button class="primary" type="submit">Publish Literature</button></div>
+            <div class="actions"><button class="secondary" type="button" onclick="saveDraft()">Save Draft</button><button class="primary" id="publishLiteratureBtn" type="submit">Publish Literature</button></div>
+            <p id="publishGateHint" class="empty hidden" style="padding:4px 0 0;text-align:left;font-size:.67rem"></p>
           </form>
           <div id="loginCreateNote" class="empty hidden"><h4>Sign in to publish</h4><p>Create a reader account first, then return to this page to publish your work.</p><button class="primary" onclick="openAccount()">Open Account</button></div>
         </div>
@@ -1324,22 +1326,31 @@ function toggleFollow(email,btn){
 }
 
 function toggleCreateGate(){
- const ready=canPublish(currentUser);
- document.getElementById('createForm').classList.toggle('hidden',!ready);
+ const signedIn=!!currentUser;
+ const verified=canPublish(currentUser);
+ const form=document.getElementById('createForm');
  const note=document.getElementById('loginCreateNote');
- note.classList.toggle('hidden',ready);
+ const publishBtn=document.getElementById('publishLiteratureBtn');
+ const hint=document.getElementById('publishGateHint');
+ if(form)form.classList.toggle('hidden',!signedIn);
+ if(note)note.classList.toggle('hidden',signedIn);
+ if(publishBtn){
+   publishBtn.disabled=!verified;
+   publishBtn.title=verified?'Publish literature':'Verify an author identity before publishing';
+   publishBtn.textContent=verified?'Publish Literature':'Verify Identity to Publish';
+ }
+ if(hint){
+   hint.classList.toggle('hidden',!signedIn||verified);
+   hint.innerHTML=signedIn&&!verified?`Drafts are available anytime. To publish, <button type="button" class="link-btn" onclick="openIdentitySetup()">set up your author identity</button>.`:'';
+ }
  if(note){
    const h=note.querySelector('h4');
    const p=note.querySelector('p');
    const b=note.querySelector('button');
    if(!currentUser){
      if(h)h.textContent='Sign in to publish';
-     if(p)p.textContent='Create or sign in to a reader account first, then set up an author identity to publish your work.';
+     if(p)p.textContent='Create or sign in to a reader account first. You can then save drafts immediately and set up an author identity when you are ready to publish.';
      if(b)b.textContent='Open Account';
-   }else{
-     if(h)h.textContent='Reader mode — publishing is locked';
-     if(p)p.textContent='Set up a verified identity on your profile before you can post literature.';
-     if(b){b.textContent='Set Up Identity';b.onclick=()=>openIdentitySetup();}
    }
  }
 }
@@ -1372,12 +1383,12 @@ function resetCreateForm(){
 }
 function saveDraft(){
  if(!currentUser){openAccount();return}
- if(!canPublish(currentUser)){openIdentitySetup();return}
  const payload=collectDraftPayload();
  if(editingDraftId){
   const idx=drafts.findIndex(d=>d.id===editingDraftId&&d.email===currentUser.email);
-  if(idx<0){showToast('Draft not found.');return;}
+  if(idx<0){showToast('Draft not found. Please reload My Works and try again.');return;}
   drafts[idx]={...drafts[idx],...payload};
+  const savedId=drafts[idx].id;
   saveState();editingDraftId=null;editingWorkId=null;renderMyWorks();showToast('Draft updated. Your changes were saved to the same draft.');showPage('myworks');
   return;
  }
