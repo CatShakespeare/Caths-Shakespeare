@@ -97,6 +97,40 @@ a{text-decoration:none;color:inherit}
 }
 .primary{border:0;background:var(--wine);color:#fff;box-shadow:0 9px 18px rgba(50,25,27,.16)}
 .secondary{border:1px solid var(--line);background:#fff;color:var(--wine)}
+
+/* Unified action-button design: match Edit/Secondary buttons */
+.social-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:14px}
+.social-btn,.danger-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  min-height:36px;padding:8px 11px;
+  border:1px solid var(--line);border-radius:10px;
+  background:#fff;color:var(--wine);
+  font-size:.72rem;font-weight:800;line-height:1;
+  box-shadow:none;transition:.2s var(--ease);
+}
+.social-btn:hover,.danger-btn:hover{
+  background:#F7F2ED;
+  color:var(--wine);
+  border-color:#DDD0C4;
+  transform:translateY(-1px);
+  box-shadow:0 6px 14px rgba(36,27,23,.07);
+}
+.social-btn.on{background:var(--wine);color:#fff;border-color:var(--wine)}
+.social-btn.on:hover{background:var(--burgundy);border-color:var(--burgundy);color:#fff}
+.social-btn .count{font-variant-numeric:tabular-nums}
+.danger-btn:hover{background:#F7F2ED;color:var(--wine)}
+.work-management{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:14px}
+.post-actions .post-action{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:36px;padding:8px 11px;
+  border:1px solid var(--line);background:#fff;color:var(--wine);
+  border-radius:10px;font-size:.72rem;font-weight:800;
+  transition:.2s var(--ease);
+}
+.post-actions .post-action:hover{background:#F7F2ED;color:var(--wine);border-color:#DDD0C4;transform:translateY(-1px);box-shadow:0 6px 14px rgba(36,27,23,.07)}
+.reader-social-bottom{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;margin:36px 0 10px;padding-top:22px;border-top:1px solid var(--line)}
+.reader-social-bottom .social-btn{min-width:74px}
+.reader-social-bottom .social-btn:first-child{min-width:64px}
 .primary:hover,.secondary:hover{transform:translateY(-2px)}
 .metrics{display:flex;gap:30px;margin-top:36px;padding-top:18px;border-top:1px solid var(--line)}
 .metric strong{display:block;font:700 2rem "Cormorant Garamond",serif;color:var(--wine)}
@@ -583,6 +617,7 @@ a{text-decoration:none;color:inherit}
           <div class="reader-submeta" id="readerSubmeta"></div>
           <div class="reader-body" id="readerBody"></div>
           <div class="comments"><div class="kicker">Conversation</div><h3 style="font:600 2.4rem 'Cormorant Garamond',serif;color:var(--wine);margin:6px 0">Comments</h3><div id="commentArea"></div></div>
+          <div class="reader-social-bottom" id="readerSocialBottom" aria-label="Work actions"></div>
           <div class="actions" style="justify-content:center"><button class="secondary" onclick="showPage('library')">Back to Library</button></div>
         </div>
       </section>
@@ -935,7 +970,7 @@ function cardHTML(w){
  const likeOn=!!currentUser&&w.likes.includes(currentUser.email);
  const tags=(w.tags||[]).map(t=>`<button class="tag" onclick="searchTag('${escapeAttr(t)}')">#${escapeHTML(t)}</button>`).join('');
  const manage=owner?`<div class="work-management"><button class="secondary" onclick="editWork('${escapeAttr(w.id)}')">Edit</button><button class="danger-btn" onclick="deleteWork('${escapeAttr(w.id)}')">Delete</button></div>`:'';
- return `<article class="card"><div class="card-art">${w.cover?`<div style="position:absolute;inset:0;background:url(${escapeAttr(w.cover)}) center/cover;opacity:.9"></div>`:''}<div style="position:relative"><small>${escapeHTML(w.genre)}</small><strong>${escapeHTML(w.title)}</strong></div></div><div class="card-body"><div class="meta"><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button><span class="tag">${escapeHTML(w.genre)}</span></div><h4>${escapeHTML(w.title)}</h4><p>${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions"><button class="social-btn ${likeOn?'on':''}" onclick="toggleLike('${escapeAttr(w.id)}',this)">♥ <span class="count">${w.likes.length}</span></button><button class="social-btn" onclick="openReader('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button></div><div class="card-foot"><button class="link-btn" onclick="openReader('${escapeAttr(w.id)}')">Read Work</button><span style="font-size:.63rem;color:#A09791">${w.views||0} views</span></div>${manage}</div></article>`;
+ return `<article class="card"><div class="card-art">${w.cover?`<div style="position:absolute;inset:0;background:url(${escapeAttr(w.cover)}) center/cover;opacity:.9"></div>`:''}<div style="position:relative"><small>${escapeHTML(w.genre)}</small><strong>${escapeHTML(w.title)}</strong></div></div><div class="card-body"><div class="meta"><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button><span class="tag">${escapeHTML(w.genre)}</span></div><h4>${escapeHTML(w.title)}</h4><p>${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions"><button class="social-btn ${likeOn?'on':''}" onclick="toggleLike('${escapeAttr(w.id)}',this)">♥ <span class="count">${w.likes.length}</span></button><button class="social-btn" onclick="openReader('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button><button class="social-btn" onclick="shareWork('${escapeAttr(w.id)}')">Share</button></div><div class="card-foot"><button class="link-btn" onclick="openReader('${escapeAttr(w.id)}')">Read Work</button><span style="font-size:.63rem;color:#A09791">${w.views||0} views</span></div>${manage}</div></article>`;
 }
 function feedHTML(w){
  const author=findUser(w.email); const likeOn=!!currentUser&&w.likes.includes(currentUser.email);
@@ -1255,7 +1290,14 @@ function openReader(id){
  renderReaderSocial();renderComments();showPage('reader');
 }
 function renderReaderSocial(){
- const root=document.getElementById('readerSocial');if(!root||!readerWork)return;const liked=currentUser&&readerWork.likes.includes(currentUser.email);const isSaved=saved.includes(readerWork.id);root.innerHTML=`<button class="social-btn ${liked?'on':''}" onclick="toggleLike('${escapeAttr(readerWork.id)}')">♥ <span class="count">${readerWork.likes.length}</span></button><button class="social-btn ${isSaved?'on':''}" onclick="toggleSaved('${escapeAttr(readerWork.id)}')">${isSaved?'Saved':'Save'}</button><button class="social-btn" onclick="shareWork('${escapeAttr(readerWork.id)}')">Share</button><button class="social-btn" onclick="showToast('Use the same report flow as the school moderation system.')">Report</button>`;
+ if(!readerWork)return;
+ const liked=currentUser&&readerWork.likes.includes(currentUser.email);
+ const isSaved=saved.includes(readerWork.id);
+ const buttons=`<button class="social-btn ${liked?'on':''}" onclick="toggleLike('${escapeAttr(readerWork.id)}')">♥ <span class="count">${readerWork.likes.length}</span></button><button class="social-btn ${isSaved?'on':''}" onclick="toggleSaved('${escapeAttr(readerWork.id)}')">${isSaved?'Saved':'Save'}</button><button class="social-btn" onclick="shareWork('${escapeAttr(readerWork.id)}')">Share</button><button class="social-btn" onclick="showToast('Use the same report flow as the school moderation system.')">Report</button>`;
+ const top=document.getElementById('readerSocial');
+ const bottom=document.getElementById('readerSocialBottom');
+ if(top)top.innerHTML=buttons;
+ if(bottom)bottom.innerHTML=buttons;
 }
 function toggleLike(id,btn){
  if(!currentUser){showToast('Sign in to like a work.');openAccount();return}let w=works.find(x=>x.id===id);if(!w)return;w=normalizeWork(w);const on=w.likes.includes(currentUser.email);if(on)w.likes=w.likes.filter(x=>x!==currentUser.email);else{w.likes=[...new Set([...w.likes,currentUser.email])];if(w.email!==currentUser.email)addNotification(w.email,`${publicNameOf(currentUser)} liked your work`,w.title);}
