@@ -48,13 +48,18 @@ a{text-decoration:none;color:inherit}
 .nav-icon{width:16px;height:16px;flex:none}
 .sidebar-bottom{margin-top:auto;border-top:1px solid var(--line);padding-top:9px}
 .profile-mini{
-  display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:11px;background:#fff;border:1px solid var(--line)
+  display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:11px;background:#fff;border:1px solid var(--line);min-width:0;overflow:hidden
 }
-.avatar{
-  width:36px;height:36px;border-radius:50%;display:grid;place-items:center;overflow:hidden;
+.profile-mini .avatar{
+  width:36px;height:36px;min-width:36px;min-height:36px;max-width:36px;max-height:36px;flex:0 0 36px;aspect-ratio:1 / 1;border-radius:50%;display:grid;place-items:center;overflow:hidden;
   background:linear-gradient(145deg,#8A5E63,#32191B);color:#F7EAD6;font-weight:800
 }
-.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar{
+  width:36px;height:36px;min-width:36px;min-height:36px;aspect-ratio:1 / 1;border-radius:50%;display:grid;place-items:center;overflow:hidden;
+  background:linear-gradient(145deg,#8A5E63,#32191B);color:#F7EAD6;font-weight:800
+}
+.avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.profile-mini > div:last-child{min-width:0}
 .profile-mini strong{display:block;font-size:.78rem;color:var(--wine);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .profile-mini span{display:block;font-size:.68rem;color:#958A83;margin-top:2px}
 .main{margin-left:240px;min-height:100vh;background:#fff}
@@ -176,7 +181,28 @@ a{text-decoration:none;color:inherit}
 .authors{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.author-card{text-align:center;padding:20px;border:1px solid var(--line);border-radius:17px;background:#fff}.author-big{width:76px;height:76px;margin:0 auto 12px;border-radius:50%;background:linear-gradient(145deg,#C9AB7E,#5D373B);display:grid;place-items:center;color:#fff}.author-card h4{font:600 1.5rem "Cormorant Garamond",serif;color:var(--wine);margin:0}.author-card p{color:#958B84;font-size:.73rem}.follow{border:1px solid var(--line);background:#fff;color:var(--wine);padding:8px 11px;border-radius:9px;font-size:.72rem;font-weight:800}.follow.on{background:var(--wine);color:#fff;border-color:var(--wine)}
 .reader{max-width:850px;margin:auto}.reader-meta{text-align:center;color:#9A9089;font-size:.67rem;letter-spacing:.15em;text-transform:uppercase}.reader h2{text-align:center;font:600 clamp(3.6rem,7vw,6rem)/.84 "Cormorant Garamond",serif;color:var(--wine);margin:10px 0}.reader-by{text-align:center;color:#8D837C;font-style:italic;font-size:.85rem}.reader-tools{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:24px 0}.reader-tools button{border:1px solid var(--line);background:#fff;color:var(--wine);padding:8px 10px;border-radius:9px;font-weight:700;font-size:.72rem}.reader-body{font:400 1.3rem/1.8 "Cormorant Garamond",serif;color:#43362F}.reader-body p{margin:0 0 20px}.reader-body p:first-child:first-letter{float:left;color:var(--burgundy);font-size:5rem;line-height:.7;padding:.05em .09em 0 0}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{text-transform:uppercase;letter-spacing:.08em;font-size:.67rem;font-weight:800;color:#756961}.field input,.field textarea,.field select{border:1px solid var(--line);border-radius:10px;background:#fff;padding:11px 12px;outline:none;color:var(--ink)}.field textarea{min-height:150px;resize:vertical}.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(179,138,82,.1)}
-.modal{position:fixed;inset:0;background:rgba(30,18,18,.45);backdrop-filter:blur(5px);display:none;place-items:center;z-index:200;padding:18px}.modal.open{display:grid}.modal-box{width:min(520px,100%);background:#fff;border:1px solid var(--line);border-radius:19px;padding:23px;box-shadow:0 30px 90px rgba(0,0,0,.2);animation:modal .3s var(--ease)}.modal-head{display:flex;justify-content:space-between;align-items:center}.modal-head h3{margin:0;font:600 2.25rem "Cormorant Garamond",serif;color:var(--wine)}.close{border:0;background:transparent;color:var(--wine);font-size:1.5rem}
+.modal{position:fixed;inset:0;background:rgba(30,18,18,.45);backdrop-filter:blur(5px);display:none;place-items:center;z-index:200;padding:18px}.modal.open{display:grid}.modal-box{width:min(520px,100%);background:#fff;border:1px solid var(--line);border-radius:19px;padding:23px;box-shadow:0 30px 90px rgba(0,0,0,.2);animation:modal .3s var(--ease)}
+.modal-box{max-height:calc(100dvh - 28px);overflow:auto}
+.pin-modal{background:linear-gradient(180deg,rgba(28,18,20,.55),rgba(28,18,20,.68));backdrop-filter:blur(9px)}
+.pin-modal .modal-box{width:min(430px,100%);padding:28px 24px 24px;text-align:center;overflow:hidden}
+.pin-kicker{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:800}
+.pin-title{font:600 2.5rem/.95 "Cormorant Garamond",serif;color:var(--wine);margin:8px 0 6px}
+.pin-subtitle{font-size:.72rem;line-height:1.55;color:#8F847D;max-width:285px;margin:0 auto}
+.pin-stage{position:relative;height:190px;margin:12px 0 2px;display:grid;place-items:center}
+.pin-input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.pin-slots{position:relative;width:270px;height:150px}
+.pin-slot{position:absolute;width:66px;height:54px;border:1px solid #B7B2C1;border-radius:10px;background:#FCFCFF;display:grid;place-items:center;font:600 1.35rem "Inter",sans-serif;color:#3E3340;box-shadow:0 12px 30px rgba(80,66,91,.10);transition:.22s var(--ease);animation:pinFloat 3.8s ease-in-out infinite}
+.pin-slot:nth-child(1){left:12px;top:49px;transform:rotate(-10deg);animation-delay:-.15s}
+.pin-slot:nth-child(2){left:83px;top:13px;transform:rotate(10deg);animation-delay:-.7s}
+.pin-slot:nth-child(3){right:51px;top:48px;transform:rotate(7deg);animation-delay:-1.25s}
+.pin-slot:nth-child(4){right:0;top:95px;transform:rotate(-11deg);animation-delay:-1.8s}
+.pin-slot.filled{border-color:#9A8BA7;background:#fff;box-shadow:0 15px 32px rgba(80,66,91,.15);transform:scale(1.04) rotate(var(--r,0deg))}
+.pin-modal.error .pin-slots{animation:pinShake .42s ease}
+.pin-help{font-size:.66rem;color:#A0968E;line-height:1.5;margin-top:8px}
+.pin-switch{border:0;background:transparent;color:var(--burgundy);font-size:.68rem;font-weight:800;margin-top:8px}
+.pin-lock{width:42px;height:42px;border-radius:12px;margin:0 auto 10px;background:#F4EEE8;color:var(--wine);display:grid;place-items:center}
+@keyframes pinFloat{0%,100%{translate:0 0}50%{translate:0 -5px}}
+@keyframes pinShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}50%{transform:translateX(7px)}75%{transform:translateX(-4px)}}.modal-head{display:flex;justify-content:space-between;align-items:center}.modal-head h3{margin:0;font:600 2.25rem "Cormorant Garamond",serif;color:var(--wine)}.close{border:0;background:transparent;color:var(--wine);font-size:1.5rem}
 .account-tabs{display:flex;gap:4px;background:#F4F0EC;padding:4px;border-radius:10px;margin:14px 0}.tab{flex:1;border:0;background:transparent;padding:9px;border-radius:8px;color:#7C6F67;font-weight:750}.tab.active{background:#fff;color:var(--wine);box-shadow:0 3px 10px rgba(36,27,23,.06)}
 .google{width:100%;border:1px solid var(--line);background:#fff;padding:11px;border-radius:10px;color:var(--wine);font-weight:750;display:flex;justify-content:center;align-items:center;gap:9px}.divider{display:flex;align-items:center;gap:10px;color:#A0968E;font-size:.68rem;margin:14px 0}.divider:before,.divider:after{content:"";height:1px;background:var(--line);flex:1}
 .toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--wine);color:#fff;padding:11px 15px;border-radius:10px;font-size:.75rem;font-weight:700;z-index:250;transition:.25s}.toast.show{opacity:1;transform:translate(-50%,0)}
@@ -266,7 +292,7 @@ a{text-decoration:none;color:inherit}
   .sidebar{width:82px;padding:15px 9px}.brand{justify-content:center;padding:4px 0 20px}.brand-copy,.nav-title,.nav-btn span,.profile-mini strong,.profile-mini span{display:none}.nav-btn{justify-content:center;padding:12px}.profile-mini{justify-content:center;padding:8px}.main{margin-left:82px}.topbar{padding:0 15px}.page-title p{display:none}.menu-toggle{display:grid}.content{padding:22px 16px 45px}.hero{padding-top:10px}.hero h2{font-size:4.1rem}.book{width:250px}.orbit{width:300px;height:300px}.section{padding:32px 0}.grid3,.journal-grid,.authors{grid-template-columns:1fr}.section-head{flex-direction:column;align-items:flex-start}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}
 }
 @media(max-width:480px){
-  .sidebar{width:64px}.main{margin-left:64px}.brand-mark{width:36px;height:36px}.profile-hero{grid-template-columns:1fr;text-align:center}.profile-actions{justify-content:center}.profile-big-avatar{margin:auto}.profile-stats{justify-content:center}.brand-mark svg{width:22px}.topbar{height:64px}.page-title h1{font-size:1.65rem}.hero h2{font-size:3.3rem}.hero p{font-size:.91rem}.metrics{gap:15px}.metric strong{font-size:1.7rem}.metric span{font-size:.59rem}.book{width:220px}.orbit{width:260px;height:260px}.f1,.f2{display:none}
+  .sidebar{width:64px}.main{margin-left:64px}.brand-mark{width:36px;height:36px}.profile-mini .avatar{width:34px;height:34px;min-width:34px;min-height:34px;flex-basis:34px}.profile-hero{grid-template-columns:1fr;text-align:center}.profile-actions{justify-content:center}.profile-big-avatar{margin:auto}.profile-stats{justify-content:center}.brand-mark svg{width:22px}.topbar{height:64px}.page-title h1{font-size:1.65rem}.hero h2{font-size:3.3rem}.hero p{font-size:.91rem}.metrics{gap:15px}.metric strong{font-size:1.7rem}.metric span{font-size:.59rem}.book{width:220px}.orbit{width:260px;height:260px}.f1,.f2{display:none}
 }
 </style>
 </head>
@@ -577,11 +603,10 @@ a{text-decoration:none;color:inherit}
         <div class="field" style="margin-top:10px"><label>Password</label><input id="authPassword" type="password" required placeholder="Your password"></div>
         <div id="signupExtras" class="hidden">
           <div class="field" style="margin-top:10px"><label>Username</label><input id="authUsername" placeholder="@username"></div>
-          <div class="field" style="margin-top:10px"><label>Profile Picture</label><input id="authPhoto" type="file" accept="image/*"></div>
         </div>
         <button class="primary" style="width:100%;margin-top:15px" id="authSubmit">Log In</button>
       </form>
-      <p style="font-size:.67rem;color:#9A9089;line-height:1.5;margin-top:13px">Google sign-in becomes fully live when Firebase Authentication is connected. Email/password works locally in this standalone version.</p>
+      <p style="font-size:.67rem;color:#9A9089;line-height:1.5;margin-top:13px">Google sign-in uses the account photo supplied by Google. No profile-photo upload or storage is required.</p>
     </div>
     <div id="loggedInArea" class="hidden">
       <div class="author" style="margin:10px 0 20px"><div class="avatar" id="modalAvatar" style="width:54px;height:54px"><span>12</span></div><div><strong id="modalName">Reader</strong><span id="modalHandle">@reader</span></div></div>
@@ -596,14 +621,55 @@ a{text-decoration:none;color:inherit}
     <form class="form-grid edit-grid" id="editProfileForm" onsubmit="saveProfile(event)">
       <div class="field full"><label>Full Name</label><input id="editName" required></div>
       <div class="field"><label>Username</label><input id="editUsername" required placeholder="@username"></div>
-      <div class="field"><label>Profile Picture</label><input id="editPhoto" type="file" accept="image/*"></div>
       <div class="field full"><label>Bio</label><textarea id="editBio" placeholder="Tell readers a little about yourself..."></textarea></div>
       <div class="actions full"><button class="secondary" type="button" onclick="closeModal('editProfileModal')">Cancel</button><button class="primary" type="submit">Save Profile</button></div>
     </form>
   </div>
 </div>
 
+<div class="modal pin-modal" id="pinModal">
+  <div class="modal-box">
+    <div class="pin-lock"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+    <div class="pin-kicker" id="pinKicker">Secure Access</div>
+    <h3 class="pin-title" id="pinTitle">Enter Access Code</h3>
+    <p class="pin-subtitle" id="pinSubtitle">A 4-digit PIN is required to enter your 12-SHAKESPEARE account.</p>
+    <div class="pin-stage" id="pinStage" onclick="focusPinInput()">
+      <input id="pinInput" class="pin-input" inputmode="numeric" autocomplete="one-time-code" maxlength="4" aria-label="4 digit PIN" oninput="handlePinInput(event)" onkeydown="handlePinKeydown(event)">
+      <div class="pin-slots">
+        <div class="pin-slot" data-pin-slot="0" style="--r:-10deg"></div>
+        <div class="pin-slot" data-pin-slot="1" style="--r:10deg"></div>
+        <div class="pin-slot" data-pin-slot="2" style="--r:7deg"></div>
+        <div class="pin-slot" data-pin-slot="3" style="--r:-11deg"></div>
+      </div>
+    </div>
+    <div class="pin-help" id="pinHelp">Tap the code area and enter 4 digits.</div>
+    <button class="pin-switch" type="button" onclick="logoutFromPin()">Use another account</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyDlfOgtbipWy83ItjN7rVVp-guAYEVkIy0",
+    authDomain: "shakespeare-e3ab7.firebaseapp.com",
+    projectId: "shakespeare-e3ab7",
+    storageBucket: "shakespeare-e3ab7.firebasestorage.app",
+    messagingSenderId: "2421428582",
+    appId: "1:2421428582:web:6a0ab1f097ff651a82b8a7",
+    measurementId: "G-KT8FNQB04J"
+  };
+  const firebaseApp = initializeApp(firebaseConfig);
+  const firebaseAuth = getAuth(firebaseApp);
+  const firebaseGoogleProvider = new GoogleAuthProvider();
+  window.firebaseApp = firebaseApp;
+  window.firebaseAuth = firebaseAuth;
+  window.firebaseGoogleProvider = firebaseGoogleProvider;
+  window.firebaseSignInWithPopup = signInWithPopup;
+  window.firebaseSignOut = signOut;
+</script>
 
 <script>
 const LEGACY_DEMO_EMAILS = new Set(['maria@example.com','andrei@example.com','carmela@example.com']);
@@ -614,7 +680,7 @@ function readJSON(key,fallback){
 }
 function normalizeUser(user){
   if(!user)return null;
-  return {...user,followers:Array.isArray(user.followers)?user.followers:[],following:Array.isArray(user.following)?user.following:[],username:(user.username||'').replace(/^@/,'')};
+  return {...user,followers:Array.isArray(user.followers)?user.followers:[],following:Array.isArray(user.following)?user.following:[],username:(user.username||'').replace(/^@/,''),photoURL:user.photoURL||user.photo||'',photo:user.photo||user.photoURL||''};
 }
 function normalizeWork(work){
   if(!work)return null;
@@ -646,6 +712,11 @@ let authMode = 'login';
 let feedFilter = 'all';
 let readerWork = null;
 let profileEmail = null;
+let sessionUnlocked = false;
+let pendingAuthUser = null;
+let pinMode = 'enter';
+let pinFirst = '';
+let pinBusy = false;
 
 const titleMap = {
  home:['Home','The Literary Archive of a Class in Motion'],
@@ -701,7 +772,7 @@ function updateProfileUI(){
   if(photo)el.innerHTML='<img src="'+escapeAttr(photo)+'" alt="Profile picture">';
   else el.innerHTML='<span>'+escapeHTML(initialsOf(name))+'</span>';
  };
- set('sideAvatar',getName(),currentUser?.photo);set('topAvatar',getName(),currentUser?.photo);set('modalAvatar',getName(),currentUser?.photo);
+ set('sideAvatar',getName(),currentUser?.photoURL||currentUser?.photo);set('topAvatar',getName(),currentUser?.photoURL||currentUser?.photo);set('modalAvatar',getName(),currentUser?.photoURL||currentUser?.photo);
  document.getElementById('sideName').textContent=getName();
  document.getElementById('sideHandle').textContent=currentUser?('@'+usernameOf(currentUser)):'Not signed in';
  document.getElementById('modalName').textContent=getName();
@@ -1016,36 +1087,79 @@ function renderNotifications(){const root=document.getElementById('notifications
 function markNotificationsRead(){if(!currentUser)return;notifications=notifications.map(n=>n.to===currentUser.email?{...n,read:true}:n);persistSessionData();renderNotifications();renderNotificationsBadge()}
 function applyDarkMode(){document.documentElement.classList.toggle('dark',darkMode)}
 function toggleDarkMode(){darkMode=!darkMode;persistSessionData();applyDarkMode();showToast(darkMode?'Dark mode enabled.':'Light mode enabled.')}
-function openEditProfile(){if(!currentUser){openAccount();return}document.getElementById('editName').value=currentUser.name||'';document.getElementById('editUsername').value='@'+usernameOf(currentUser);document.getElementById('editBio').value=currentUser.bio||'';document.getElementById('editPhoto').value='';document.getElementById('editProfileModal').classList.add('open')}
-async function saveProfile(e){e.preventDefault();if(!currentUser)return;const email=currentUser.email;const name=document.getElementById('editName').value.trim();const username=document.getElementById('editUsername').value.trim().replace(/^@/,'');const bio=document.getElementById('editBio').value.trim();if(!name||!username){showToast('Name and username are required.');return}const clash=users.find(u=>u.email!==email&&usernameOf(u).toLowerCase()===username.toLowerCase());if(clash){showToast('That username is already in use.');return}let photo=currentUser.photo||'';const file=document.getElementById('editPhoto').files[0];if(file)photo=await fileToDataURL(file);const idx=users.findIndex(u=>u.email===email);if(idx<0)return;users[idx]=normalizeUser({...users[idx],name,username,bio,photo});currentUser=normalizeUser({...users[idx]});works=works.map(w=>w.email===email?{...w,author:name}:w);saveState();closeModal('editProfileModal');renderAll();showToast('Profile updated.')}
+function openEditProfile(){if(!currentUser){openAccount();return}document.getElementById('editName').value=currentUser.name||'';document.getElementById('editUsername').value='@'+usernameOf(currentUser);document.getElementById('editBio').value=currentUser.bio||'';document.getElementById('editProfileModal').classList.add('open')}
+async function saveProfile(e){e.preventDefault();if(!currentUser)return;const email=currentUser.email;const name=document.getElementById('editName').value.trim();const username=document.getElementById('editUsername').value.trim().replace(/^@/,'');const bio=document.getElementById('editBio').value.trim();if(!name||!username){showToast('Name and username are required.');return}const clash=users.find(u=>u.email!==email&&usernameOf(u).toLowerCase()===username.toLowerCase());if(clash){showToast('That username is already in use.');return}const idx=users.findIndex(u=>u.email===email);if(idx<0)return;users[idx]=normalizeUser({...users[idx],name,username,bio,photo:currentUser.photoURL||currentUser.photo||''});currentUser=normalizeUser({...users[idx]});works=works.map(w=>w.email===email?{...w,author:name}:w);saveState();closeModal('editProfileModal');renderAll();showToast('Profile updated.')}
 
-function openAccount(){document.getElementById('accountModal').classList.add('open');updateProfileUI()}
+function openAccount(){if(!sessionUnlocked&&currentUser){openPinGate('enter',currentUser);return}document.getElementById('accountModal').classList.add('open');updateProfileUI()}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
-function outsideModal(e,m){if(e.target===m)closeModal(m.id)}
+function outsideModal(e,m){if(e.target===m && m.id!=='pinModal')closeModal(m.id)}
 function switchAuth(mode){
  authMode=mode;document.getElementById('loginTab').classList.toggle('active',mode==='login');document.getElementById('signupTab').classList.toggle('active',mode==='signup');
  document.getElementById('signupOnly').classList.toggle('hidden',mode!=='signup');document.getElementById('signupExtras').classList.toggle('hidden',mode!=='signup');document.getElementById('authSubmit').textContent=mode==='login'?'Log In':'Create Account';
 }
+function emailAccountUser(){const email=document.getElementById('authEmail').value.trim().toLowerCase();const pass=document.getElementById('authPassword').value;return {email,password:pass}}
 async function submitAuth(e){
  e.preventDefault();
- const email=document.getElementById('authEmail').value.trim().toLowerCase(),pass=document.getElementById('authPassword').value;
+ const {email,password}=emailAccountUser();
  if(authMode==='signup'){
    if(users.some(u=>u.email===email)){showToast('An account with this email already exists.');return}
-   const photoInput=document.getElementById('authPhoto');let photo='';
-   if(photoInput.files[0])photo=await fileToDataURL(photoInput.files[0]);
-   const user={name:document.getElementById('authName').value.trim()||'Student Author',username:document.getElementById('authUsername').value.trim().replace(/^@/,''),email,password:pass,photo,bio:'Student writer in 12-SHAKESPEARE.',followers:[],following:[]};
-   users.push(user);currentUser=normalizeUser(user);saveState();closeModal('accountModal');renderAll();showToast('Account created.');return;
+   if(password.length<6){showToast('Use a password with at least 6 characters.');return}
+   const username=document.getElementById('authUsername').value.trim().replace(/^@/,'');
+   if(!username){showToast('Please choose a username.');return}
+   if(users.some(u=>usernameOf(u).toLowerCase()===username.toLowerCase())){showToast('That username is already in use.');return}
+   pendingAuthUser=normalizeUser({name:document.getElementById('authName').value.trim()||'Student Author',username,email,password,bio:'Student writer in 12-SHAKESPEARE.',followers:[],following:[],photo:'',photoURL:'',provider:'password'});
+   closeModal('accountModal'); openPinGate('setup',pendingAuthUser); return;
  }
- const user=users.find(u=>u.email===email&&u.password===pass);
+ const user=users.find(u=>u.email===email&&u.password===password);
  if(!user){showToast('Email or password is incorrect.');return}
- currentUser=normalizeUser(user);saveState();closeModal('accountModal');renderAll();showToast('Welcome back.');
+ pendingAuthUser=normalizeUser(user); closeModal('accountModal'); openPinGate(user.pinHash?'enter':'setup',pendingAuthUser);
 }
-function googleLogin(){showToast('Google sign-in needs Firebase Authentication configuration.')}
-function logout(){currentUser=null;saveState();closeModal('accountModal');renderAll();showToast('You are signed out.')}
+async function googleLogin(){
+  if(!window.firebaseAuth||!window.firebaseSignInWithPopup||!window.firebaseGoogleProvider){showToast('Google login is ready for Firebase, but Firebase Auth is not connected yet.');return}
+  closeModal('accountModal');
+  try{
+    const credential=await window.firebaseSignInWithPopup(window.firebaseAuth,window.firebaseGoogleProvider);
+    const g=credential.user;
+    const existing=users.find(u=>u.email===String(g.email||'').toLowerCase());
+    const usernameBase=(g.email||'student').split('@')[0].toLowerCase().replace(/[^a-z0-9_]+/g,'').slice(0,18)||'student';
+    let username=existing?usernameOf(existing):usernameBase;
+    let n=2;while(users.some(u=>u.email!==(g.email||'').toLowerCase()&&usernameOf(u).toLowerCase()===username.toLowerCase())){username=usernameBase+n;n++;}
+    pendingAuthUser=normalizeUser({...existing,...existing,name:g.displayName||existing?.name||'Student Author',username,email:String(g.email||'').toLowerCase(),photoURL:g.photoURL||existing?.photoURL||existing?.photo||'',photo:g.photoURL||existing?.photo||'',provider:'google',uid:g.uid,bio:existing?.bio||'Student writer in 12-SHAKESPEARE.',followers:existing?.followers||[],following:existing?.following||[]});
+    openPinGate(pendingAuthUser.pinHash?'enter':'setup',pendingAuthUser);
+  }catch(err){console.error(err);document.getElementById('accountModal').classList.add('open');showToast(err?.code==='auth/popup-closed-by-user'?'Google sign-in was cancelled.':'Google sign-in failed.');}
+}
+async function hashPin(pin){const data=new TextEncoder().encode('12SHAKESPEARE::PIN::'+pin);const digest=await crypto.subtle.digest('SHA-256',data);return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('')}
+function openPinGate(mode,user){
+  pendingAuthUser=normalizeUser(user);pinMode=mode;pinFirst='';pinBusy=false;
+  const modal=document.getElementById('pinModal');modal.classList.add('open');modal.classList.remove('error');
+  document.getElementById('pinKicker').textContent=mode==='setup'?'Account Security':'Secure Access';
+  document.getElementById('pinTitle').textContent=mode==='setup'?'Create Access Code':'Enter Access Code';
+  document.getElementById('pinSubtitle').textContent=mode==='setup'?'Create a 4-digit PIN you will enter after signing in to your account.':'Enter your 4-digit PIN to continue into your 12-SHAKESPEARE account.';
+  document.getElementById('pinHelp').textContent=mode==='setup'?'Choose 4 digits. You will confirm them next.':'Tap the code area and enter 4 digits.';
+  document.getElementById('pinInput').value='';updatePinSlots('');setTimeout(focusPinInput,90);
+}
+function focusPinInput(){const i=document.getElementById('pinInput');if(i){i.focus({preventScroll:true})}}
+function updatePinSlots(value){document.querySelectorAll('.pin-slot').forEach((slot,i)=>{const char=value[i]||'';slot.textContent=char;slot.classList.toggle('filled',!!char)})}
+function handlePinKeydown(e){if(e.key==='Escape'){e.preventDefault();return}if(e.key==='Enter'&&document.getElementById('pinInput').value.length===4)processPinEntry()}
+function handlePinInput(e){const input=e.target;input.value=input.value.replace(/\D/g,'').slice(0,4);updatePinSlots(input.value);if(input.value.length===4&&!pinBusy)setTimeout(processPinEntry,220)}
+async function processPinEntry(){if(pinBusy)return;const pin=document.getElementById('pinInput').value;if(pin.length!==4)return;pinBusy=true;const modal=document.getElementById('pinModal');
+  if(pinMode==='setup'){
+    if(!pinFirst){pinFirst=pin;pinMode='confirm';document.getElementById('pinTitle').textContent='Confirm Access Code';document.getElementById('pinSubtitle').textContent='Enter the same 4 digits again to protect your account.';document.getElementById('pinHelp').textContent='Step 2 of 2 · Confirm your PIN.';document.getElementById('pinInput').value='';updatePinSlots('');pinBusy=false;setTimeout(focusPinInput,120);return}
+    if(pin!==pinFirst){pinFirst='';modal.classList.add('error');document.getElementById('pinHelp').textContent='The PINs did not match. Start again.';document.getElementById('pinInput').value='';updatePinSlots('');pinBusy=false;setTimeout(()=>{modal.classList.remove('error');focusPinInput()},430);return}
+    pendingAuthUser.pinHash=await hashPin(pin);await finishPendingAuth();return;
+  }
+  const expected=pendingAuthUser?.pinHash;if(!expected){pinMode='setup';pinFirst='';pinBusy=false;openPinGate('setup',pendingAuthUser);return}
+  const actual=await hashPin(pin);if(actual!==expected){modal.classList.add('error');document.getElementById('pinHelp').textContent='Incorrect PIN. Try again.';document.getElementById('pinInput').value='';updatePinSlots('');pinBusy=false;setTimeout(()=>{modal.classList.remove('error');focusPinInput()},430);return}
+  await finishPendingAuth();
+}
+async function finishPendingAuth(){
+  if(!pendingAuthUser)return;const u=normalizeUser(pendingAuthUser);const idx=users.findIndex(x=>x.email===u.email);if(idx>=0)users[idx]=normalizeUser({...users[idx],...u});else users.push(u);currentUser=normalizeUser(u);pendingAuthUser=null;sessionUnlocked=true;saveState();document.getElementById('pinModal').classList.remove('open');renderAll();showToast('Welcome, '+getName()+'!');
+}
+function logoutFromPin(){pendingAuthUser=null;pinFirst='';pinBusy=false;sessionUnlocked=false;if(window.firebaseAuth&&window.firebaseSignOut)window.firebaseSignOut(window.firebaseAuth).catch(()=>{});document.getElementById('pinModal').classList.remove('open');document.getElementById('accountModal').classList.add('open');switchAuth('login');}
+function logout(){currentUser=null;pendingAuthUser=null;sessionUnlocked=false;if(window.firebaseAuth&&window.firebaseSignOut)window.firebaseSignOut(window.firebaseAuth).catch(()=>{});saveState();closeModal('accountModal');closeModal('pinModal');renderAll();showToast('You are signed out.')}
 function submitFeedback(e){e.preventDefault();e.target.reset();showToast('Feedback submitted.')}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.remove('show'),2300)}
 function toggleSidebar(){document.body.classList.toggle('menu-open')}
-function fileToDataURL(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)})}
 function escapeHTML(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function escapeAttr(v){return escapeHTML(v).replace(/`/g,'&#096;')}
 function switchAuthDefault(){switchAuth('login')}
