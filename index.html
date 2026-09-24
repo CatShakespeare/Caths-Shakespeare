@@ -704,7 +704,24 @@ function persistSessionData(){
   localStorage.setItem('shkDarkMode',JSON.stringify(darkMode));
 }
 
-let users = readJSON('shkUsers',[]).filter(u=>u&&u.email&&!LEGACY_DEMO_EMAILS.has(String(u.email).toLowerCase())).map(normalizeUser);
+const PIN_STORAGE_KEY='shkPinHashes';
+function readPinHashes(){return readJSON(PIN_STORAGE_KEY,{});}
+function storedPinHash(user){
+  if(!user)return '';
+  const map=readPinHashes();
+  return user.pinHash || map[user.uid||''] || map[(user.email||'').toLowerCase()] || '';
+}
+function savePinHash(user,hash){
+  if(!user||!hash)return;
+  const map=readPinHashes();
+  const email=(user.email||'').toLowerCase();
+  if(email)map[email]=hash;
+  if(user.uid)map[user.uid]=hash;
+  localStorage.setItem(PIN_STORAGE_KEY,JSON.stringify(map));
+  user.pinHash=hash;
+}
+
+let users = readJSON('shkUsers',[]).filter(u=>u&&u.email&&!LEGACY_DEMO_EMAILS.has(String(u.email).toLowerCase())).map(u=>{const n=normalizeUser(u); const h=n.pinHash||storedPinHash(n); if(h)n.pinHash=h; return n;});
 let works = readJSON('shkWorks',[]).filter(w=>w&&!LEGACY_DEMO_IDS.has(w.id)&&!LEGACY_DEMO_EMAILS.has(String(w.email||'').toLowerCase())).map(normalizeWork);
 let currentUser = normalizeUser(readJSON('shkUser',null));
 let notifications = readJSON('shkNotifications',[]).filter(n=>n&&n.to);
@@ -1124,7 +1141,7 @@ async function submitAuth(e){
  }
  const user=users.find(u=>u.email===email&&u.password===password);
  if(!user){showToast('Email or password is incorrect.');return}
- pendingAuthUser=normalizeUser(user); closeModal('accountModal'); openPinGate(user.pinHash?'enter':'setup',pendingAuthUser);
+ pendingAuthUser=normalizeUser(user); const hasPin=!!storedPinHash(pendingAuthUser); pendingAuthUser.pinHash=storedPinHash(pendingAuthUser); closeModal('accountModal'); openPinGate(hasPin?'enter':'setup',pendingAuthUser);
 }
 async function googleLogin(){
   closeModal('accountModal');
@@ -1143,7 +1160,7 @@ async function googleLogin(){
     let n=2;
     while(users.some(u=>u.email!==email&&usernameOf(u).toLowerCase()===username.toLowerCase())){username=usernameBase+n;n++;}
     pendingAuthUser=normalizeUser({...existing,name:g.displayName||existing?.name||'Student Author',username,email,photoURL:g.photoURL||existing?.photoURL||existing?.photo||'',photo:g.photoURL||existing?.photo||'',provider:'google',uid:g.uid,bio:existing?.bio||'Student writer in 12-SHAKESPEARE.',followers:existing?.followers||[],following:existing?.following||[]});
-    openPinGate(pendingAuthUser.pinHash?'enter':'setup',pendingAuthUser);
+    pendingAuthUser.pinHash=storedPinHash(pendingAuthUser); openPinGate(pendingAuthUser.pinHash?'enter':'setup',pendingAuthUser);
   }catch(err){
     console.error('Google Sign-In Error:',err);
     document.getElementById('accountModal').classList.add('open');
@@ -1180,14 +1197,14 @@ async function processPinEntry(){if(pinBusy)return;const pin=document.getElement
   if(pinMode==='setup'){
     if(!pinFirst){pinFirst=pin;pinMode='confirm';document.getElementById('pinTitle').textContent='Confirm Access Code';document.getElementById('pinSubtitle').textContent='Enter the same 4 digits again to protect your account.';document.getElementById('pinHelp').textContent='Step 2 of 2 · Confirm your PIN.';document.getElementById('pinInput').value='';updatePinSlots('');pinBusy=false;setTimeout(focusPinInput,120);return}
     if(pin!==pinFirst){pinFirst='';modal.classList.add('error');document.getElementById('pinHelp').textContent='The PINs did not match. Start again.';document.getElementById('pinInput').value='';updatePinSlots('');pinBusy=false;setTimeout(()=>{modal.classList.remove('error');focusPinInput()},430);return}
-    pendingAuthUser.pinHash=await hashPin(pin);await finishPendingAuth();return;
+    const newPinHash=await hashPin(pin); pendingAuthUser.pinHash=newPinHash; savePinHash(pendingAuthUser,newPinHash); await finishPendingAuth();return;
   }
-  const expected=pendingAuthUser?.pinHash;if(!expected){pinMode='setup';pinFirst='';pinBusy=false;openPinGate('setup',pendingAuthUser);return}
+  const expected=storedPinHash(pendingAuthUser); if(!expected){pinMode='setup';pinFirst='';pinBusy=false;openPinGate('setup',pendingAuthUser);return}
   const actual=await hashPin(pin);if(actual!==expected){modal.classList.add('error');document.getElementById('pinHelp').textContent='Incorrect PIN. Try again.';document.getElementById('pinInput').value='';updatePinSlots('');pinBusy=false;setTimeout(()=>{modal.classList.remove('error');focusPinInput()},430);return}
   await finishPendingAuth();
 }
 async function finishPendingAuth(){
-  if(!pendingAuthUser)return;const u=normalizeUser(pendingAuthUser);const idx=users.findIndex(x=>x.email===u.email);if(idx>=0)users[idx]=normalizeUser({...users[idx],...u});else users.push(u);currentUser=normalizeUser(u);pendingAuthUser=null;sessionUnlocked=true;saveState();document.getElementById('pinModal').classList.remove('open');renderAll();showToast('Welcome, '+getName()+'!');
+  if(!pendingAuthUser)return; const persistedPinHash=storedPinHash(pendingAuthUser); const u=normalizeUser({...pendingAuthUser,pinHash:persistedPinHash||pendingAuthUser.pinHash||''}); if(u.pinHash)savePinHash(u,u.pinHash);const idx=users.findIndex(x=>x.email===u.email);if(idx>=0)users[idx]=normalizeUser({...users[idx],...u});else users.push(u);currentUser=normalizeUser(u);pendingAuthUser=null;sessionUnlocked=true;saveState();document.getElementById('pinModal').classList.remove('open');renderAll();showToast('Welcome, '+getName()+'!');
 }
 function logoutFromPin(){pendingAuthUser=null;pinFirst='';pinBusy=false;sessionUnlocked=false;if(window.firebaseAuth&&window.firebaseSignOut)window.firebaseSignOut(window.firebaseAuth).catch(()=>{});document.getElementById('pinModal').classList.remove('open');document.getElementById('accountModal').classList.add('open');switchAuth('login');}
 function logout(){currentUser=null;pendingAuthUser=null;sessionUnlocked=false;if(window.firebaseAuth&&window.firebaseSignOut)window.firebaseSignOut(window.firebaseAuth).catch(()=>{});saveState();closeModal('accountModal');closeModal('pinModal');renderAll();showToast('You are signed out.')}
