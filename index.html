@@ -199,6 +199,9 @@ a{text-decoration:none;color:inherit}
 .pin-slot.filled{border-color:#9A8BA7;background:#fff;box-shadow:0 15px 32px rgba(80,66,91,.15);transform:scale(1.04) rotate(var(--r,0deg))}
 .pin-modal.error .pin-slots{animation:pinShake .42s ease}
 .pin-help{font-size:.66rem;color:#A0968E;line-height:1.5;margin-top:8px}
+.pin-nav{display:flex;justify-content:center;gap:8px;margin-top:10px}
+.pin-back{border:1px solid var(--line);background:#fff;color:var(--wine);padding:7px 10px;border-radius:9px;font-size:.68rem;font-weight:800}
+.pin-back:hover{transform:translateY(-1px)}
 .pin-switch{border:0;background:transparent;color:var(--burgundy);font-size:.68rem;font-weight:800;margin-top:8px}
 .pin-lock{width:42px;height:42px;border-radius:12px;margin:0 auto 10px;background:#F4EEE8;color:var(--wine);display:grid;place-items:center}
 @keyframes pinFloat{0%,100%{translate:0 0}50%{translate:0 -5px}}
@@ -643,6 +646,9 @@ a{text-decoration:none;color:inherit}
       </div>
     </div>
     <div class="pin-help" id="pinHelp">Tap the code area and enter 4 digits.</div>
+    <div class="pin-nav">
+      <button class="pin-back hidden" id="pinBack" type="button" onclick="backToCreatePin()">← Back</button>
+    </div>
     <button class="pin-switch" type="button" onclick="logoutFromPin()">Use another account</button>
   </div>
 </div>
@@ -656,6 +662,7 @@ a{text-decoration:none;color:inherit}
     try {
       const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js");
       const { getAuth, GoogleAuthProvider, signInWithPopup, signOut } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
+      const { getFirestore, doc, getDoc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js");
       const firebaseConfig = {
         apiKey: "AIzaSyDlfOgtbipWy83ItjN7rVVp-guAYEVkIy0",
         authDomain: "shakespeare-e3ab7.firebaseapp.com",
@@ -667,14 +674,20 @@ a{text-decoration:none;color:inherit}
       };
       const firebaseApp = initializeApp(firebaseConfig);
       const firebaseAuth = getAuth(firebaseApp);
+      const firebaseDB = getFirestore(firebaseApp);
       const firebaseGoogleProvider = new GoogleAuthProvider();
       window.firebaseApp = firebaseApp;
       window.firebaseAuth = firebaseAuth;
+      window.firebaseDB = firebaseDB;
+      window.firebaseDoc = doc;
+      window.firebaseGetDoc = getDoc;
+      window.firebaseSetDoc = setDoc;
+      window.firebaseServerTimestamp = serverTimestamp;
       window.firebaseGoogleProvider = firebaseGoogleProvider;
       window.firebaseSignInWithPopup = signInWithPopup;
       window.firebaseSignOut = signOut;
       window.firebaseReadyState = {ok:true,projectId:firebaseConfig.projectId};
-      return {firebaseApp,firebaseAuth,firebaseGoogleProvider,signInWithPopup,signOut};
+      return {firebaseApp,firebaseAuth,firebaseDB,firebaseGoogleProvider,signInWithPopup,signOut};
     } catch(error) {
       window.firebaseReadyState = {ok:false,error:error?.message||String(error)};
       console.error("Firebase initialization failed:",error);
@@ -1190,8 +1203,15 @@ async function googleLogin(){
     let username=existing?usernameOf(existing):usernameBase;
     let n=2;
     while(users.some(u=>u.email!==email&&usernameOf(u).toLowerCase()===username.toLowerCase())){username=usernameBase+n;n++;}
-    pendingAuthUser=normalizeUser({...existing,name:g.displayName||existing?.name||'Student Author',username,email,photoURL:g.photoURL||existing?.photoURL||existing?.photo||'',photo:g.photoURL||existing?.photo||'',provider:'google',uid:g.uid,bio:existing?.bio||'Student writer in 12-SHAKESPEARE.',followers:existing?.followers||[],following:existing?.following||[]});
-    pendingAuthUser.pinHash=storedPinHash(pendingAuthUser); openPinGate(pendingAuthUser.pinHash?'enter':'setup',pendingAuthUser);
+    pendingAuthUser=normalizeUser({...existing,name:g.displayName||existing?.name||'Student Author',username,email,photoURL:g.photoURL||existing?.photoURL||existing?.photo||'',photo:g.photoURL||existing?.photo||existing?.photo||'',provider:'google',uid:g.uid,bio:existing?.bio||'Student writer in 12-SHAKESPEARE.',followers:existing?.followers||[],following:existing?.following||[]});
+    const cloudPin=await readCloudPin(g.uid,email);
+    if(!cloudPin.ok){
+      document.getElementById('accountModal').classList.add('open');
+      showToast('Your account is signed in, but the PIN could not be verified. Please try again.');
+      return;
+    }
+    pendingAuthUser.pinHash=cloudPin.pinHash||'';
+    openPinGate(pendingAuthUser.pinHash?'enter':'setup',pendingAuthUser);
   }catch(err){
     console.error('Google Sign-In Error:',err);
     document.getElementById('accountModal').classList.add('open');
@@ -1210,15 +1230,60 @@ async function googleLogin(){
     showToast(friendly[code]||('Firebase error '+code+(err?.message?': '+err.message:'')));
   }
 }
+async function readCloudPin(uid,email){
+  if(!uid || !window.firebaseDB || !window.firebaseDoc || !window.firebaseGetDoc){
+    return {ok:false,available:false,pinHash:'',error:'Cloud security is not available for this account.'};
+  }
+  try{
+    const ref=window.firebaseDoc(window.firebaseDB,'users',uid,'private','security','account');
+    const snap=await window.firebaseGetDoc(ref);
+    if(snap.exists()){
+      const data=snap.data()||{};
+      return {ok:true,available:true,pinHash:String(data.pinHash||'')};
+    }
+    const localUser=users.find(u=>canonicalEmail(u.email)===canonicalEmail(email));
+    const localHash=String(localUser?.pinHash||storedPinHash(localUser)||'');
+    if(localHash){
+      try{
+        await window.firebaseSetDoc(ref,{pinHash:localHash,pinVersion:1,updatedAt:window.firebaseServerTimestamp()},{merge:true});
+        return {ok:true,available:true,pinHash:localHash};
+      }catch(migrateErr){
+        console.warn('Could not migrate local PIN to Firestore:',migrateErr);
+      }
+    }
+    return {ok:true,available:true,pinHash:''};
+  }catch(err){
+    console.error('Firestore PIN lookup failed:',err);
+    return {ok:false,available:true,pinHash:'',error:err?.message||String(err)};
+  }
+}
+async function writeCloudPin(uid,pinHash){
+  if(!uid || !window.firebaseDB || !window.firebaseDoc || !window.firebaseSetDoc) throw new Error('Cloud security is not available.');
+  const ref=window.firebaseDoc(window.firebaseDB,'users',uid,'private','security','account');
+  await window.firebaseSetDoc(ref,{pinHash:String(pinHash),pinVersion:1,updatedAt:window.firebaseServerTimestamp()},{merge:true});
+}
+
 async function hashPin(pin){const data=new TextEncoder().encode('12SHAKESPEARE::PIN::'+pin);const digest=await crypto.subtle.digest('SHA-256',data);return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('')}
+function updatePinScreen(){
+  const confirm=pinMode==='confirm';
+  document.getElementById('pinKicker').textContent=pinMode==='enter'?'Secure Access':'Account Security';
+  document.getElementById('pinTitle').textContent=pinMode==='confirm'?'Double-check PIN':(pinMode==='setup'?'Create PIN':'Enter PIN');
+  document.getElementById('pinSubtitle').textContent=pinMode==='confirm'?'Enter the same 4 digits again to confirm your new account PIN.':(pinMode==='setup'?'Create a 4-digit PIN for this account. You will confirm it next.':'Enter your 4-digit PIN to continue into your 12-SHAKESPEARE account.');
+  document.getElementById('pinHelp').textContent=pinMode==='confirm'?'Step 2 of 2 · Confirm your PIN.':(pinMode==='setup'?'Step 1 of 2 · Choose 4 digits.':'Enter your 4-digit PIN.');
+  document.getElementById('pinBack').classList.toggle('hidden',!confirm);
+}
 function openPinGate(mode,user){
   pendingAuthUser=normalizeUser(user);pinMode=mode;pinFirst='';pinBusy=false;
   const modal=document.getElementById('pinModal');modal.classList.add('open');modal.classList.remove('error');
-  document.getElementById('pinKicker').textContent=mode==='setup'?'Account Security':'Secure Access';
-  document.getElementById('pinTitle').textContent=mode==='setup'?'Create Access Code':'Enter Access Code';
-  document.getElementById('pinSubtitle').textContent=mode==='setup'?'Create a 4-digit PIN you will enter after signing in to your account.':'Enter your 4-digit PIN to continue into your 12-SHAKESPEARE account.';
-  document.getElementById('pinHelp').textContent=mode==='setup'?'Choose 4 digits. You will confirm them next.':'Tap the code area and enter 4 digits.';
+  updatePinScreen();
   document.getElementById('pinInput').value='';updatePinSlots('');setTimeout(focusPinInput,90);
+}
+function backToCreatePin(){
+  if(pinMode!=='confirm')return;
+  pinMode='setup';pinFirst='';pinBusy=false;
+  updatePinScreen();
+  document.getElementById('pinInput').value='';updatePinSlots('');
+  setTimeout(focusPinInput,90);
 }
 function focusPinInput(){const i=document.getElementById('pinInput');if(i){i.focus({preventScroll:true})}}
 function updatePinSlots(value){document.querySelectorAll('.pin-slot').forEach((slot,i)=>{const char=value[i]||'';slot.textContent=char;slot.classList.toggle('filled',!!char)})}
@@ -1226,11 +1291,34 @@ function handlePinKeydown(e){if(e.key==='Escape'){e.preventDefault();return}if(e
 function handlePinInput(e){const input=e.target;input.value=input.value.replace(/\D/g,'').slice(0,4);updatePinSlots(input.value);if(input.value.length===4&&!pinBusy)setTimeout(processPinEntry,220)}
 async function processPinEntry(){if(pinBusy)return;const pin=document.getElementById('pinInput').value;if(pin.length!==4)return;pinBusy=true;const modal=document.getElementById('pinModal');
   if(pinMode==='setup'){
-    if(!pinFirst){pinFirst=pin;pinMode='confirm';document.getElementById('pinTitle').textContent='Confirm Access Code';document.getElementById('pinSubtitle').textContent='Enter the same 4 digits again to protect your account.';document.getElementById('pinHelp').textContent='Step 2 of 2 · Confirm your PIN.';document.getElementById('pinInput').value='';updatePinSlots('');pinBusy=false;setTimeout(focusPinInput,120);return}
-    if(pin!==pinFirst){pinFirst='';modal.classList.add('error');document.getElementById('pinHelp').textContent='The PINs did not match. Start again.';document.getElementById('pinInput').value='';updatePinSlots('');pinBusy=false;setTimeout(()=>{modal.classList.remove('error');focusPinInput()},430);return}
-    const newPinHash=await hashPin(pin); pendingAuthUser.pinHash=newPinHash; savePinHash(pendingAuthUser,newPinHash); await finishPendingAuth();return;
+    if(!pinFirst){pinFirst=pin;pinMode='confirm';updatePinScreen();document.getElementById('pinInput').value='';updatePinSlots('');pinBusy=false;setTimeout(focusPinInput,120);return}
+    if(pin!==pinFirst){pinFirst='';pinMode='setup';updatePinScreen();modal.classList.add('error');document.getElementById('pinHelp').textContent='The PINs did not match. Create your PIN again, then double-check it.';document.getElementById('pinInput').value='';updatePinSlots('');pinBusy=false;setTimeout(()=>{modal.classList.remove('error');focusPinInput()},430);return}
+    const newPinHash=await hashPin(pin);
+    try{
+      if(pendingAuthUser?.uid) await writeCloudPin(pendingAuthUser.uid,newPinHash);
+      pendingAuthUser.pinHash=newPinHash;
+      savePinHash(pendingAuthUser,newPinHash);
+      await finishPendingAuth();
+    }catch(err){
+      console.error('Could not save PIN:',err);
+      modal.classList.add('error');
+      document.getElementById('pinHelp').textContent='We could not save your PIN. Check your connection and try again.';
+      pinBusy=false;
+      setTimeout(()=>modal.classList.remove('error'),500);
+    }
+    return;
   }
-  const expected=storedPinHash(pendingAuthUser); if(expected){pendingAuthUser.pinHash=expected;} else {pinMode='setup';pinFirst='';pinBusy=false;openPinGate('setup',pendingAuthUser);return}
+  const expected=storedPinHash(pendingAuthUser);
+  if(expected){pendingAuthUser.pinHash=expected;}
+  else if(pendingAuthUser?.uid){
+    pinBusy=false;
+    modal.classList.add('error');
+    document.getElementById('pinHelp').textContent='No saved PIN was found for this account. Use Create PIN only when setting up a brand-new account.';
+    document.getElementById('pinInput').value='';updatePinSlots('');
+    setTimeout(()=>{modal.classList.remove('error');focusPinInput()},430);
+    return;
+  }
+  else {pinMode='setup';pinFirst='';pinBusy=false;updatePinScreen();return}
   const actual=await hashPin(pin);if(actual!==expected){modal.classList.add('error');document.getElementById('pinHelp').textContent='Incorrect PIN. Try again.';document.getElementById('pinInput').value='';updatePinSlots('');pinBusy=false;setTimeout(()=>{modal.classList.remove('error');focusPinInput()},430);return}
   await finishPendingAuth();
 }
