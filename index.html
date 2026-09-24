@@ -826,11 +826,14 @@ button,input,textarea,select{max-width:100%}
           <h2 id="readerTitle">Select a Work</h2>
           <div class="reader-by" id="readerBy">Open a published student work to begin reading.</div>
           <div class="reader-tools"><button onclick="changeReaderSize(1)">A+</button><button onclick="changeReaderSize(-1)">A−</button></div>
-          <div class="reader-social" id="readerSocial"></div>
           <div class="reader-submeta" id="readerSubmeta"></div>
           <div class="reader-body" id="readerBody"></div>
-          <div class="comments"><div class="kicker">Conversation</div><h3 style="font:600 2.4rem 'Cormorant Garamond',serif;color:var(--wine);margin:6px 0">Comments</h3><div id="commentArea"></div></div>
-          <div class="reader-social-bottom" id="readerSocialBottom" aria-label="Work actions"></div>
+          <div class="comments">
+            <div class="kicker">Conversation</div>
+            <h3 style="font:600 2.4rem 'Cormorant Garamond',serif;color:var(--wine);margin:6px 0">Comments</h3>
+            <div id="commentArea"></div>
+            <div class="reader-social-bottom" id="readerSocialBottom" aria-label="Work actions"></div>
+          </div>
           <div class="actions" style="justify-content:center"><button class="secondary" onclick="showPage('library')">Back to Library</button></div>
         </div>
       </section>
@@ -1675,9 +1678,7 @@ function renderReaderSocial(){
  if(!readerWork)return;
  const isSaved=saved.includes(readerWork.id);
  const buttons=`${reactionButtonHTML(readerWork)}<button class="social-btn" type="button" onclick="openCommentModal('${escapeAttr(readerWork.id)}')">💬 <span class="count">${readerWork.comments.length}</span></button><button class="social-btn ${isSaved?'on':''}" type="button" onclick="toggleSaved('${escapeAttr(readerWork.id)}')">${isSaved?'Saved':'Save'}</button><button class="social-btn" type="button" onclick="shareWork('${escapeAttr(readerWork.id)}')">Share</button><button class="social-btn" type="button" onclick="showToast('Use the same report flow as the school moderation system.')">Report</button>`;
- const top=document.getElementById('readerSocial');
  const bottom=document.getElementById('readerSocialBottom');
- if(top)top.innerHTML=buttons;
  if(bottom)bottom.innerHTML=buttons;
 }
 function toggleReactionPicker(e,id){
