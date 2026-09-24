@@ -1375,18 +1375,21 @@ async function processPinEntry(){
   pinBusy=true;
   const modal=document.getElementById('pinModal');
 
+  // STEP 1: brand-new account creates the PIN.
   if(pinMode==='setup'){
-    if(!pinFirst){
-      pinFirst=pin;
-      pinMode='confirm';
-      updatePinScreen();
-      document.getElementById('pinInput').value='';
-      updatePinSlots('');
-      pinBusy=false;
-      setTimeout(focusPinInput,120);
-      return;
-    }
+    pinFirst=pin;
+    pinMode='confirm';
+    updatePinScreen();
+    document.getElementById('pinInput').value='';
+    updatePinSlots('');
+    pinBusy=false;
+    setTimeout(focusPinInput,120);
+    return;
+  }
 
+  // STEP 2: brand-new account double-checks the PIN.
+  // IMPORTANT: do not run the normal "saved PIN" login check here.
+  if(pinMode==='confirm'){
     if(pin!==pinFirst){
       pinFirst='';
       pinMode='setup';
@@ -1402,12 +1405,13 @@ async function processPinEntry(){
 
     const newPinHash=await hashPin(pin);
     try{
-      // Google accounts must save the PIN to Firestore before access is granted.
+      // Save the confirmed PIN before granting access.
       if(pendingAuthUser?.uid){
         await writeCloudPin(pendingAuthUser.uid,newPinHash);
       }
       pendingAuthUser.pinHash=newPinHash;
       savePinHash(pendingAuthUser,newPinHash);
+      await saveCloudUserProfile(pendingAuthUser).catch(err=>console.warn('Profile save warning:',err));
       await finishPendingAuth();
     }catch(err){
       console.error('Could not save PIN:',err);
@@ -1421,6 +1425,7 @@ async function processPinEntry(){
     return;
   }
 
+  // Existing account: only this branch verifies the saved PIN.
   const expected=storedPinHash(pendingAuthUser);
   if(!expected && pendingAuthUser?.uid){
     // A Google account without a saved PIN should not be silently reset to a
