@@ -150,6 +150,23 @@ a{text-decoration:none;color:inherit}
 .comment-modal-item-head strong{color:var(--wine);font-size:.76rem}
 .comment-modal-item-head span{color:#A0968E;font-size:.61rem}
 .comment-modal-item p{margin:6px 0 0;color:#625751;font-size:.75rem;line-height:1.6;white-space:pre-wrap}
+.comment-item-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px}
+.comment-action-btn,.comment-reaction-trigger,.comment-reaction-choice{border:1px solid var(--line);background:#fff;color:var(--wine);border-radius:9px;min-height:32px;padding:6px 9px;font-size:.63rem;font-weight:800;transition:.18s var(--ease)}
+.comment-action-btn:hover,.comment-reaction-trigger:hover,.comment-reaction-choice:hover{background:#F7F2ED;transform:translateY(-1px)}
+.comment-action-btn.danger:hover{background:#FBEEEE;color:#8E3438;border-color:#E5C4C6}
+.comment-reaction-wrap{position:relative;display:inline-flex}
+.comment-reaction-trigger{display:inline-flex;align-items:center;gap:5px;min-width:50px;justify-content:center}
+.comment-reaction-trigger.on{background:#EEE6E0;border-color:#DDD0C4}
+.comment-total-count{color:#8E8179;font-size:.61rem}
+.comment-reaction-picker{position:absolute;left:0;bottom:calc(100% + 7px);z-index:120;display:none;align-items:center;gap:3px;padding:5px;border:1px solid var(--line);border-radius:11px;background:#fff;box-shadow:0 14px 30px rgba(36,27,23,.13);white-space:nowrap;max-width:min(520px,calc(100vw - 44px));overflow-x:auto}
+.comment-reaction-picker.open{display:flex;animation:modal .16s var(--ease)}
+.comment-reaction-choice{display:inline-flex;align-items:center;gap:4px;padding:6px 7px;min-height:30px}
+.comment-reaction-choice.on{background:#EEE6E0;box-shadow:inset 0 0 0 1px #DDD0C4}
+.comment-reply{margin-top:9px;margin-left:24px;background:#fff}
+.comment-replies{margin-top:9px;padding-left:8px;border-left:2px solid #EFE7E0}
+.comment-reply-state{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#FBF8F5;color:#8A7E76;font-size:.65rem}
+.comment-reply-state strong{color:var(--wine)}
+.comment-cancel-reply{border:0;background:transparent;color:var(--burgundy);font-size:.63rem;font-weight:800;padding:3px 5px}
 .comment-popup-form{border-top:1px solid var(--line);padding-top:14px}
 .comment-popup-form textarea{width:100%;min-height:90px;resize:vertical;border:1px solid var(--line);border-radius:11px;background:#fff;padding:11px 12px;outline:none;color:var(--ink)}
 .comment-popup-form textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(179,138,82,.1)}
@@ -172,7 +189,7 @@ a{text-decoration:none;color:inherit}
 .delete-modal-actions .social-btn{min-width:92px}
 .delete-modal-actions .delete-confirm{min-width:120px;background:var(--wine);border-color:var(--wine);color:#fff}
 .delete-modal-actions .delete-confirm:hover{background:var(--burgundy);border-color:var(--burgundy);color:#fff}
-@media(max-width:760px){.reaction-picker{left:auto;right:0;max-width:calc(100vw - 40px);overflow:auto}.reaction-choice{padding:7px 6px}.comment-modal .modal-box{padding:18px}.comment-modal-list{max-height:50vh}}
+@media(max-width:760px){.reaction-picker{left:auto;right:0;max-width:calc(100vw - 40px);overflow:auto}.reaction-choice{padding:7px 6px}.comment-modal .modal-box{padding:18px}.comment-modal-list{max-height:50vh}.comment-modal-item{padding:11px}.comment-item-actions{gap:5px}.comment-action-btn,.comment-reaction-trigger{min-height:34px;padding:7px 9px}.comment-reply{margin-left:12px}.comment-reaction-picker{left:auto;right:0;max-width:calc(100vw - 60px)}}
 .primary:hover,.secondary:hover{transform:translateY(-2px)}
 .metrics{display:flex;gap:30px;margin-top:36px;padding-top:18px;border-top:1px solid var(--line)}
 .metric strong{display:block;font:700 2rem "Cormorant Garamond",serif;color:var(--wine)}
@@ -961,6 +978,7 @@ button,input,textarea,select{max-width:100%}
     </div>
     <div id="commentModalList" class="comment-modal-list"></div>
     <form class="comment-popup-form" onsubmit="submitPopupComment(event)">
+      <div id="commentReplyState" class="comment-reply-state hidden"></div>
       <textarea id="commentPopupInput" maxlength="1000" disabled placeholder="Write a thoughtful comment..."></textarea>
       <div class="comment-popup-actions"><button class="secondary" type="button" onclick="closeModal('commentModal')">Cancel</button><button class="primary" type="submit" disabled>Comment</button></div>
     </form>
@@ -1073,13 +1091,60 @@ function normalizeReactions(value){
   Object.keys(base).forEach(k=>{base[k]=Array.isArray(value?.[k])?[...new Set(value[k].map(x=>String(x||'').trim()).filter(Boolean))]:[]});
   return base;
 }
+function normalizeComment(comment){
+  if(!comment)return null;
+  return {
+    ...comment,
+    id:String(comment.id||('comment-'+Date.now()+'-'+Math.random().toString(36).slice(2,8))),
+    email:String(comment.email||''),
+    name:String(comment.name||'Anonymous Reader'),
+    text:String(comment.text||''),
+    at:Number(comment.at||Date.now()),
+    reactions:normalizeReactions(comment.reactions),
+    replies:Array.isArray(comment.replies)?comment.replies.map(normalizeComment).filter(Boolean):[]
+  };
+}
+function normalizeComments(value){
+  return Array.isArray(value)?value.map(normalizeComment).filter(Boolean):[];
+}
+function findCommentInList(list,id){
+  for(const c of (Array.isArray(list)?list:[])){
+    if(c.id===id)return {comment:c,parent:null,index:list.indexOf(c)};
+    const nested=findCommentInList(c.replies||[],id);
+    if(nested){nested.parent=c;return nested;}
+  }
+  return null;
+}
+function findComment(work,id){
+  if(!work)return null;
+  return findCommentInList(work.comments||[],id);
+}
+function commentReactionOf(comment){
+  const email=canonicalEmail(currentUser?.email);if(!email)return '';
+  const r=normalizeReactions(comment?.reactions);
+  return Object.keys(REACTION_TYPES).find(k=>r[k].includes(email))||'';
+}
+function commentReactionTotal(comment){
+  return Object.values(normalizeReactions(comment?.reactions)).reduce((n,arr)=>n+arr.length,0);
+}
+function reportCommentRecord(work,comment,isReply=false){
+  const reports=readJSON('shkCommentReports',[]);
+  const email=canonicalEmail(currentUser?.email);
+  if(!email)return false;
+  const already=reports.some(r=>r.workId===work.id&&r.commentId===comment.id&&canonicalEmail(r.email)===email);
+  if(already)return false;
+  reports.push({workId:work.id,commentId:comment.id,email,at:Date.now(),isReply});
+  localStorage.setItem('shkCommentReports',JSON.stringify(reports));
+  return true;
+}
 function normalizeWork(work){
   if(!work)return null;
   const reactions=normalizeReactions(work.reactions);
   // Migrate legacy heart likes into the new heart reaction bucket once.
   if(!Array.isArray(work.reactions?.heart) && Array.isArray(work.likes)) reactions.heart=[...new Set(work.likes.map(x=>String(x||'').trim()).filter(Boolean))];
   reactions.heart=[...new Set([...(reactions.heart||[]),...(Array.isArray(work.likes)?work.likes:[]).map(x=>String(x||'').trim()).filter(Boolean)])];
-  return {...work,reactions,likes:reactions.heart.slice(),comments:Array.isArray(work.comments)?work.comments:[],views:Number(work.views||0),privacy:work.privacy||'public',createdAt:work.createdAt||Date.now()};
+  const comments=normalizeComments(work.comments);
+  return {...work,reactions,likes:reactions.heart.slice(),comments,views:Number(work.views||0),privacy:work.privacy||'public',createdAt:work.createdAt||Date.now()};
 }
 function totalReactionCount(w){return Object.values(normalizeReactions(w?.reactions)).reduce((n,arr)=>n+arr.length,0)}
 function userReactionOf(w){
@@ -1162,6 +1227,7 @@ let authMode = 'login';
 let feedFilter = 'all';
 let readerWork = null;
 let commentModalWork = null;
+let commentReplyTarget = null;
 let profileEmail = null;
 let sessionUnlocked = false;
 let pendingAuthUser = null;
@@ -1821,16 +1887,52 @@ function toggleLike(id,btn){
  return chooseReaction(null,id,'heart');
 }
 
-function renderComments(){
- const root=document.getElementById('commentArea');if(!root||!readerWork)return;const comments=readerWork.comments||[];const list=comments.length?comments.map(c=>`<div class="comment"><div class="comment-head"><strong>${escapeHTML(c.name||'Student')}</strong><span>${escapeHTML(new Date(c.at||Date.now()).toLocaleString())}</span></div><p>${escapeHTML(c.text)}</p></div>`).join(''):'<div class="empty" style="padding:20px 0"><h4>No comments yet</h4><p>Be the first to leave a comment.</p></div>';
- root.innerHTML=list+`<form class="comment-form" onsubmit="submitComment(event)"><input id="commentInput" ${currentUser?'':'disabled'} placeholder="${currentUser?'Write a thoughtful comment...':'Sign in to comment'}"><button class="primary" aria-label="Post comment" ${currentUser?'':'disabled'}>Post</button></form>`;
+function syncCommentWorkFromState(work){
+ const idx=works.findIndex(x=>x.id===work?.id);
+ if(idx<0)return null;
+ works[idx]=normalizeWork({...work});
+ if(readerWork?.id===work.id)readerWork=works[idx];
+ if(commentModalWork?.id===work.id)commentModalWork=works[idx];
+ return works[idx];
 }
-function submitComment(e){e.preventDefault();contentUser();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now()};works[idx].comments=[...(works[idx].comments||[]),comment];readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title);saveState();renderComments();renderReaderSocial();showToast('Comment posted.')}
+function commentActionButton(label,onclick,extra=''){
+ return `<button class="comment-action-btn ${extra}" type="button" onclick="${onclick}">${label}</button>`;
+}
+function renderCommentReactionBar(workId,comment,isReply=false){
+ const selected=commentReactionOf(comment);
+ const r=normalizeReactions(comment.reactions);
+ const total=commentReactionTotal(comment);
+ const choices=Object.entries(REACTION_TYPES).map(([key,v])=>`<button class="comment-reaction-choice ${selected===key?'on':''}" type="button" onclick="toggleCommentReaction(event,'${escapeAttr(workId)}','${escapeAttr(comment.id)}','${key}',${isReply?'true':'false'})" title="${v.label}"><span>${v.icon}</span><span>${r[key].length}</span></button>`).join('');
+ const current=selected?REACTION_TYPES[selected].icon:'❤️';
+ return `<div class="comment-reaction-wrap"><button class="comment-reaction-trigger ${selected?'on':''}" type="button" onclick="toggleCommentReactionPicker(event,'${escapeAttr(workId)}','${escapeAttr(comment.id)}',${isReply?'true':'false'})" aria-label="React to comment"><span>${current}</span><span class="comment-total-count">${total}</span></button><div class="comment-reaction-picker" data-comment-picker="${escapeAttr(comment.id)}">${choices}</div></div>`;
+}
+function renderReplyItems(workId,parent){
+ const replies=Array.isArray(parent.replies)?parent.replies:[];
+ if(!replies.length)return '';
+ return `<div class="comment-replies">${replies.map(reply=>renderCommentItem(workId,reply,true)).join('')}</div>`;
+}
+function renderCommentItem(workId,c,isReply=false){
+ const mine=canonicalEmail(c.email)===canonicalEmail(currentUser?.email);
+ const author=findUser(c.email);
+ const safeName=publicNameOf(author||{penName:c.name||'Anonymous Reader'});
+ const actions=[renderCommentReactionBar(workId,c,isReply)];
+ if(!isReply)actions.push(commentActionButton('Reply',`startCommentReply('${escapeAttr(c.id)}')`));
+ actions.push(commentActionButton('Report',`reportComment('${escapeAttr(workId)}','${escapeAttr(c.id)}',${isReply?'true':'false'})`));
+ if(mine)actions.push(commentActionButton('Delete',`deleteComment('${escapeAttr(workId)}','${escapeAttr(c.id)}',${isReply?'true':'false'})`,'danger'));
+ return `<div class="comment-modal-item ${isReply?'comment-reply':''}" data-comment-id="${escapeAttr(c.id)}"><div class="comment-modal-item-head"><strong>${escapeHTML(safeName)}</strong><span>${escapeHTML(new Date(c.at||Date.now()).toLocaleString())}</span></div><p>${escapeHTML(c.text||'')}</p><div class="comment-item-actions">${actions.join('')}</div>${renderReplyItems(workId,c)}</div>`;
+}
+function renderComments(){
+ const root=document.getElementById('commentArea');if(!root||!readerWork)return;
+ const comments=normalizeComments(readerWork.comments);
+ const list=comments.length?comments.map(c=>renderCommentItem(readerWork.id,c,false)).join(''):'<div class="empty" style="padding:20px 0"><h4>No comments yet</h4><p>Be the first to leave a comment.</p></div>';
+ root.innerHTML=list;
+}
+function submitComment(e){e.preventDefault();contentUser();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now(),reactions:emptyReactions(),replies:[]};works[idx].comments=[...(works[idx].comments||[]),comment];works[idx]=normalizeWork(works[idx]);readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title);saveState();renderComments();renderReaderSocial();showToast('Comment posted.')}
 function openCommentModal(id){
  contentUser();
  const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
  if(!canReadWork(w)){showToast('This work is not currently visible to your account.');return;}
- commentModalWork=w;
+ commentModalWork=normalizeWork(w);commentReplyTarget=null;
  const title=document.getElementById('commentModalTitle');
  const meta=document.getElementById('commentModalMeta');
  if(title)title.textContent=`Comments · ${w.title}`;
@@ -1844,13 +1946,66 @@ function openCommentModal(id){
 function updateCommentPopupForm(){
  const input=document.getElementById('commentPopupInput');
  const btn=document.querySelector('#commentModal .comment-popup-actions .primary');
- if(input){input.disabled=!currentUser;input.placeholder=currentUser?'Write a thoughtful comment...':'Sign in to comment';}
- if(btn)btn.disabled=!currentUser;
+ const label=document.getElementById('commentReplyState');
+ if(input){input.disabled=!currentUser;input.placeholder=currentUser?(commentReplyTarget?`Replying to ${commentReplyTarget.name}...`:'Write a thoughtful comment...'):'Sign in to comment';}
+ if(btn){btn.disabled=!currentUser;btn.textContent=commentReplyTarget?'Reply':'Comment';}
+ if(label){label.innerHTML=commentReplyTarget?`Replying to <strong>${escapeHTML(commentReplyTarget.name)}</strong><button type="button" class="comment-cancel-reply" onclick="cancelCommentReply()">Cancel reply</button>`:'';label.classList.toggle('hidden',!commentReplyTarget);}
 }
 function renderCommentModal(){
  const root=document.getElementById('commentModalList');if(!root||!commentModalWork)return;
+ commentModalWork=normalizeWork(commentModalWork);
  const comments=commentModalWork.comments||[];
- root.innerHTML=comments.length?comments.map(c=>`<div class="comment-modal-item"><div class="comment-modal-item-head"><strong>${escapeHTML(c.name||'Anonymous Reader')}</strong><span>${escapeHTML(new Date(c.at||Date.now()).toLocaleString())}</span></div><p>${escapeHTML(c.text||'')}</p></div>`).join(''):'<div class="empty" style="padding:22px 8px"><h4>No comments yet</h4><p>Start the conversation around this work.</p></div>';
+ root.innerHTML=comments.length?comments.map(c=>renderCommentItem(commentModalWork.id,c,false)).join(''):'<div class="empty" style="padding:22px 8px"><h4>No comments yet</h4><p>Be the first to leave a comment.</p></div>';
+}
+function startCommentReply(commentId){
+ if(!commentModalWork)return;
+ const found=findComment(commentModalWork,commentId);if(!found?.comment)return;
+ commentReplyTarget={id:found.comment.id,name:publicNameOf(findUser(found.comment.email)||{penName:found.comment.name})};
+ updateCommentPopupForm();
+ const input=document.getElementById('commentPopupInput');
+ input?.focus();
+ showToast(`Replying to ${commentReplyTarget.name}.`);
+}
+function cancelCommentReply(){commentReplyTarget=null;updateCommentPopupForm();const input=document.getElementById('commentPopupInput');if(input)input.focus();}
+function toggleCommentReactionPicker(e,workId,commentId,isReply=false){
+ if(e)e.stopPropagation();
+ document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>{if(p.dataset.commentPicker!==commentId) p.classList.remove('open')});
+ const picker=document.querySelector(`.comment-reaction-picker[data-comment-picker="${CSS.escape(commentId)}"]`);if(!picker)return;
+ picker.classList.toggle('open');
+}
+function toggleCommentReaction(e,workId,commentId,type,isReply=false){
+ if(e)e.stopPropagation();
+ contentUser();
+ if(!currentUser){showToast('Sign in to react to comments.');openAccount();return;}
+ const idx=works.findIndex(x=>x.id===workId);if(idx<0)return;
+ const w=normalizeWork(works[idx]);const found=findComment(w,commentId);if(!found?.comment)return;
+ const email=canonicalEmail(currentUser.email);const r=normalizeReactions(found.comment.reactions);const before=commentReactionOf(found.comment);
+ Object.keys(r).forEach(k=>{r[k]=r[k].filter(x=>canonicalEmail(x)!==email)});
+ if(before!==type)r[type].push(email);
+ found.comment.reactions=r;works[idx]=normalizeWork(w);readerWork=readerWork?.id===workId?works[idx]:readerWork;commentModalWork=commentModalWork?.id===workId?works[idx]:commentModalWork;
+ saveState();renderCommentModal();renderComments();renderReaderSocial();
+ document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'));
+ showToast(before===type?'Comment reaction removed':`${REACTION_TYPES[type].label} reaction added to comment.`);
+}
+function reportComment(workId,commentId,isReply=false){
+ contentUser();
+ if(!currentUser){showToast('Sign in to report a comment.');openAccount();return;}
+ const w=works.find(x=>x.id===workId);if(!w)return;const found=findComment(w,commentId);if(!found?.comment)return;
+ const added=reportCommentRecord(w,found.comment,isReply);
+ showToast(added?'Comment reported. Thank you.':'You already reported this comment.');
+}
+function deleteComment(workId,commentId,isReply=false){
+ contentUser();
+ if(!currentUser){showToast('Sign in to delete your comment.');openAccount();return;}
+ const idx=works.findIndex(x=>x.id===workId);if(idx<0)return;
+ const w=normalizeWork(works[idx]);const found=findComment(w,commentId);if(!found?.comment)return;
+ if(canonicalEmail(found.comment.email)!==canonicalEmail(currentUser.email)){showToast('You can only delete your own comment.');return;}
+ const targetList=found.parent?(found.parent.replies||[]):w.comments||[];
+ const removeIndex=targetList.findIndex(c=>c.id===commentId);if(removeIndex<0)return;
+ targetList.splice(removeIndex,1);
+ works[idx]=normalizeWork(w);if(readerWork?.id===workId)readerWork=works[idx];if(commentModalWork?.id===workId)commentModalWork=works[idx];
+ if(commentReplyTarget?.id===commentId)commentReplyTarget=null;
+ saveState();renderCommentModal();renderComments();renderReaderSocial();updateCommentPopupForm();showToast('Comment deleted.');
 }
 function submitPopupComment(e){
  e.preventDefault();
@@ -1859,15 +2014,16 @@ function submitPopupComment(e){
  if(!commentModalWork)return;
  const input=document.getElementById('commentPopupInput');const text=String(input?.value||'').trim();if(!text)return;
  const idx=works.findIndex(w=>w.id===commentModalWork.id);if(idx<0)return;
- const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now()};
- works[idx].comments=[...(works[idx].comments||[]),comment];
- works[idx]=normalizeWork(works[idx]);commentModalWork=works[idx];
- if(readerWork?.id===commentModalWork.id)readerWork=works[idx];
- if(commentModalWork.email!==currentUser.email)addNotification(commentModalWork.email,`${publicNameOf(currentUser)} commented on your work`,commentModalWork.title);
- saveState();
- renderAll();renderCommentModal();renderComments();renderReaderSocial();
- if(input)input.value='';
- showToast('Comment posted.');
+ const targetId=commentReplyTarget?.id||null;
+ const comment={id:'comment-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now(),reactions:emptyReactions(),replies:[]};
+ const w=normalizeWork(works[idx]);
+ if(targetId){const found=findComment(w,targetId);if(!found?.comment){showToast('That comment is no longer available.');commentReplyTarget=null;updateCommentPopupForm();return;}found.comment.replies=[...(found.comment.replies||[]),comment];}
+ else w.comments=[...(w.comments||[]),comment];
+ works[idx]=normalizeWork(w);commentModalWork=works[idx];if(readerWork?.id===commentModalWork.id)readerWork=works[idx];
+ if(commentModalWork.email!==currentUser.email)addNotification(commentModalWork.email,`${publicNameOf(currentUser)} ${targetId?'replied to a comment on':'commented on'} your work`,commentModalWork.title);
+ saveState();renderAll();renderCommentModal();renderComments();renderReaderSocial();
+ if(input)input.value='';commentReplyTarget=null;updateCommentPopupForm();
+ showToast(targetId?'Reply posted.':'Comment posted.');
 }
 
 async function copyShareLink(text){
@@ -1936,7 +2092,7 @@ function openEditProfile(){if(!currentUser){openAccount();return}document.getEle
 async function saveProfile(e){e.preventDefault();if(!currentUser)return;const email=currentUser.email;const penName=document.getElementById('editPenName').value.trim();const username=document.getElementById('editUsername').value.trim().replace(/^@/,'');const bio=document.getElementById('editBio').value.trim();if(!penName||!username){showToast('Pen name and username are required.');return}const clash=users.find(u=>u.email!==email&&usernameOf(u).toLowerCase()===username.toLowerCase());if(clash){showToast('That username is already in use.');return}const idx=users.findIndex(u=>u.email===email);if(idx<0)return;users[idx]=normalizeUser({...users[idx],penName,username,bio,photo:currentUser.photoURL||currentUser.photo||''});currentUser=normalizeUser({...users[idx]});works=works.map(w=>w.email===email?{...w,author:publicNameOf(currentUser)}:w);saveState();closeModal('editProfileModal');renderAll();showToast('Profile updated.')}
 
 function openAccount(){if(!sessionUnlocked&&currentUser){openPinGate('enter',currentUser);return}document.getElementById('accountModal').classList.add('open');updateProfileUI()}
-function closeModal(id){document.getElementById(id)?.classList.remove('open');if(id==='commentModal'){commentModalWork=null}if(id==='deleteWorkModal'){pendingDeleteWorkId=null}}
+function closeModal(id){document.getElementById(id)?.classList.remove('open');if(id==='commentModal'){commentModalWork=null;commentReplyTarget=null;updateCommentPopupForm();document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'))}if(id==='deleteWorkModal'){pendingDeleteWorkId=null}}
 function outsideModal(e,m){if(e.target===m && m.id!=='pinModal')closeModal(m.id)}
 function switchAuth(mode){
  authMode=mode;document.getElementById('loginTab').classList.toggle('active',mode==='login');document.getElementById('signupTab').classList.toggle('active',mode==='signup');
@@ -2397,7 +2553,7 @@ function initShkNavigationSounds(){
 }
 
 function switchAuthDefault(){switchAuth('login')}
-document.addEventListener('click',(e)=>{if(!e.target.closest('.reaction-wrap'))document.querySelectorAll('.reaction-picker.open').forEach(closeReactionPicker);});
+document.addEventListener('click',(e)=>{if(!e.target.closest('.reaction-wrap'))document.querySelectorAll('.reaction-picker.open').forEach(closeReactionPicker);if(!e.target.closest('.comment-reaction-wrap'))document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'));});
 switchAuthDefault();applyDarkMode();renderAll();initShkNavigationSounds();
 </script>
 </body>
