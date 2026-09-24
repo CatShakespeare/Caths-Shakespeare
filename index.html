@@ -638,9 +638,11 @@ a{text-decoration:none;color:inherit}
   <div class="modal-box">
     <div class="modal-head"><div><div class="kicker">Your identity</div><h3>Edit Profile</h3></div><button class="close" onclick="closeModal('editProfileModal')">×</button></div>
     <form class="form-grid edit-grid" id="editProfileForm" onsubmit="saveProfile(event)">
-      <div class="field full"><label>Full Name</label><input id="editName" required></div>
+      <div class="field full"><label>Full Name</label><input id="editName" required><small style="color:#978C85;font-size:.68rem;line-height:1.4">Your full name stays private. It is not shown as your public author name when a pen name is set.</small></div>
+      <div class="field"><label>Pen Name / Surname</label><input id="editPenName" placeholder="The name readers should see"></div>
       <div class="field"><label>Username</label><input id="editUsername" required placeholder="@username"></div>
       <div class="field full"><label>Bio</label><textarea id="editBio" placeholder="Tell readers a little about yourself..."></textarea></div>
+      <div class="field full"><div style="padding:10px 12px;border:1px dashed var(--line);border-radius:10px;background:#FBF9F7;color:#8C8179;font-size:.68rem;line-height:1.5"><strong style="color:var(--wine)">Email privacy:</strong> the email used to sign in is kept for account authentication and is not displayed on your public profile, posts, or author pages.</div></div>
       <div class="actions full"><button class="secondary" type="button" onclick="closeModal('editProfileModal')">Cancel</button><button class="primary" type="submit">Save Profile</button></div>
     </form>
   </div>
@@ -753,7 +755,15 @@ function canPublish(user){return !!user&&normalizeIdentity(user.identity)!=='rea
 function normalizeUser(user){
   if(!user)return null;
   const identity=normalizeIdentity(user.identity);
-  return {...user,followers:Array.isArray(user.followers)?user.followers:[],following:Array.isArray(user.following)?user.following:[],username:(user.username||'').replace(/^@/,''),photoURL:user.photoURL||user.photo||'',photo:user.photo||user.photoURL||'',identity,identityLabel:IDENTITY_OPTIONS[identity].label};
+  return {...user,followers:Array.isArray(user.followers)?user.followers:[],following:Array.isArray(user.following)?user.following:[],username:(user.username||'').replace(/^@/,''),penName:String(user.penName||'').trim(),photoURL:user.photoURL||user.photo||'',photo:user.photo||user.photoURL||'',identity,identityLabel:IDENTITY_OPTIONS[identity].label};
+}
+function publicNameOf(user){
+  if(!user)return 'Reader';
+  return String(user.penName||user.name||'Reader').trim() || 'Reader';
+}
+function publicAuthorNameForWork(work){
+  const owner=findUser(work?.email);
+  return owner?publicNameOf(owner):(work?.author||'Reader');
 }
 function normalizeWork(work){
   if(!work)return null;
@@ -916,12 +926,12 @@ function cardHTML(w){
  const likeOn=!!currentUser&&w.likes.includes(currentUser.email);
  const tags=(w.tags||[]).map(t=>`<button class="tag" onclick="searchTag('${escapeAttr(t)}')">#${escapeHTML(t)}</button>`).join('');
  const manage=owner?`<div class="work-management"><button class="secondary" onclick="editWork('${escapeAttr(w.id)}')">Edit</button><button class="danger-btn" onclick="deleteWork('${escapeAttr(w.id)}')">Delete</button></div>`:'';
- return `<article class="card"><div class="card-art">${w.cover?`<div style="position:absolute;inset:0;background:url(${escapeAttr(w.cover)}) center/cover;opacity:.9"></div>`:''}<div style="position:relative"><small>${escapeHTML(w.genre)}</small><strong>${escapeHTML(w.title)}</strong></div></div><div class="card-body"><div class="meta"><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button><span class="tag">${escapeHTML(w.genre)}</span></div><h4>${escapeHTML(w.title)}</h4><p>${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions"><button class="social-btn ${likeOn?'on':''}" onclick="toggleLike('${escapeAttr(w.id)}',this)">♥ <span class="count">${w.likes.length}</span></button><button class="social-btn" onclick="openReader('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button></div><div class="card-foot"><button class="link-btn" onclick="openReader('${escapeAttr(w.id)}')">Read Work</button><span style="font-size:.63rem;color:#A09791">${w.views||0} views</span></div>${manage}</div></article>`;
+ return `<article class="card"><div class="card-art">${w.cover?`<div style="position:absolute;inset:0;background:url(${escapeAttr(w.cover)}) center/cover;opacity:.9"></div>`:''}<div style="position:relative"><small>${escapeHTML(w.genre)}</small><strong>${escapeHTML(w.title)}</strong></div></div><div class="card-body"><div class="meta"><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(publicAuthorNameForWork(w))}</button><span class="tag">${escapeHTML(w.genre)}</span></div><h4>${escapeHTML(w.title)}</h4><p>${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions"><button class="social-btn ${likeOn?'on':''}" onclick="toggleLike('${escapeAttr(w.id)}',this)">♥ <span class="count">${w.likes.length}</span></button><button class="social-btn" onclick="openReader('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button></div><div class="card-foot"><button class="link-btn" onclick="openReader('${escapeAttr(w.id)}')">Read Work</button><span style="font-size:.63rem;color:#A09791">${w.views||0} views</span></div>${manage}</div></article>`;
 }
 function feedHTML(w){
  const author=findUser(w.email); const likeOn=!!currentUser&&w.likes.includes(currentUser.email);
  const tags=(w.tags||[]).slice(0,6).map(t=>`<button class="tag" onclick="searchTag('${escapeAttr(t)}')">#${escapeHTML(t)}</button>`).join('');
- return `<article class="feed-post"><div class="author"><div class="avatar">${author?.photo?`<img src="${escapeAttr(author.photo)}" alt="">`:escapeHTML(initialsOf(w.author))}</div><div><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button><span>@${escapeHTML(usernameOf(author||{name:w.author,email:w.email||''}))} · ${escapeHTML(identityLabelOf(author||{}))} · ${escapeHTML(w.genre)}</span></div></div><div class="post-title">${escapeHTML(w.title)}</div><p class="post-text">${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions"><button class="social-btn ${likeOn?'on':''}" onclick="toggleLike('${escapeAttr(w.id)}',this)">♥ <span class="count">${w.likes.length}</span></button><button class="social-btn" onclick="openReader('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button><button class="social-btn" onclick="shareWork('${escapeAttr(w.id)}')">Share</button></div><div class="post-actions"><button class="post-action" onclick="openReader('${escapeAttr(w.id)}')">Read Full Work</button></div></article>`;
+ return `<article class="feed-post"><div class="author"><div class="avatar">${author?.photo?`<img src="${escapeAttr(author.photo)}" alt="">`:escapeHTML(initialsOf(publicAuthorNameForWork(w)))}</div><div><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(publicAuthorNameForWork(w))}</button><span>@${escapeHTML(usernameOf(author||{name:publicAuthorNameForWork(w),email:w.email||''}))} · ${escapeHTML(identityLabelOf(author||{}))} · ${escapeHTML(w.genre)}</span></div></div><div class="post-title">${escapeHTML(w.title)}</div><p class="post-text">${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions"><button class="social-btn ${likeOn?'on':''}" onclick="toggleLike('${escapeAttr(w.id)}',this)">♥ <span class="count">${w.likes.length}</span></button><button class="social-btn" onclick="openReader('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button><button class="social-btn" onclick="shareWork('${escapeAttr(w.id)}')">Share</button></div><div class="post-actions"><button class="post-action" onclick="openReader('${escapeAttr(w.id)}')">Read Full Work</button></div></article>`;
 }
 function renderFeed(){
  const q=(document.getElementById('feedSearch')?.value||'').toLowerCase().trim();
@@ -972,10 +982,10 @@ function followingFeedHTML(w,rank){
  return `<article class="feed-post following-post">
    <div>${rankBadge}${freshBadge}</div>
    <div class="author">
-     <div class="avatar">${author?.photo?`<img src="${escapeAttr(author.photo)}" alt="">`:escapeHTML(initialsOf(w.author))}</div>
+     <div class="avatar">${author?.photo?`<img src="${escapeAttr(author.photo)}" alt="">`:escapeHTML(initialsOf(publicAuthorNameForWork(w)))}</div>
      <div>
-       <button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button>
-       <span>@${escapeHTML(usernameOf(author||{name:w.author,email:w.email||''}))} · ${escapeHTML(identityLabelOf(author||{}))} · ${escapeHTML(w.genre)} · ${followingTimeLabel(w)}</span>
+       <button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(publicAuthorNameForWork(w))}</button>
+       <span>@${escapeHTML(usernameOf(author||{name:publicAuthorNameForWork(w),email:w.email||''}))} · ${escapeHTML(identityLabelOf(author||{}))} · ${escapeHTML(w.genre)} · ${followingTimeLabel(w)}</span>
      </div>
    </div>
    <div class="post-title">${escapeHTML(w.title)}</div>
@@ -1074,7 +1084,7 @@ function renderAuthors(){
    const count=getUserWorks(user.email).length;
    const following=!!currentUser&&currentUser.following.includes(user.email);
    const self=currentUser&&currentUser.email===user.email;
-   return `<article class="author-card"><button class="result-link" onclick="openProfile('${escapeAttr(user.email)}')"><div class="author-big">${user.photo?`<img src="${escapeAttr(user.photo)}" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:escapeHTML(initialsOf(user.name))}</div><h4>${escapeHTML(user.name)}</h4><p>@${escapeHTML(usernameOf(user))} · ${escapeHTML(identityLabelOf(user))} · ${count} published work${count===1?'':'s'}</p></button><button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${self?'You':(following?'Following':'Follow')}</button></article>`;
+   return `<article class="author-card"><button class="result-link" onclick="openProfile('${escapeAttr(user.email)}')"><div class="author-big">${user.photo?`<img src="${escapeAttr(user.photo)}" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:escapeHTML(initialsOf(user.name))}</div><h4>${escapeHTML(publicNameOf(user))}</h4><p>@${escapeHTML(usernameOf(user))} · ${escapeHTML(identityLabelOf(user))} · ${count} published work${count===1?'':'s'}</p></button><button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${self?'You':(following?'Following':'Follow')}</button></article>`;
  }).join('');
 }
 function openIdentitySetup(){
@@ -1145,7 +1155,7 @@ function renderProfile(){
  const followLabel=self?'This is you':(following?'Following':'Follow');
  const identityAction=self&&normalizeIdentity(user.identity)==='reader'?'<button class="primary" onclick="openIdentitySetup()">Set Up Identity</button>':'';
  const publishNote=normalizeIdentity(user.identity)==='reader'?'This account is a Reader. Verify an identity to publish literature.':'This profile can publish literature as a verified 12-SHAKESPEARE identity.';
- root.innerHTML=`<div class="profile-hero"><div class="profile-big-avatar">${user.photoURL||user.photo?`<img src="${escapeAttr(user.photoURL||user.photo)}" alt="Profile picture">`:escapeHTML(initialsOf(user.name))}</div><div class="profile-copy"><div class="kicker">Profile identity</div><div class="identity-badge ${identityClass}">${escapeHTML(identity)}</div><h2>${escapeHTML(user.name)}</h2><p class="profile-handle">@${escapeHTML(usernameOf(user))}</p><p>${escapeHTML(user.bio||'A reader in 12-SHAKESPEARE.')}</p><div class="profile-stats"><div class="profile-stat"><strong>${userWorks.length}</strong><span>Works</span></div><div class="profile-stat"><strong>${user.followers.length}</strong><span>Followers</span></div><div class="profile-stat"><strong>${user.following.length}</strong><span>Following</span></div></div></div><div class="profile-actions">${identityAction}<button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${followLabel}</button><button class="secondary" onclick="openGlobalSearch()">Search</button></div></div><div class="section"><div class="profile-work-head"><div><div class="kicker">Published shelf</div><h3 style="font:600 3rem 'Cormorant Garamond',serif;color:var(--wine);margin:7px 0">${escapeHTML(user.name)}'s Works</h3></div><p style="color:var(--muted);margin:0">${escapeHTML(publishNote)}</p></div><div class="grid3" style="margin-top:20px">${userWorks.length?userWorks.map(cardHTML).join(''):'<div class="empty"><h4>No published works yet</h4><p>This student has not published a work.</p></div>'}</div></div>`;
+ root.innerHTML=`<div class="profile-hero"><div class="profile-big-avatar">${user.photoURL||user.photo?`<img src="${escapeAttr(user.photoURL||user.photo)}" alt="Profile picture">`:escapeHTML(initialsOf(user.name))}</div><div class="profile-copy"><div class="kicker">Profile identity</div><div class="identity-badge ${identityClass}">${escapeHTML(identity)}</div><h2>${escapeHTML(publicNameOf(user))}</h2><p class="profile-handle">@${escapeHTML(usernameOf(user))}</p><p>${escapeHTML(user.bio||'A reader in 12-SHAKESPEARE.')}</p><div class="profile-stats"><div class="profile-stat"><strong>${userWorks.length}</strong><span>Works</span></div><div class="profile-stat"><strong>${user.followers.length}</strong><span>Followers</span></div><div class="profile-stat"><strong>${user.following.length}</strong><span>Following</span></div></div></div><div class="profile-actions">${identityAction}<button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${followLabel}</button><button class="secondary" onclick="openGlobalSearch()">Search</button></div></div><div class="section"><div class="profile-work-head"><div><div class="kicker">Published shelf</div><h3 style="font:600 3rem 'Cormorant Garamond',serif;color:var(--wine);margin:7px 0">${escapeHTML(publicNameOf(user))}'s Works</h3></div><p style="color:var(--muted);margin:0">${escapeHTML(publishNote)}</p></div><div class="grid3" style="margin-top:20px">${userWorks.length?userWorks.map(cardHTML).join(''):'<div class="empty"><h4>No published works yet</h4><p>This student has not published a work.</p></div>'}</div></div>`;
 }
 function openProfile(email){
  const user=findUser(email); if(!user){showToast('Student profile not found.');return;}
@@ -1218,7 +1228,7 @@ document.getElementById('createForm').addEventListener('submit',function(e){
  e.preventDefault();if(!currentUser){openAccount();return}
  if(!canPublish(currentUser)){openIdentitySetup();return}
  const now=Date.now();
- const payload={title:document.getElementById('postTitle').value.trim(),author:currentUser.name,email:currentUser.email,genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
+ const payload={title:document.getElementById('postTitle').value.trim(),author:publicNameOf(currentUser),email:currentUser.email,genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
  if(editingWorkId){const idx=works.findIndex(w=>w.id===editingWorkId&&w.email===currentUser.email);if(idx<0){showToast('Work not found.');return}works[idx]=normalizeWork({...works[idx],...payload,updatedAt:now});showToast('Your work was updated.');editingWorkId=null;}else{works.unshift(normalizeWork({id:'work-'+now,...payload,likes:[],comments:[],views:0,createdAt:now}));showToast('Your literature has been published.');}
  saveState();this.reset();document.getElementById('postPrivacy').value='public';renderAll();showPage('feed');
 });
@@ -1229,7 +1239,7 @@ function openReader(id){
  const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
  if(!canReadWork(w)){showToast('This work is not currently visible to your account.');return;}
  readerWork=w;w.views=(w.views||0)+1;rememberRead(w);saveState();
- const workAuthor=findUser(w.email)||{};document.getElementById('readerGenre').textContent=w.genre.toUpperCase();document.getElementById('readerIdentity').textContent=identityLabelOf(workAuthor).toUpperCase();document.getElementById('readerIdentity').classList.toggle('reader',normalizeIdentity(workAuthor.identity)==='reader');document.getElementById('readerTitle').textContent=w.title;document.getElementById('readerBy').textContent='by '+w.author+' · '+new Date(w.createdAt||Date.now()).getFullYear();
+ const workAuthor=findUser(w.email)||{};document.getElementById('readerGenre').textContent=w.genre.toUpperCase();document.getElementById('readerIdentity').textContent=identityLabelOf(workAuthor).toUpperCase();document.getElementById('readerIdentity').classList.toggle('reader',normalizeIdentity(workAuthor.identity)==='reader');document.getElementById('readerTitle').textContent=w.title;document.getElementById('readerBy').textContent='by '+publicAuthorNameForWork(w)+' · '+new Date(w.createdAt||Date.now()).getFullYear();
  document.getElementById('readerSubmeta').textContent=`${w.views||0} views · ${w.likes.length} likes · ${w.comments.length} comments · ${w.privacy==='followers'?'Followers only':w.privacy==='private'?'Private':'Public'}`;
  document.getElementById('readerBody').innerHTML=w.content.split(/\\n+/).map(p=>'<p>'+escapeHTML(p)+'</p>').join('');
  renderReaderSocial();renderComments();showPage('reader');
@@ -1266,11 +1276,11 @@ function renderGlobalSearch(){
  let html='';
  if(foundUsers.length){
    html+='<div class="search-group"><div class="search-group-head"><strong>Student profiles</strong><span>'+foundUsers.length+' result'+(foundUsers.length===1?'':'s')+'</span></div>';
-   html+=foundUsers.map(u=>{const followed=currentUser?.following.includes(u.email);const self=currentUser?.email===u.email;return `<div class="search-result"><button class="result-link" onclick="openProfile('${escapeAttr(u.email)}');closeModal('globalSearchModal')"><div class="search-result-main"><div class="avatar">${u.photo?`<img src="${escapeAttr(u.photo)}" alt="">`:escapeHTML(initialsOf(u.name))}</div><div class="search-result-copy"><div class="result-kind">Student profile</div><strong>${escapeHTML(u.name)}</strong><span>@${escapeHTML(usernameOf(u))} · ${escapeHTML(identityLabelOf(u))} · ${getUserWorks(u.email).length} work${getUserWorks(u.email).length===1?'':'s'}</span></div></div></button><button class="follow ${followed?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(u.email)}',this)">${self?'You':(followed?'Following':'Follow')}</button></div>`}).join('')+'</div>';
+   html+=foundUsers.map(u=>{const followed=currentUser?.following.includes(u.email);const self=currentUser?.email===u.email;return `<div class="search-result"><button class="result-link" onclick="openProfile('${escapeAttr(u.email)}');closeModal('globalSearchModal')"><div class="search-result-main"><div class="avatar">${u.photo?`<img src="${escapeAttr(u.photo)}" alt="">`:escapeHTML(initialsOf(u.name))}</div><div class="search-result-copy"><div class="result-kind">Student profile</div><strong>${escapeHTML(publicNameOf(u))}</strong><span>@${escapeHTML(usernameOf(u))} · ${escapeHTML(identityLabelOf(u))} · ${getUserWorks(u.email).length} work${getUserWorks(u.email).length===1?'':'s'}</span></div></div></button><button class="follow ${followed?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(u.email)}',this)">${self?'You':(followed?'Following':'Follow')}</button></div>`}).join('')+'</div>';
  }
  if(foundWorks.length){
    html+='<div class="search-group"><div class="search-group-head"><strong>Works & posts</strong><span>'+foundWorks.length+' result'+(foundWorks.length===1?'':'s')+'</span></div>';
-   html+=foundWorks.map(w=>`<div class="search-result"><button class="result-link" onclick="closeModal('globalSearchModal');openReader('${escapeAttr(w.id)}')"><div class="search-result-copy"><div class="result-kind">${escapeHTML(w.genre)}</div><strong>${escapeHTML(w.title)}</strong><span>by ${escapeHTML(w.author)} · ${escapeHTML(w.excerpt)}</span></div></button><button class="secondary" style="padding:8px 10px;font-size:.7rem" onclick="openProfile('${escapeAttr(w.email||'')}');closeModal('globalSearchModal')">Profile</button></div>`).join('')+'</div>';
+   html+=foundWorks.map(w=>`<div class="search-result"><button class="result-link" onclick="closeModal('globalSearchModal');openReader('${escapeAttr(w.id)}')"><div class="search-result-copy"><div class="result-kind">${escapeHTML(w.genre)}</div><strong>${escapeHTML(w.title)}</strong><span>by ${escapeHTML(publicAuthorNameForWork(w))} · ${escapeHTML(w.excerpt)}</span></div></button><button class="secondary" style="padding:8px 10px;font-size:.7rem" onclick="openProfile('${escapeAttr(w.email||'')}');closeModal('globalSearchModal')">Profile</button></div>`).join('')+'</div>';
  }
  root.innerHTML=html||'<div class="empty"><h4>No matches found</h4><p>Try a different title, keyword, student name, or @username.</p></div>';
 }
@@ -1284,8 +1294,31 @@ function renderNotifications(){const root=document.getElementById('notifications
 function markNotificationsRead(){if(!currentUser)return;notifications=notifications.map(n=>n.to===currentUser.email?{...n,read:true}:n);persistSessionData();renderNotifications();renderNotificationsBadge()}
 function applyDarkMode(){document.documentElement.classList.toggle('dark',darkMode)}
 function toggleDarkMode(){darkMode=!darkMode;persistSessionData();applyDarkMode();showToast(darkMode?'Dark mode enabled.':'Light mode enabled.')}
-function openEditProfile(){if(!currentUser){openAccount();return}document.getElementById('editName').value=currentUser.name||'';document.getElementById('editUsername').value='@'+usernameOf(currentUser);document.getElementById('editBio').value=currentUser.bio||'';document.getElementById('editProfileModal').classList.add('open')}
-async function saveProfile(e){e.preventDefault();if(!currentUser)return;const email=currentUser.email;const name=document.getElementById('editName').value.trim();const username=document.getElementById('editUsername').value.trim().replace(/^@/,'');const bio=document.getElementById('editBio').value.trim();if(!name||!username){showToast('Name and username are required.');return}const clash=users.find(u=>u.email!==email&&usernameOf(u).toLowerCase()===username.toLowerCase());if(clash){showToast('That username is already in use.');return}const idx=users.findIndex(u=>u.email===email);if(idx<0)return;users[idx]=normalizeUser({...users[idx],name,username,bio,photo:currentUser.photoURL||currentUser.photo||''});currentUser=normalizeUser({...users[idx]});works=works.map(w=>w.email===email?{...w,author:name}:w);saveState();closeModal('editProfileModal');renderAll();showToast('Profile updated.')}
+function openEditProfile(){if(!currentUser){openAccount();return}document.getElementById('editName').value=currentUser.name||'';document.getElementById('editPenName').value=currentUser.penName||'';document.getElementById('editUsername').value='@'+usernameOf(currentUser);document.getElementById('editBio').value=currentUser.bio||'';document.getElementById('editProfileModal').classList.add('open')}
+async function saveProfile(e){
+ e.preventDefault();
+ if(!currentUser)return;
+ const email=currentUser.email;
+ const name=document.getElementById('editName').value.trim();
+ const penName=document.getElementById('editPenName').value.trim();
+ const username=document.getElementById('editUsername').value.trim().replace(/^@/,'');
+ const bio=document.getElementById('editBio').value.trim();
+ if(!name||!username){showToast('Full name and username are required.');return}
+ const clash=users.find(u=>canonicalEmail(u.email)!==canonicalEmail(email)&&usernameOf(u).toLowerCase()===username.toLowerCase());
+ if(clash){showToast('That username is already in use.');return}
+ const idx=users.findIndex(u=>canonicalEmail(u.email)===canonicalEmail(email));
+ if(idx<0)return;
+ const updated=normalizeUser({...users[idx],name,penName,username,bio,photo:currentUser.photoURL||currentUser.photo||''});
+ users[idx]=updated;
+ currentUser=normalizeUser({...updated});
+ works=works.map(w=>w.email===email?{...w,author:publicNameOf(updated)}:w);
+ saveState();
+ try{if(currentUser.uid)await saveCloudUserProfile(currentUser)}catch(err){console.warn('Profile cloud sync failed:',err)}
+ closeModal('editProfileModal');
+ renderAll();
+ showToast('Profile updated.');
+}
+
 
 function openAccount(){if(!sessionUnlocked&&currentUser){openPinGate('enter',currentUser);return}document.getElementById('accountModal').classList.add('open');updateProfileUI()}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
@@ -1336,10 +1369,12 @@ async function googleLogin(){
 
     const cloudProfile=await readCloudUserProfile(g.uid);
     const cloudData=cloudProfile.data||{};
+    const privateProfile=await readCloudPrivateProfile(g.uid);
+    const privateData=privateProfile.data||{};
     pendingAuthUser=normalizeUser({
       ...existing,
       ...cloudData,
-      name:g.displayName||existing?.name||cloudData.displayName||'Student Author',
+      name:privateData.fullName||existing?.name||g.displayName||'Student Author',
       username:existing?.username||cloudData.username||username,
       email,
       photoURL:g.photoURL||existing?.photoURL||existing?.photo||cloudData.photoURL||'',
@@ -1458,6 +1493,18 @@ async function readCloudUserProfile(uid){
   }
 }
 
+async function readCloudPrivateProfile(uid){
+  if(!uid||!window.firebaseDB||!window.firebaseDoc||!window.firebaseGetDoc)return {ok:false,data:null};
+  try{
+    const ref=window.firebaseDoc(window.firebaseDB,'users',uid,'private','profile');
+    const snap=await window.firebaseGetDoc(ref);
+    return {ok:true,data:snap.exists()?snap.data():null};
+  }catch(err){
+    console.warn('Private profile lookup failed:',err);
+    return {ok:false,data:null};
+  }
+}
+
 async function saveCloudUserProfile(user){
   if(!user?.uid || !window.firebaseDB || !window.firebaseDoc || !window.firebaseSetDoc)return;
   const ref=window.firebaseDoc(window.firebaseDB,'users',user.uid);
@@ -1467,11 +1514,11 @@ async function saveCloudUserProfile(user){
     if(snap.exists()) createdAt=snap.data()?.createdAt || createdAt;
   }catch(_e){/* profile data is auxiliary; PIN remains the critical step */}
 
+  // Public profile document: never store sign-in email or private full name here.
   await window.firebaseSetDoc(ref,{
     uid:user.uid,
-    displayName:user.name||'Student Author',
+    displayName:publicNameOf(user),
     username:usernameOf(user),
-    email:canonicalEmail(user.email),
     photoURL:user.photoURL||user.photo||'',
     provider:user.provider||'google',
     bio:user.bio||'Student writer in 12-SHAKESPEARE.',
@@ -1479,7 +1526,21 @@ async function saveCloudUserProfile(user){
     identityLabel:identityLabelOf(user),
     updatedAt:window.firebaseServerTimestamp(),
     createdAt
-  },{merge:true});
+  },{merge:false});
+
+  // Private profile document: owner-only under the existing /private rules.
+  try{
+    const privateRef=window.firebaseDoc(window.firebaseDB,'users',user.uid,'private','profile');
+    await window.firebaseSetDoc(privateRef,{
+      uid:user.uid,
+      email:canonicalEmail(user.email),
+      fullName:user.name||'Student Author',
+      updatedAt:window.firebaseServerTimestamp(),
+      createdAt
+    },{merge:true});
+  }catch(err){
+    console.warn('Private profile sync failed:',err);
+  }
 }
 
 async function hashPin(pin){const data=new TextEncoder().encode('12SHAKESPEARE::PIN::'+pin);const digest=await crypto.subtle.digest('SHA-256',data);return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('')}
