@@ -131,6 +131,35 @@ a{text-decoration:none;color:inherit}
 .reader-social-bottom{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;margin:36px 0 10px;padding-top:22px;border-top:1px solid var(--line)}
 .reader-social-bottom .social-btn{min-width:74px}
 .reader-social-bottom .social-btn:first-child{min-width:64px}
+
+.reaction-wrap{position:relative;display:inline-flex;align-items:center}
+.reaction-picker{position:absolute;left:0;bottom:calc(100% + 8px);z-index:30;display:none;align-items:center;gap:4px;padding:6px;border:1px solid var(--line);border-radius:13px;background:#fff;box-shadow:0 16px 35px rgba(36,27,23,.12);white-space:nowrap}
+.reaction-picker.open{display:flex;animation:modal .18s var(--ease)}
+.reaction-choice{display:flex;align-items:center;gap:4px;border:0;background:#fff;color:var(--wine);border-radius:9px;padding:7px 8px;font-size:.68rem;font-weight:800;transition:.16s var(--ease)}
+.reaction-choice:hover{background:#F7F2ED;transform:translateY(-1px)}
+.reaction-choice.on{background:#EEE6E0;box-shadow:inset 0 0 0 1px #DDD0C4}
+.reaction-icon{font-size:1rem;line-height:1}
+.reaction-choice .reaction-count{color:#9A9089;font-size:.6rem}
+.comment-modal .modal-box{width:min(640px,100%);padding:23px}
+.comment-modal-list{display:grid;gap:10px;max-height:min(55vh,470px);overflow:auto;margin:16px 0;padding-right:3px}
+.comment-modal-item{border:1px solid var(--line);border-radius:13px;background:#FBF8F5;padding:12px 13px}
+.comment-modal-item-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.comment-modal-item-head strong{color:var(--wine);font-size:.76rem}
+.comment-modal-item-head span{color:#A0968E;font-size:.61rem}
+.comment-modal-item p{margin:6px 0 0;color:#625751;font-size:.75rem;line-height:1.6;white-space:pre-wrap}
+.comment-popup-form{border-top:1px solid var(--line);padding-top:14px}
+.comment-popup-form textarea{width:100%;min-height:90px;resize:vertical;border:1px solid var(--line);border-radius:11px;background:#fff;padding:11px 12px;outline:none;color:var(--ink)}
+.comment-popup-form textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(179,138,82,.1)}
+.comment-popup-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:9px}
+.delete-modal .modal-box{width:min(430px,100%);padding:26px;text-align:center}
+.delete-modal-icon{width:48px;height:48px;margin:0 auto 12px;border-radius:14px;background:#F7F2ED;color:var(--wine);display:grid;place-items:center;font-size:1.25rem}
+.delete-modal h3{font:600 2rem/.98 "Cormorant Garamond",serif;color:var(--wine);margin:0}
+.delete-modal p{margin:8px auto 0;max-width:330px;color:var(--muted);font-size:.74rem;line-height:1.6}
+.delete-modal-actions{display:flex;justify-content:center;gap:8px;margin-top:19px}
+.delete-modal-actions .social-btn{min-width:92px}
+.delete-modal-actions .delete-confirm{min-width:120px;background:var(--wine);border-color:var(--wine);color:#fff}
+.delete-modal-actions .delete-confirm:hover{background:var(--burgundy);border-color:var(--burgundy);color:#fff}
+@media(max-width:760px){.reaction-picker{left:auto;right:0;max-width:calc(100vw - 40px);overflow:auto}.reaction-choice{padding:7px 6px}.comment-modal .modal-box{padding:18px}.comment-modal-list{max-height:50vh}}
 .primary:hover,.secondary:hover{transform:translateY(-2px)}
 .metrics{display:flex;gap:30px;margin-top:36px;padding-top:18px;border-top:1px solid var(--line)}
 .metric strong{display:block;font:700 2rem "Cormorant Garamond",serif;color:var(--wine)}
@@ -727,6 +756,32 @@ a{text-decoration:none;color:inherit}
   </div>
 </div>
 
+<div class="modal comment-modal" id="commentModal" onclick="outsideModal(event,this)">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div><div class="kicker">Conversation</div><h3 id="commentModalTitle">Comments</h3><p id="commentModalMeta" style="margin:4px 0 0;color:#9A9089;font-size:.68rem"></p></div>
+      <button class="close" onclick="closeModal('commentModal')">×</button>
+    </div>
+    <div id="commentModalList" class="comment-modal-list"></div>
+    <form class="comment-popup-form" onsubmit="submitPopupComment(event)">
+      <textarea id="commentPopupInput" maxlength="1000" disabled placeholder="Write a thoughtful comment..."></textarea>
+      <div class="comment-popup-actions"><button class="secondary" type="button" onclick="closeModal('commentModal')">Cancel</button><button class="primary" type="submit" disabled>Comment</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="modal delete-modal" id="deleteWorkModal" onclick="outsideModal(event,this)">
+  <div class="modal-box">
+    <div class="delete-modal-icon" aria-hidden="true">⌫</div>
+    <h3>Delete this work permanently?</h3>
+    <p>This action cannot be undone. The work and its saved reference will be removed from your archive.</p>
+    <div class="delete-modal-actions">
+      <button class="social-btn" type="button" onclick="closeModal('deleteWorkModal')">No</button>
+      <button class="social-btn delete-confirm" type="button" onclick="confirmDeleteWork()">Delete</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -797,9 +852,40 @@ function normalizeUser(user){
 function publicNameOf(user){
   return String(user?.penName||'Anonymous Author').trim()||'Anonymous Author';
 }
+const REACTION_TYPES={
+  heart:{label:'Heart',icon:'♥'},
+  like:{label:'Like',icon:'👍'},
+  dislike:{label:'Dislike',icon:'👎'},
+  wow:{label:'Wow',icon:'😮'},
+  sad:{label:'Sad',icon:'😢'}
+};
+function emptyReactions(){return {heart:[],like:[],dislike:[],wow:[],sad:[]}}
+function normalizeReactions(value){
+  const base=emptyReactions();
+  Object.keys(base).forEach(k=>{base[k]=Array.isArray(value?.[k])?[...new Set(value[k].map(x=>String(x||'').trim()).filter(Boolean))]:[]});
+  return base;
+}
 function normalizeWork(work){
   if(!work)return null;
-  return {...work,likes:Array.isArray(work.likes)?work.likes:[],comments:Array.isArray(work.comments)?work.comments:[],views:Number(work.views||0),privacy:work.privacy||'public',createdAt:work.createdAt||Date.now()};
+  const reactions=normalizeReactions(work.reactions);
+  // Migrate legacy heart likes into the new heart reaction bucket once.
+  if(!Array.isArray(work.reactions?.heart) && Array.isArray(work.likes)) reactions.heart=[...new Set(work.likes.map(x=>String(x||'').trim()).filter(Boolean))];
+  reactions.heart=[...new Set([...(reactions.heart||[]),...(Array.isArray(work.likes)?work.likes:[]).map(x=>String(x||'').trim()).filter(Boolean)])];
+  return {...work,reactions,likes:reactions.heart.slice(),comments:Array.isArray(work.comments)?work.comments:[],views:Number(work.views||0),privacy:work.privacy||'public',createdAt:work.createdAt||Date.now()};
+}
+function totalReactionCount(w){return Object.values(normalizeReactions(w?.reactions)).reduce((n,arr)=>n+arr.length,0)}
+function userReactionOf(w){
+  const email=canonicalEmail(currentUser?.email);if(!email)return '';
+  const r=normalizeReactions(w?.reactions);
+  return Object.keys(REACTION_TYPES).find(k=>r[k].includes(email))||'';
+}
+function reactionButtonHTML(w){
+  const selected=userReactionOf(w);
+  const icon=selected?REACTION_TYPES[selected].icon:REACTION_TYPES.heart.icon;
+  const total=totalReactionCount(w);
+  const r=normalizeReactions(w.reactions);
+  const choices=Object.entries(REACTION_TYPES).map(([key,v])=>`<button class="reaction-choice ${selected===key?'on':''}" type="button" onclick="chooseReaction(event,'${escapeAttr(w.id)}','${key}')" title="${v.label}"><span class="reaction-icon">${v.icon}</span><span>${v.label}</span><span class="reaction-count">${r[key].length}</span></button>`).join('');
+  return `<span class="reaction-wrap"><button class="social-btn ${selected?'on':''}" type="button" onclick="toggleReactionPicker(event,'${escapeAttr(w.id)}')" aria-label="Choose a reaction"><span class="reaction-icon">${icon}</span><span class="count">${total}</span></button><span class="reaction-picker" data-reaction-picker="${escapeAttr(w.id)}">${choices}</span></span>`;
 }
 function persistSessionData(){
   localStorage.setItem('shkNotifications',JSON.stringify(notifications));
@@ -867,6 +953,7 @@ let drafts = readJSON('shkDrafts',[]).filter(d=>d&&!LEGACY_DEMO_EMAILS.has(Strin
 let authMode = 'login';
 let feedFilter = 'all';
 let readerWork = null;
+let commentModalWork = null;
 let profileEmail = null;
 let sessionUnlocked = false;
 let pendingAuthUser = null;
@@ -945,6 +1032,7 @@ function renderAll(){
  updateProfileUI(); renderHome(); renderFeed(); renderLibrary(); renderSaved(); renderMyWorks(); renderAuthors(); renderProfile(); renderFollowing(); renderHistory(); toggleCreateGate(); renderNotificationsBadge(); applyDarkMode(); const feedbackIdentity=document.getElementById('feedbackIdentity'); if(feedbackIdentity)feedbackIdentity.textContent=identityLabelOf(currentUser).toUpperCase();
 }
 function updateProfileUI(){
+ updateCommentPopupForm();
  const set=(id,name,photo)=>{
   const el=document.getElementById(id); if(!el)return;
   if(photo)el.innerHTML='<img src="'+escapeAttr(photo)+'" alt="Profile picture">';
@@ -970,12 +1058,12 @@ function cardHTML(w){
  const likeOn=!!currentUser&&w.likes.includes(currentUser.email);
  const tags=(w.tags||[]).map(t=>`<button class="tag" onclick="searchTag('${escapeAttr(t)}')">#${escapeHTML(t)}</button>`).join('');
  const manage=owner?`<div class="work-management"><button class="secondary" onclick="editWork('${escapeAttr(w.id)}')">Edit</button><button class="danger-btn" onclick="deleteWork('${escapeAttr(w.id)}')">Delete</button></div>`:'';
- return `<article class="card"><div class="card-art">${w.cover?`<div style="position:absolute;inset:0;background:url(${escapeAttr(w.cover)}) center/cover;opacity:.9"></div>`:''}<div style="position:relative"><small>${escapeHTML(w.genre)}</small><strong>${escapeHTML(w.title)}</strong></div></div><div class="card-body"><div class="meta"><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button><span class="tag">${escapeHTML(w.genre)}</span></div><h4>${escapeHTML(w.title)}</h4><p>${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions"><button class="social-btn ${likeOn?'on':''}" onclick="toggleLike('${escapeAttr(w.id)}',this)">♥ <span class="count">${w.likes.length}</span></button><button class="social-btn" onclick="openReader('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button><button class="social-btn" onclick="shareWork('${escapeAttr(w.id)}')">Share</button></div><div class="card-foot"><button class="link-btn" onclick="openReader('${escapeAttr(w.id)}')">Read Work</button><span style="font-size:.63rem;color:#A09791">${w.views||0} views</span></div>${manage}</div></article>`;
+ return `<article class="card"><div class="card-art">${w.cover?`<div style="position:absolute;inset:0;background:url(${escapeAttr(w.cover)}) center/cover;opacity:.9"></div>`:''}<div style="position:relative"><small>${escapeHTML(w.genre)}</small><strong>${escapeHTML(w.title)}</strong></div></div><div class="card-body"><div class="meta"><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button><span class="tag">${escapeHTML(w.genre)}</span></div><h4>${escapeHTML(w.title)}</h4><p>${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions">${reactionButtonHTML(w)}<button class="social-btn" type="button" onclick="openCommentModal('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" type="button" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button><button class="social-btn" type="button" onclick="shareWork('${escapeAttr(w.id)}')">Share</button></div><div class="card-foot"><button class="link-btn" onclick="openReader('${escapeAttr(w.id)}')">Read Work</button><span style="font-size:.63rem;color:#A09791">${w.views||0} views</span></div>${manage}</div></article>`;
 }
 function feedHTML(w){
  const author=findUser(w.email); const likeOn=!!currentUser&&w.likes.includes(currentUser.email);
  const tags=(w.tags||[]).slice(0,6).map(t=>`<button class="tag" onclick="searchTag('${escapeAttr(t)}')">#${escapeHTML(t)}</button>`).join('');
- return `<article class="feed-post"><div class="author"><div class="avatar">${author?.photo?`<img src="${escapeAttr(author.photo)}" alt="">`:escapeHTML(initialsOf(w.author))}</div><div><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button><span>@${escapeHTML(usernameOf(author||{name:w.author,email:w.email||''}))} · ${escapeHTML(identityLabelOf(author||{}))} · ${escapeHTML(w.genre)}</span></div></div><div class="post-title">${escapeHTML(w.title)}</div><p class="post-text">${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions"><button class="social-btn ${likeOn?'on':''}" onclick="toggleLike('${escapeAttr(w.id)}',this)">♥ <span class="count">${w.likes.length}</span></button><button class="social-btn" onclick="openReader('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button><button class="social-btn" onclick="shareWork('${escapeAttr(w.id)}')">Share</button></div><div class="post-actions"><button class="post-action" onclick="openReader('${escapeAttr(w.id)}')">Read Full Work</button></div></article>`;
+ return `<article class="feed-post"><div class="author"><div class="avatar">${author?.photo?`<img src="${escapeAttr(author.photo)}" alt="">`:escapeHTML(initialsOf(w.author))}</div><div><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button><span>@${escapeHTML(usernameOf(author||{name:w.author,email:w.email||''}))} · ${escapeHTML(identityLabelOf(author||{}))} · ${escapeHTML(w.genre)}</span></div></div><div class="post-title">${escapeHTML(w.title)}</div><p class="post-text">${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions">${reactionButtonHTML(w)}<button class="social-btn" type="button" onclick="openCommentModal('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" type="button" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button><button class="social-btn" type="button" onclick="shareWork('${escapeAttr(w.id)}')">Share</button></div><div class="post-actions"><button class="post-action" onclick="openReader('${escapeAttr(w.id)}')">Read Full Work</button></div></article>`;
 }
 function renderFeed(){
  const q=(document.getElementById('feedSearch')?.value||'').toLowerCase().trim();
@@ -999,7 +1087,7 @@ function canReadWork(w){
 function ageDays(w){return Math.max(0,(Date.now()-(w.createdAt||Date.now()))/86400000)}
 function workPopularity(w){
  const likes=(w.likes?.length||0),comments=(w.comments?.length||0),views=(w.views||0);
- const engagement=likes*5+comments*8+views;
+ const engagement=totalReactionCount(w)*5+comments*8+views;
  const freshness=1+Math.max(0,1-ageDays(w)/30)*6;
  return engagement*freshness;
 }
@@ -1022,7 +1110,7 @@ function followingFeedHTML(w,rank){
  const fresh=ageDays(w)<2;
  const rankBadge=followingMode==='popular'?`<span class="post-rank">#${rank||1} · ${workPopularity(w)} trend</span>`:'';
  const freshBadge=followingMode==='latest'&&fresh?'<span class="post-fresh">Fresh</span>':'';
- const engagement=`<div class="engagement-line"><span><b>${w.likes.length}</b> likes</span><span><b>${w.comments.length}</b> comments</span><span><b>${w.views||0}</b> views</span>${followingMode==='popular'?`<span class="pop-score">Popularity ${workPopularity(w)}</span>`:`<span>${followingTimeLabel(w)}</span>`}</div>`;
+ const engagement=`<div class="engagement-line"><span><b>${totalReactionCount(w)}</b> reactions</span><span><b>${w.comments.length}</b> comments</span><span><b>${w.views||0}</b> views</span>${followingMode==='popular'?`<span class="pop-score">Popularity ${workPopularity(w)}</span>`:`<span>${followingTimeLabel(w)}</span>`}</div>`;
  return `<article class="feed-post following-post">
    <div>${rankBadge}${freshBadge}</div>
    <div class="author">
@@ -1037,10 +1125,10 @@ function followingFeedHTML(w,rank){
    ${tags?`<div class="post-tags">${tags}</div>`:''}
    ${engagement}
    <div class="social-actions">
-     <button class="social-btn ${likeOn?'on':''}" onclick="toggleLike('${escapeAttr(w.id)}',this)">♥ <span class="count">${w.likes.length}</span></button>
-     <button class="social-btn" onclick="openReader('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button>
-     <button class="social-btn ${saved.includes(w.id)?'on':''}" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button>
-     <button class="social-btn" onclick="shareWork('${escapeAttr(w.id)}')">Share</button>
+     ${reactionButtonHTML(w)}
+     <button class="social-btn" type="button" onclick="openCommentModal('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button>
+     <button class="social-btn ${saved.includes(w.id)?'on':''}" type="button" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button>
+     <button class="social-btn" type="button" onclick="shareWork('${escapeAttr(w.id)}')">Share</button>
    </div>
    <div class="post-actions"><button class="post-action" onclick="openReader('${escapeAttr(w.id)}')">Read Full Work</button></div>
  </article>`;
@@ -1069,7 +1157,7 @@ function renderFollowing(){
  }
  const writerCount=new Set(arr.map(w=>w.email)).size;
  const totalViews=arr.reduce((n,w)=>n+(w.views||0),0);
- const totalLikes=arr.reduce((n,w)=>n+(w.likes?.length||0),0);
+ const totalLikes=arr.reduce((n,w)=>n+totalReactionCount(w),0);
  const totalComments=arr.reduce((n,w)=>n+(w.comments?.length||0),0);
  const newest=arr[0];
  if(latestCount)latestCount.textContent=eligibleCount;
@@ -1079,7 +1167,7 @@ function renderFollowing(){
    const lead=followingMode==='popular'?'Popular right now':'Fresh from your circle';
    const leadNote=followingMode==='popular'?'Engagement + recency':'Newest publication date';
    const rangeLabel=followingRangeDays===0?'All time':`Past ${followingRangeDays} days`;
-   insight.innerHTML=`<div class="insight-card"><span class="insight-kicker">${lead}</span><strong class="insight-value">${arr.length} work${arr.length===1?'':'s'}</strong><span class="insight-note">${writerCount} writer${writerCount===1?'':'s'} · ${rangeLabel}</span></div><div class="insight-card"><span class="insight-kicker">Activity</span><strong class="insight-value">${totalLikes} likes · ${totalComments} comments</strong><span class="insight-note">${totalViews} total views across your followed works</span></div><div class="insight-card"><span class="insight-kicker">${followingMode==='popular'?'Top signal':'Latest post'}</span><strong class="insight-value">${newest?followingMode==='popular'?workPopularity(newest):followingTimeLabel(newest):'—'}</strong><span class="insight-note">${newest?escapeHTML(newest.title):'No followed posts yet'}</span></div>`;
+   insight.innerHTML=`<div class="insight-card"><span class="insight-kicker">${lead}</span><strong class="insight-value">${arr.length} work${arr.length===1?'':'s'}</strong><span class="insight-note">${writerCount} writer${writerCount===1?'':'s'} · ${rangeLabel}</span></div><div class="insight-card"><span class="insight-kicker">Activity</span><strong class="insight-value">${totalLikes} reactions · ${totalComments} comments</strong><span class="insight-note">${totalViews} total views across your followed works</span></div><div class="insight-card"><span class="insight-kicker">${followingMode==='popular'?'Top signal':'Latest post'}</span><strong class="insight-value">${newest?followingMode==='popular'?workPopularity(newest):followingTimeLabel(newest):'—'}</strong><span class="insight-note">${newest?escapeHTML(newest.title):'No followed posts yet'}</span></div>`;
  }
  root.innerHTML=arr.length?arr.map((w,i)=>followingFeedHTML(w,i+1)).join(''):'<div class="empty"><h4>Your following feed is empty</h4><p>Follow student writers to see their latest work and public activity here.</p><button class="secondary" onclick="openGlobalSearch()">Discover Writers</button></div>';
  document.querySelectorAll('.feed-tab').forEach(x=>x.setAttribute('aria-selected',x.classList.contains('active')?'true':'false'));
@@ -1119,7 +1207,7 @@ function renderMyWorks(){
  if(mineDrafts.length)html+='<div class="section"><div class="kicker">Drafts</div><div class="grid3">'+mineDrafts.map(d=>`<article class="card"><div class="card-body"><div class="meta"><span>Draft</span><span class="tag">${escapeHTML(d.genre)}</span></div><h4>${escapeHTML(d.title||'Untitled')}</h4><p>${escapeHTML(d.excerpt||'')}</p><div class="work-management"><button class="secondary" onclick="loadDraft('${escapeAttr(d.id)}')">Continue Writing</button><button class="danger-btn" onclick="deleteDraft('${escapeAttr(d.id)}')">Delete Draft</button></div></div></article>`).join('')+'</div></div>';
  document.getElementById('myWorksPanel').innerHTML=html;
 }
-function loadDraft(id){const d=drafts.find(x=>x.id===id);if(!d||!currentUser)return;editingWorkId=null;document.getElementById('postTitle').value=d.title||'';document.getElementById('postGenre').value=d.genre||'Poetry';document.getElementById('postTags').value=(d.tags||[]).join(', ');document.getElementById('postExcerpt').value=d.excerpt||'';document.getElementById('postContent').value=d.content||'';document.getElementById('postCover').value=d.cover||'';showPage('create');showToast('Draft loaded.');}
+function loadDraft(id){const d=drafts.find(x=>x.id===id&&x.email===currentUser?.email);if(!d||!currentUser)return;editingWorkId=null;editingDraftId=d.id;document.getElementById('postTitle').value=d.title||'';document.getElementById('postGenre').value=d.genre||'Poetry';document.getElementById('postTags').value=(d.tags||[]).join(', ');document.getElementById('postExcerpt').value=d.excerpt||'';document.getElementById('postContent').value=d.content||'';document.getElementById('postCover').value=d.cover||'';document.getElementById('postPrivacy').value=d.privacy||'public';showPage('create');showToast('Draft loaded. Your edits will stay in this same draft.');}
 function deleteDraft(id){drafts=drafts.filter(d=>d.id!==id);saveState();renderMyWorks();showToast('Draft deleted.')}
 
 function renderAuthors(){
@@ -1262,52 +1350,203 @@ function toggleSaved(id,btn){
  else{saved.push(id);if(btn)btn.textContent='★';showToast('Saved to your library.')}
  saveState();renderSaved();
 }
+function collectDraftPayload(){
+ const now=Date.now();
+ return {
+  email:currentUser.email,
+  title:document.getElementById('postTitle').value.trim()||'Untitled',
+  genre:document.getElementById('postGenre').value,
+  tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),
+  excerpt:document.getElementById('postExcerpt').value.trim(),
+  content:document.getElementById('postContent').value,
+  cover:document.getElementById('postCover').value.trim(),
+  privacy:document.getElementById('postPrivacy').value,
+  updatedAt:now
+ };
+}
+function resetCreateForm(){
+ document.getElementById('createForm').reset();
+ document.getElementById('postPrivacy').value='public';
+ editingWorkId=null;
+ editingDraftId=null;
+}
 function saveDraft(){
  if(!currentUser){openAccount();return}
  if(!canPublish(currentUser)){openIdentitySetup();return}
- const draft={id:'draft-'+Date.now(),email:currentUser.email,title:document.getElementById('postTitle').value||'Untitled',genre:document.getElementById('postGenre').value,excerpt:document.getElementById('postExcerpt').value||'',content:document.getElementById('postContent').value||''};
- drafts.unshift(draft);saveState();renderMyWorks();showToast('Draft saved.');showPage('myworks');
+ const payload=collectDraftPayload();
+ if(editingDraftId){
+  const idx=drafts.findIndex(d=>d.id===editingDraftId&&d.email===currentUser.email);
+  if(idx<0){showToast('Draft not found.');return;}
+  drafts[idx]={...drafts[idx],...payload};
+  saveState();editingDraftId=null;editingWorkId=null;renderMyWorks();showToast('Draft updated. Your changes were saved to the same draft.');showPage('myworks');
+  return;
+ }
+ const draft={id:'draft-'+Date.now(),createdAt:Date.now(),...payload};
+ drafts.unshift(draft);
+ editingDraftId=draft.id;
+ saveState();editingDraftId=null;editingWorkId=null;renderMyWorks();showToast('Draft saved.');showPage('myworks');
 }
-let editingWorkId=null;
 document.getElementById('createForm').addEventListener('submit',function(e){
  e.preventDefault();if(!currentUser){openAccount();return}
  if(!canPublish(currentUser)){openIdentitySetup();return}
  const now=Date.now();
  const payload={title:document.getElementById('postTitle').value.trim(),author:publicNameOf(currentUser),email:currentUser.email,genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
- if(editingWorkId){const idx=works.findIndex(w=>w.id===editingWorkId&&w.email===currentUser.email);if(idx<0){showToast('Work not found.');return}works[idx]=normalizeWork({...works[idx],...payload,updatedAt:now});showToast('Your work was updated.');editingWorkId=null;}else{works.unshift(normalizeWork({id:'work-'+now,...payload,likes:[],comments:[],views:0,createdAt:now}));showToast('Your literature has been published.');}
- saveState();this.reset();document.getElementById('postPrivacy').value='public';renderAll();showPage('feed');
+ if(editingWorkId){
+  const idx=works.findIndex(w=>w.id===editingWorkId&&w.email===currentUser.email);
+  if(idx<0){showToast('Work not found.');return}
+  works[idx]=normalizeWork({...works[idx],...payload,updatedAt:now});
+  showToast('Your work was updated.');
+ }else if(editingDraftId){
+  const draftIdx=drafts.findIndex(d=>d.id===editingDraftId&&d.email===currentUser.email);
+  if(draftIdx<0){showToast('Draft not found.');return}
+  const draft=drafts[draftIdx];
+  const existingWorkIdx=works.findIndex(w=>w.id===draft.id);
+  const publishedWork=normalizeWork({
+   id:draft.id,
+   ...payload,
+   likes:existingWorkIdx>=0?works[existingWorkIdx].likes:[],
+   reactions:existingWorkIdx>=0?works[existingWorkIdx].reactions:emptyReactions(),
+   comments:existingWorkIdx>=0?works[existingWorkIdx].comments:[],
+   views:existingWorkIdx>=0?works[existingWorkIdx].views:0,
+   createdAt:draft.createdAt||now,
+   updatedAt:now
+  });
+  if(existingWorkIdx>=0)works[existingWorkIdx]=publishedWork;else works.unshift(publishedWork);
+  drafts=drafts.filter(d=>d.id!==editingDraftId);
+  showToast('Your draft was published as the same work.');
+ }else{
+  works.unshift(normalizeWork({id:'work-'+now,...payload,likes:[],comments:[],views:0,createdAt:now}));
+  showToast('Your literature has been published.');
+ }
+ saveState();resetCreateForm();renderAll();showPage('feed');
 });
-function editWork(id){const w=works.find(x=>x.id===id&&x.email===currentUser?.email);if(!w){showToast('You can only edit your own work.');return;}editingWorkId=w.id;document.getElementById('postTitle').value=w.title;document.getElementById('postGenre').value=w.genre;document.getElementById('postTags').value=(w.tags||[]).join(', ');document.getElementById('postExcerpt').value=w.excerpt;document.getElementById('postContent').value=w.content;document.getElementById('postCover').value=w.cover||'';document.getElementById('postPrivacy').value=w.privacy||'public';showPage('create');showToast('Edit mode enabled.');}
-function deleteWork(id){const w=works.find(x=>x.id===id);if(!w||w.email!==currentUser?.email){showToast('You can only delete your own work.');return;}if(!confirm('Delete this published work? This cannot be undone.'))return;works=works.filter(x=>x.id!==id);saved=saved.filter(x=>x!==id);saveState();renderAll();showToast('Work deleted.')}
+function editWork(id){
+ const w=works.find(x=>x.id===id&&x.email===currentUser?.email);
+ if(!w){showToast('You can only edit your own work.');return;}
+ editingWorkId=w.id;editingDraftId=null;
+ document.getElementById('postTitle').value=w.title;
+ document.getElementById('postGenre').value=w.genre;
+ document.getElementById('postTags').value=(w.tags||[]).join(', ');
+ document.getElementById('postExcerpt').value=w.excerpt;
+ document.getElementById('postContent').value=w.content;
+ document.getElementById('postCover').value=w.cover||'';
+ document.getElementById('postPrivacy').value=w.privacy||'public';
+ showPage('create');showToast('Edit mode enabled.');
+}
+function deleteWork(id){
+ const w=works.find(x=>x.id===id);
+ if(!w||w.email!==currentUser?.email){showToast('You can only delete your own work.');return;}
+ pendingDeleteWorkId=id;
+ document.getElementById('deleteWorkModal')?.classList.add('open');
+}
+function confirmDeleteWork(){
+ const id=pendingDeleteWorkId;
+ const w=works.find(x=>x.id===id);
+ if(!w||w.email!==currentUser?.email){pendingDeleteWorkId=null;closeModal('deleteWorkModal');showToast('You can only delete your own work.');return;}
+ works=works.filter(x=>x.id!==id);
+ saved=saved.filter(x=>x!==id);
+ if(readerWork?.id===id)readerWork=null;
+ if(commentModalWork?.id===id)commentModalWork=null;
+ pendingDeleteWorkId=null;
+ saveState();closeModal('deleteWorkModal');renderAll();showToast('Work deleted permanently.');
+}
 
 function openReader(id){
  const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
  if(!canReadWork(w)){showToast('This work is not currently visible to your account.');return;}
  readerWork=w;w.views=(w.views||0)+1;rememberRead(w);saveState();
  const workAuthor=findUser(w.email)||{};document.getElementById('readerGenre').textContent=w.genre.toUpperCase();document.getElementById('readerIdentity').textContent=identityLabelOf(workAuthor).toUpperCase();document.getElementById('readerIdentity').classList.toggle('reader',normalizeIdentity(workAuthor.identity)==='reader');document.getElementById('readerTitle').textContent=w.title;document.getElementById('readerBy').textContent='by '+(w.author||publicNameOf(workAuthor))+' · '+new Date(w.createdAt||Date.now()).getFullYear();
- document.getElementById('readerSubmeta').textContent=`${w.views||0} views · ${w.likes.length} likes · ${w.comments.length} comments · ${w.privacy==='followers'?'Followers only':w.privacy==='private'?'Private':'Public'}`;
+ document.getElementById('readerSubmeta').textContent=`${w.views||0} views · ${totalReactionCount(w)} reactions · ${w.comments.length} comments · ${w.privacy==='followers'?'Followers only':w.privacy==='private'?'Private':'Public'}`;
  document.getElementById('readerBody').innerHTML=w.content.split(/\\n+/).map(p=>'<p>'+escapeHTML(p)+'</p>').join('');
  renderReaderSocial();renderComments();showPage('reader');
 }
 function renderReaderSocial(){
  if(!readerWork)return;
- const liked=currentUser&&readerWork.likes.includes(currentUser.email);
  const isSaved=saved.includes(readerWork.id);
- const buttons=`<button class="social-btn ${liked?'on':''}" onclick="toggleLike('${escapeAttr(readerWork.id)}')">♥ <span class="count">${readerWork.likes.length}</span></button><button class="social-btn ${isSaved?'on':''}" onclick="toggleSaved('${escapeAttr(readerWork.id)}')">${isSaved?'Saved':'Save'}</button><button class="social-btn" onclick="shareWork('${escapeAttr(readerWork.id)}')">Share</button><button class="social-btn" onclick="showToast('Use the same report flow as the school moderation system.')">Report</button>`;
+ const buttons=`${reactionButtonHTML(readerWork)}<button class="social-btn" type="button" onclick="openCommentModal('${escapeAttr(readerWork.id)}')">💬 <span class="count">${readerWork.comments.length}</span></button><button class="social-btn ${isSaved?'on':''}" type="button" onclick="toggleSaved('${escapeAttr(readerWork.id)}')">${isSaved?'Saved':'Save'}</button><button class="social-btn" type="button" onclick="shareWork('${escapeAttr(readerWork.id)}')">Share</button><button class="social-btn" type="button" onclick="showToast('Use the same report flow as the school moderation system.')">Report</button>`;
  const top=document.getElementById('readerSocial');
  const bottom=document.getElementById('readerSocialBottom');
  if(top)top.innerHTML=buttons;
  if(bottom)bottom.innerHTML=buttons;
 }
-function toggleLike(id,btn){
- if(!currentUser){showToast('Sign in to like a work.');openAccount();return}let w=works.find(x=>x.id===id);if(!w)return;w=normalizeWork(w);const on=w.likes.includes(currentUser.email);if(on)w.likes=w.likes.filter(x=>x!==currentUser.email);else{w.likes=[...new Set([...w.likes,currentUser.email])];if(w.email!==currentUser.email)addNotification(w.email,`${publicNameOf(currentUser)} liked your work`,w.title);}
- const idx=works.findIndex(x=>x.id===id);works[idx]=w;saveState();if(btn){btn.classList.toggle('on',!on);btn.querySelector('.count')?.replaceChildren(document.createTextNode(String(w.likes.length)));}renderReaderSocial();renderHome();renderFeed();renderLibrary();renderFollowing();
+function toggleReactionPicker(e,id){
+ if(e)e.stopPropagation();
+ document.querySelectorAll('.reaction-picker.open').forEach(el=>{if(el.dataset.reactionPicker!==id)el.classList.remove('open')});
+ const picker=document.querySelector(`.reaction-picker[data-reaction-picker="${CSS.escape(id)}"]`);
+ if(picker)picker.classList.toggle('open');
 }
+function chooseReaction(e,id,type){
+ if(e)e.stopPropagation();
+ if(!REACTION_TYPES[type])return;
+ if(!currentUser){showToast('Sign in to react to a work.');openAccount();return;}
+ let w=works.find(x=>x.id===id);if(!w)return;w=normalizeWork(w);
+ const email=canonicalEmail(currentUser.email);const before=userReactionOf(w);const r=normalizeReactions(w.reactions);
+ Object.keys(r).forEach(k=>{r[k]=r[k].filter(x=>canonicalEmail(x)!==email)});
+ if(before!==type)r[type].push(email);
+ w.reactions=r;w.likes=r.heart.slice();
+ const idx=works.findIndex(x=>x.id===id);works[idx]=w;
+ if(readerWork?.id===id)readerWork=w;
+ saveState();
+ if(before!==type && w.email!==currentUser.email){addNotification(w.email,`${publicNameOf(currentUser)} reacted with ${REACTION_TYPES[type].label}`,w.title)}
+ renderAll();
+ renderReaderSocial();
+ renderComments();
+ document.querySelectorAll('.reaction-picker.open').forEach(el=>el.classList.remove('open'));
+ const label=before===type?'Reaction removed':REACTION_TYPES[type].label+' reaction added';
+ showToast(label+'.');
+}
+function toggleLike(id,btn){
+ // Backward-compatible helper: the legacy heart action now maps to Heart reaction.
+ return chooseReaction(null,id,'heart');
+}
+
 function renderComments(){
  const root=document.getElementById('commentArea');if(!root||!readerWork)return;const comments=readerWork.comments||[];const list=comments.length?comments.map(c=>`<div class="comment"><div class="comment-head"><strong>${escapeHTML(c.name||'Student')}</strong><span>${escapeHTML(new Date(c.at||Date.now()).toLocaleString())}</span></div><p>${escapeHTML(c.text)}</p></div>`).join(''):'<div class="empty" style="padding:20px 0"><h4>No comments yet</h4><p>Start the conversation around this work.</p></div>';
  root.innerHTML=list+`<form class="comment-form" onsubmit="submitComment(event)"><input id="commentInput" ${currentUser?'':'disabled'} placeholder="${currentUser?'Write a thoughtful comment...':'Sign in to comment'}"><button class="primary" ${currentUser?'':'disabled'}>Comment</button></form>`;
 }
 function submitComment(e){e.preventDefault();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now()};works[idx].comments=[...(works[idx].comments||[]),comment];readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title);saveState();renderComments();renderReaderSocial();showToast('Comment posted.')}
+function openCommentModal(id){
+ const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
+ if(!canReadWork(w)){showToast('This work is not currently visible to your account.');return;}
+ commentModalWork=w;
+ const title=document.getElementById('commentModalTitle');
+ const meta=document.getElementById('commentModalMeta');
+ if(title)title.textContent=`Comments · ${w.title}`;
+ if(meta)meta.textContent=`by ${w.author||publicNameOf(findUser(w.email)||{})}`;
+ const modal=document.getElementById('commentModal');
+ updateCommentPopupForm();
+ renderCommentModal();
+ modal?.classList.add('open');
+ setTimeout(()=>document.getElementById('commentPopupInput')?.focus(),80);
+}
+function updateCommentPopupForm(){
+ const input=document.getElementById('commentPopupInput');
+ const btn=document.querySelector('#commentModal .comment-popup-actions .primary');
+ if(input){input.disabled=!currentUser;input.placeholder=currentUser?'Write a thoughtful comment...':'Sign in to comment';}
+ if(btn)btn.disabled=!currentUser;
+}
+function renderCommentModal(){
+ const root=document.getElementById('commentModalList');if(!root||!commentModalWork)return;
+ const comments=commentModalWork.comments||[];
+ root.innerHTML=comments.length?comments.map(c=>`<div class="comment-modal-item"><div class="comment-modal-item-head"><strong>${escapeHTML(c.name||'Anonymous Reader')}</strong><span>${escapeHTML(new Date(c.at||Date.now()).toLocaleString())}</span></div><p>${escapeHTML(c.text||'')}</p></div>`).join(''):'<div class="empty" style="padding:22px 8px"><h4>No comments yet</h4><p>Start the conversation around this work.</p></div>';
+}
+function submitPopupComment(e){
+ e.preventDefault();
+ if(!currentUser){showToast('Sign in to comment.');openAccount();return;}
+ if(!commentModalWork)return;
+ const input=document.getElementById('commentPopupInput');const text=String(input?.value||'').trim();if(!text)return;
+ const idx=works.findIndex(w=>w.id===commentModalWork.id);if(idx<0)return;
+ const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now()};
+ works[idx].comments=[...(works[idx].comments||[]),comment];
+ works[idx]=normalizeWork(works[idx]);commentModalWork=works[idx];
+ if(readerWork?.id===commentModalWork.id)readerWork=works[idx];
+ if(commentModalWork.email!==currentUser.email)addNotification(commentModalWork.email,`${publicNameOf(currentUser)} commented on your work`,commentModalWork.title);
+ saveState();
+ renderAll();renderCommentModal();renderComments();renderReaderSocial();
+ if(input)input.value='';
+ showToast('Comment posted.');
+}
+
 function shareWork(id){const url=location.href.split('#')[0]+'#work='+encodeURIComponent(id);if(navigator.clipboard)navigator.clipboard.writeText(url).catch(()=>{});history.replaceState(null,'','#work='+encodeURIComponent(id));showToast('Share link copied.')}
 function saveCurrentReader(){if(readerWork)toggleSaved(readerWork.id)}
 function searchTag(tag){openGlobalSearch();setTimeout(()=>{const input=document.getElementById('globalSearchInput');input.value=tag;renderGlobalSearch()},60)}
@@ -1350,7 +1589,7 @@ function openEditProfile(){if(!currentUser){openAccount();return}document.getEle
 async function saveProfile(e){e.preventDefault();if(!currentUser)return;const email=currentUser.email;const penName=document.getElementById('editPenName').value.trim();const username=document.getElementById('editUsername').value.trim().replace(/^@/,'');const bio=document.getElementById('editBio').value.trim();if(!penName||!username){showToast('Pen name and username are required.');return}const clash=users.find(u=>u.email!==email&&usernameOf(u).toLowerCase()===username.toLowerCase());if(clash){showToast('That username is already in use.');return}const idx=users.findIndex(u=>u.email===email);if(idx<0)return;users[idx]=normalizeUser({...users[idx],penName,username,bio,photo:currentUser.photoURL||currentUser.photo||''});currentUser=normalizeUser({...users[idx]});works=works.map(w=>w.email===email?{...w,author:publicNameOf(currentUser)}:w);saveState();closeModal('editProfileModal');renderAll();showToast('Profile updated.')}
 
 function openAccount(){if(!sessionUnlocked&&currentUser){openPinGate('enter',currentUser);return}document.getElementById('accountModal').classList.add('open');updateProfileUI()}
-function closeModal(id){document.getElementById(id).classList.remove('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open');if(id==='commentModal'){commentModalWork=null}if(id==='deleteWorkModal'){pendingDeleteWorkId=null}}
 function outsideModal(e,m){if(e.target===m && m.id!=='pinModal')closeModal(m.id)}
 function switchAuth(mode){
  authMode=mode;document.getElementById('loginTab').classList.toggle('active',mode==='login');document.getElementById('signupTab').classList.toggle('active',mode==='signup');
@@ -1811,6 +2050,7 @@ function initShkNavigationSounds(){
 }
 
 function switchAuthDefault(){switchAuth('login')}
+document.addEventListener('click',(e)=>{if(!e.target.closest('.reaction-wrap'))document.querySelectorAll('.reaction-picker.open').forEach(el=>el.classList.remove('open'));});
 switchAuthDefault();applyDarkMode();renderAll();initShkNavigationSounds();
 </script>
 </body>
