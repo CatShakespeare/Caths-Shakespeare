@@ -155,6 +155,16 @@ a{text-decoration:none;color:inherit}
 .comment-popup-form textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(179,138,82,.1)}
 .comment-popup-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:9px}
 .delete-modal .modal-box{width:min(430px,100%);padding:26px;text-align:center}
+.edit-back-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-4px 0 14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.edit-back-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;color:var(--wine);padding:9px 12px;border-radius:10px;font-size:.72rem;font-weight:800;transition:.2s var(--ease)}
+.edit-back-btn:hover{transform:translateY(-1px);background:#F7F2ED;box-shadow:0 6px 16px rgba(36,27,23,.06)}
+.edit-mode-note{font-size:.65rem;color:#958A83;text-align:right;line-height:1.45}
+.save-edit-modal .modal-box{width:min(430px,100%);padding:26px;text-align:center}
+.save-edit-modal h3{font:600 2rem/.98 "Cormorant Garamond",serif;color:var(--wine);margin:0}
+.save-edit-modal p{margin:8px auto 0;max-width:330px;color:var(--muted);font-size:.74rem;line-height:1.6}
+.save-edit-modal-actions{display:flex;justify-content:center;gap:8px;margin-top:19px}
+.save-edit-modal-actions .social-btn{min-width:92px}
+@media(max-width:760px){.edit-back-row{align-items:flex-start;flex-direction:column}.edit-mode-note{text-align:left}}
 .delete-modal-icon{width:48px;height:48px;margin:0 auto 12px;border-radius:14px;background:#F7F2ED;color:var(--wine);display:grid;place-items:center;font-size:1.25rem}
 .delete-modal h3{font:600 2rem/.98 "Cormorant Garamond",serif;color:var(--wine);margin:0}
 .delete-modal p{margin:8px auto 0;max-width:330px;color:var(--muted);font-size:.74rem;line-height:1.6}
@@ -696,6 +706,10 @@ button,input,textarea,select{max-width:100%}
       <section class="page" id="page-create">
         <div class="section-head"><div><div class="kicker">Publishing desk</div><h3>Create Literature Post</h3></div><p>Write a new piece, save it as a draft, or publish it to the archive.</p></div>
         <div class="panel">
+          <div class="edit-back-row hidden" id="createEditBar">
+            <button class="edit-back-btn" type="button" onclick="requestEditBack()">← Back</button>
+            <div class="edit-mode-note" id="createEditModeNote">Editing this work. Your changes are not saved yet.</div>
+          </div>
           <form id="createForm" class="form-grid">
             <div class="field full"><label>Title</label><input id="postTitle" required placeholder="Your literature title"></div>
             <div class="field"><label>Genre</label><select id="postGenre" required><option>Poetry</option><option>Short Story</option><option>Essay</option><option>Drama</option><option>Creative Nonfiction</option><option>Literary Analysis</option></select></div>
@@ -950,6 +964,17 @@ button,input,textarea,select{max-width:100%}
       <textarea id="commentPopupInput" maxlength="1000" disabled placeholder="Write a thoughtful comment..."></textarea>
       <div class="comment-popup-actions"><button class="secondary" type="button" onclick="closeModal('commentModal')">Cancel</button><button class="primary" type="submit" disabled>Comment</button></div>
     </form>
+  </div>
+</div>
+
+<div class="modal save-edit-modal" id="saveEditModal">
+  <div class="modal-box">
+    <h3>Save your edited work?</h3>
+    <p>Your changes are ready. Do you want to save them before going back?</p>
+    <div class="save-edit-modal-actions">
+      <button class="social-btn" type="button" onclick="discardEditAndBack()">No</button>
+      <button class="social-btn delete-confirm" type="button" onclick="confirmSaveEditAndBack()">Yes</button>
+    </div>
   </div>
 </div>
 
@@ -1228,7 +1253,8 @@ function showPage(name){
 
 function renderAll(){
  document.querySelectorAll('.reaction-picker.open').forEach(closeReactionPicker);
- updateProfileUI(); renderHome(); renderFeed(); renderLibrary(); renderSaved(); renderMyWorks(); renderAuthors(); renderProfile(); renderFollowing(); renderHistory(); toggleCreateGate(); renderNotificationsBadge(); applyDarkMode(); const feedbackIdentity=document.getElementById('feedbackIdentity'); if(feedbackIdentity)feedbackIdentity.textContent=identityLabelOf(currentUser).toUpperCase();
+ updateProfileUI(); renderHome(); renderFeed(); renderLibrary(); renderSaved(); renderMyWorks(); renderAuthors(); renderProfile(); renderFollowing(); renderHistory(); syncCreateEditUI();
+toggleCreateGate(); renderNotificationsBadge(); applyDarkMode(); const feedbackIdentity=document.getElementById('feedbackIdentity'); if(feedbackIdentity)feedbackIdentity.textContent=identityLabelOf(currentUser).toUpperCase();
 }
 function updateProfileUI(){
  updateCommentPopupForm();
@@ -1406,7 +1432,7 @@ function renderMyWorks(){
  if(mineDrafts.length)html+='<div class="section"><div class="kicker">Drafts</div><div class="grid3">'+mineDrafts.map(d=>`<article class="card"><div class="card-body"><div class="meta"><span>Draft</span><span class="tag">${escapeHTML(d.genre)}</span></div><h4>${escapeHTML(d.title||'Untitled')}</h4><p>${escapeHTML(d.excerpt||'')}</p><div class="work-management"><button class="secondary" onclick="loadDraft('${escapeAttr(d.id)}')">Continue Writing</button><button class="danger-btn" onclick="deleteDraft('${escapeAttr(d.id)}')">Delete Draft</button></div></div></article>`).join('')+'</div></div>';
  document.getElementById('myWorksPanel').innerHTML=html;
 }
-function loadDraft(id){const d=drafts.find(x=>x.id===id&&x.email===currentUser?.email);if(!d||!currentUser)return;editingWorkId=null;editingDraftId=d.id;document.getElementById('postTitle').value=d.title||'';document.getElementById('postGenre').value=d.genre||'Poetry';document.getElementById('postTags').value=(d.tags||[]).join(', ');document.getElementById('postExcerpt').value=d.excerpt||'';document.getElementById('postContent').value=d.content||'';document.getElementById('postCover').value=d.cover||'';document.getElementById('postPrivacy').value=d.privacy||'public';showPage('create');showToast('Draft loaded. Your edits will stay in this same draft.');}
+function loadDraft(id){const d=drafts.find(x=>x.id===id&&x.email===currentUser?.email);if(!d||!currentUser)return;editingWorkId=null;editingDraftId=d.id;document.getElementById('postTitle').value=d.title||'';document.getElementById('postGenre').value=d.genre||'Poetry';document.getElementById('postTags').value=(d.tags||[]).join(', ');document.getElementById('postExcerpt').value=d.excerpt||'';document.getElementById('postContent').value=d.content||'';document.getElementById('postCover').value=d.cover||'';document.getElementById('postPrivacy').value=d.privacy||'public';syncCreateEditUI();showPage('create');showToast('Draft loaded. Your edits will stay in this same draft.');}
 function deleteDraft(id){drafts=drafts.filter(d=>d.id!==id);saveState();renderMyWorks();showToast('Draft deleted.')}
 
 function renderAuthors(){
@@ -1572,12 +1598,62 @@ function collectDraftPayload(){
   updatedAt:now
  };
 }
+function syncCreateEditUI(){
+ const bar=document.getElementById('createEditBar');
+ const note=document.getElementById('createEditModeNote');
+ const heading=document.querySelector('#page-create .section-head h3');
+ const active=!!editingWorkId||!!editingDraftId;
+ if(bar)bar.classList.toggle('hidden',!active);
+ if(note)note.textContent=editingDraftId?'Editing a saved draft. Your changes are not saved yet.':'Editing a published work. Your changes are not saved yet.';
+ if(heading)heading.textContent=active?'Edit Literature Work':'Create Literature Post';
+}
 function resetCreateForm(){
  document.getElementById('createForm').reset();
  document.getElementById('postPrivacy').value='public';
  editingWorkId=null;
  editingDraftId=null;
+ syncCreateEditUI();
 }
+function requestEditBack(){
+ if(!editingWorkId&&!editingDraftId){showPage('myworks');return;}
+ document.getElementById('saveEditModal')?.classList.add('open');
+}
+function discardEditAndBack(){
+ closeModal('saveEditModal');
+ resetCreateForm();
+ renderMyWorks();
+ showPage('myworks');
+ showToast('Changes discarded.');
+}
+function saveEditedWorkAndBack(){
+ if(!currentUser){closeModal('saveEditModal');openAccount();return;}
+ const now=Date.now();
+ if(editingWorkId){
+  const idx=works.findIndex(w=>w.id===editingWorkId&&w.email===currentUser.email);
+  if(idx<0){closeModal('saveEditModal');showToast('Work not found.');return;}
+  const old=works[idx];
+  const payload={title:document.getElementById('postTitle').value.trim()||'Untitled',author:publicNameOf(currentUser),email:currentUser.email,genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
+  works[idx]=normalizeWork({...old,...payload,updatedAt:now});
+  closeModal('saveEditModal');
+  resetCreateForm();
+  saveState();renderAll();showPage('myworks');showToast('Your edited work was saved.');
+  return;
+ }
+ if(editingDraftId){
+  const idx=drafts.findIndex(d=>d.id===editingDraftId&&d.email===currentUser.email);
+  if(idx<0){closeModal('saveEditModal');showToast('Draft not found.');return;}
+  const payload=collectDraftPayload();
+  drafts[idx]={...drafts[idx],...payload,updatedAt:now};
+  closeModal('saveEditModal');
+  resetCreateForm();
+  saveState();renderMyWorks();showPage('myworks');showToast('Your edited draft was saved.');
+  return;
+ }
+ closeModal('saveEditModal');
+ resetCreateForm();
+ showPage('myworks');
+}
+function confirmSaveEditAndBack(){saveEditedWorkAndBack();}
 function saveDraft(){
  contentUser();
  if(!currentUser){openAccount();return}
@@ -1587,13 +1663,13 @@ function saveDraft(){
   if(idx<0){showToast('Draft not found. Please reload My Works and try again.');return;}
   drafts[idx]={...drafts[idx],...payload};
   const savedId=drafts[idx].id;
-  saveState();editingDraftId=null;editingWorkId=null;renderMyWorks();showToast('Draft updated. Your changes were saved to the same draft.');showPage('myworks');
+  saveState();editingDraftId=null;editingWorkId=null;syncCreateEditUI();renderMyWorks();showToast('Draft updated. Your changes were saved to the same draft.');showPage('myworks');
   return;
  }
  const draft={id:'draft-'+Date.now(),createdAt:Date.now(),...payload};
  drafts.unshift(draft);
  editingDraftId=draft.id;
- saveState();editingDraftId=null;editingWorkId=null;renderMyWorks();showToast('Draft saved.');showPage('myworks');
+ saveState();editingDraftId=null;editingWorkId=null;syncCreateEditUI();renderMyWorks();showToast('Draft saved.');showPage('myworks');
 }
 document.getElementById('createForm').addEventListener('submit',function(e){
  e.preventDefault();contentUser();if(!currentUser){openAccount();return}
@@ -1640,7 +1716,7 @@ function editWork(id){
  document.getElementById('postContent').value=w.content;
  document.getElementById('postCover').value=w.cover||'';
  document.getElementById('postPrivacy').value=w.privacy||'public';
- showPage('create');showToast('Edit mode enabled.');
+ syncCreateEditUI();showPage('create');showToast('Edit mode enabled.');
 }
 function deleteWork(id){
  const w=works.find(x=>x.id===id);
@@ -1860,7 +1936,7 @@ function openEditProfile(){if(!currentUser){openAccount();return}document.getEle
 async function saveProfile(e){e.preventDefault();if(!currentUser)return;const email=currentUser.email;const penName=document.getElementById('editPenName').value.trim();const username=document.getElementById('editUsername').value.trim().replace(/^@/,'');const bio=document.getElementById('editBio').value.trim();if(!penName||!username){showToast('Pen name and username are required.');return}const clash=users.find(u=>u.email!==email&&usernameOf(u).toLowerCase()===username.toLowerCase());if(clash){showToast('That username is already in use.');return}const idx=users.findIndex(u=>u.email===email);if(idx<0)return;users[idx]=normalizeUser({...users[idx],penName,username,bio,photo:currentUser.photoURL||currentUser.photo||''});currentUser=normalizeUser({...users[idx]});works=works.map(w=>w.email===email?{...w,author:publicNameOf(currentUser)}:w);saveState();closeModal('editProfileModal');renderAll();showToast('Profile updated.')}
 
 function openAccount(){if(!sessionUnlocked&&currentUser){openPinGate('enter',currentUser);return}document.getElementById('accountModal').classList.add('open');updateProfileUI()}
-function closeModal(id){document.getElementById(id).classList.remove('open');if(id==='commentModal'){commentModalWork=null}if(id==='deleteWorkModal'){pendingDeleteWorkId=null}}
+function closeModal(id){document.getElementById(id)?.classList.remove('open');if(id==='commentModal'){commentModalWork=null}if(id==='deleteWorkModal'){pendingDeleteWorkId=null}}
 function outsideModal(e,m){if(e.target===m && m.id!=='pinModal')closeModal(m.id)}
 function switchAuth(mode){
  authMode=mode;document.getElementById('loginTab').classList.toggle('active',mode==='login');document.getElementById('signupTab').classList.toggle('active',mode==='signup');
