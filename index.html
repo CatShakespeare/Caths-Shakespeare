@@ -146,10 +146,15 @@ a{text-decoration:none;color:inherit}
 .comment-modal .modal-box{width:min(640px,100%);padding:23px}
 .comment-modal-list{display:grid;gap:10px;max-height:min(55vh,470px);overflow:auto;margin:16px 0;padding-right:3px}
 .comment-modal-item{border:1px solid var(--line);border-radius:13px;background:#FBF8F5;padding:12px 13px}
-.comment-modal-item-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
-.comment-modal-item-head strong{color:var(--wine);font-size:.76rem}
-.comment-modal-item-head span{color:#A0968E;font-size:.61rem}
-.comment-modal-item p{margin:6px 0 0;color:#625751;font-size:.75rem;line-height:1.6;white-space:pre-wrap}
+.comment-modal-item-head{display:flex;gap:10px;align-items:flex-start}
+.comment-author-row{display:flex;align-items:flex-start;gap:9px;min-width:0;flex:1}
+.comment-author-avatar{width:36px;height:36px;min-width:36px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:linear-gradient(145deg,#8A5E63,#32191B);color:#F7EAD6;font-size:.68rem;font-weight:800}
+.comment-author-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.comment-author-copy{min-width:0}
+.comment-modal-item-head strong{display:block;color:var(--wine);font-size:.76rem;line-height:1.25}
+.comment-modal-item-head .comment-author-handle{display:block;color:#9A9089;font-size:.61rem;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.comment-modal-item-head > span{margin-left:auto;color:#A0968E;font-size:.61rem;white-space:nowrap}
+.comment-modal-item p{margin:8px 0 0;color:#625751;font-size:.75rem;line-height:1.6;white-space:pre-wrap;padding-left:45px}
 .comment-item-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px}
 .comment-action-btn,.comment-reaction-trigger,.comment-reaction-choice{border:1px solid var(--line);background:#fff;color:var(--wine);border-radius:9px;min-height:32px;padding:6px 9px;font-size:.63rem;font-weight:800;transition:.18s var(--ease)}
 .comment-action-btn:hover,.comment-reaction-trigger:hover,.comment-reaction-choice:hover{background:#F7F2ED;transform:translateY(-1px)}
@@ -565,7 +570,9 @@ button,input,textarea,select{max-width:100%}
   .author{align-items:flex-start}
   .author > div:last-child{min-width:0}
   .author-link{max-width:100%;overflow-wrap:anywhere}
-  .comment-modal-item-head{align-items:flex-start;flex-direction:column;gap:3px}
+  .comment-modal-item-head{align-items:flex-start}
+  .comment-modal-item-head > span{margin-left:0}
+  .comment-modal-item p{padding-left:45px}
   .pin-modal .modal-box{padding:22px 16px 18px}
 }
 
@@ -1915,11 +1922,18 @@ function renderCommentItem(workId,c,isReply=false){
  const mine=canonicalEmail(c.email)===canonicalEmail(currentUser?.email);
  const author=findUser(c.email);
  const safeName=publicNameOf(author||{penName:c.name||'Anonymous Reader'});
+ const username=author?usernameOf(author):'';
+ const photo=author?.photoURL||author?.photo||'';
+ const avatar=photo
+   ? `<img src="${escapeAttr(photo)}" alt="">`
+   : escapeHTML(initialsOf(safeName));
+ const profileAction=c.email?` onclick="openProfile('${escapeAttr(c.email)}')" title="View profile"`:' aria-hidden="true"';
  const actions=[renderCommentReactionBar(workId,c,isReply)];
- if(!isReply)actions.push(commentActionButton('Reply',`startCommentReply('${escapeAttr(c.id)}')`));
+ // Replies can themselves be replied to, so every comment level gets a Reply action.
+ actions.push(commentActionButton('Reply',`startCommentReply('${escapeAttr(c.id)}')`));
  actions.push(commentActionButton('Report',`reportComment('${escapeAttr(workId)}','${escapeAttr(c.id)}',${isReply?'true':'false'})`));
  if(mine)actions.push(commentActionButton('Delete',`deleteComment('${escapeAttr(workId)}','${escapeAttr(c.id)}',${isReply?'true':'false'})`,'danger'));
- return `<div class="comment-modal-item ${isReply?'comment-reply':''}" data-comment-id="${escapeAttr(c.id)}"><div class="comment-modal-item-head"><strong>${escapeHTML(safeName)}</strong><span>${escapeHTML(new Date(c.at||Date.now()).toLocaleString())}</span></div><p>${escapeHTML(c.text||'')}</p><div class="comment-item-actions">${actions.join('')}</div>${renderReplyItems(workId,c)}</div>`;
+ return `<div class="comment-modal-item ${isReply?'comment-reply':''}" data-comment-id="${escapeAttr(c.id)}"><div class="comment-modal-item-head"><div class="comment-author-row"><button class="comment-author-avatar" type="button"${profileAction}>${avatar}</button><div class="comment-author-copy"><strong>${escapeHTML(safeName)}</strong>${username?`<span class="comment-author-handle">@${escapeHTML(username)}</span>`:''}</div></div><span>${escapeHTML(new Date(c.at||Date.now()).toLocaleString())}</span></div><p>${escapeHTML(c.text||'')}</p><div class="comment-item-actions">${actions.join('')}</div>${renderReplyItems(workId,c)}</div>`;
 }
 function renderComments(){
  const root=document.getElementById('commentArea');if(!root||!readerWork)return;
