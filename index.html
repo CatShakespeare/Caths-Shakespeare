@@ -380,6 +380,185 @@ a{text-decoration:none;color:inherit}
 @media(max-width:480px){
   .sidebar{width:64px}.main{margin-left:64px}.brand-mark{width:36px;height:36px}.profile-mini .avatar{width:34px;height:34px;min-width:34px;min-height:34px;flex-basis:34px}.profile-hero{grid-template-columns:1fr;text-align:center}.profile-actions{justify-content:center}.profile-big-avatar{margin:auto}.profile-stats{justify-content:center}.brand-mark svg{width:22px}.topbar{height:64px}.page-title h1{font-size:1.65rem}.hero h2{font-size:3.3rem}.hero p{font-size:.91rem}.metrics{gap:15px}.metric strong{font-size:1.7rem}.metric span{font-size:.59rem}.book{width:220px}.orbit{width:260px;height:260px}.f1,.f2{display:none}
 }
+
+/* ==========================================================
+   Responsive polish: phone, tablet, laptop, and wide desktop
+   ========================================================== */
+html{font-size:16px}
+body{min-width:0;overflow-x:hidden}
+img,svg,video,canvas{max-width:100%}
+button,input,textarea,select{max-width:100%}
+.content{width:100%;max-width:1450px;margin:0 auto;padding-inline:clamp(16px,2.4vw,32px)}
+.page,.panel,.card,.feed-post,.reader,.profile-hero,.two-col,.grid3,.journal-grid,.authors{min-width:0}
+.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.two-col{grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr)}
+.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.section-head{min-width:0}
+.section-head > div{min-width:0}
+.section-head p{min-width:0}
+.search{min-width:0}
+.search input{min-width:0}
+.card-body,.feed-post,.panel{overflow-wrap:anywhere}
+.post-title,.card-body h4,.profile-copy h2,.reader h2{overflow-wrap:anywhere}
+.social-actions,.work-management,.post-actions,.reader-social,.reader-social-bottom{width:100%}
+.social-actions{row-gap:8px}
+.social-btn,.danger-btn,.post-actions .post-action{white-space:nowrap}
+.topbar{padding-inline:clamp(14px,2.2vw,28px)}
+.page-title{min-width:0}
+.page-title > div{min-width:0}
+.page-title h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-actions{flex:none}
+
+/* Tablets / small laptops: keep the navigation usable without crushing content. */
+@media (max-width:1100px){
+  .sidebar{width:210px}
+  .main{margin-left:210px}
+  .hero{grid-template-columns:minmax(0,1fr)}
+  .book-zone{min-height:410px}
+  .grid3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .two-col{grid-template-columns:1fr}
+  .authors{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* Tablet portrait / large phones: off-canvas sidebar gives the content full width. */
+@media (max-width:900px){
+  .sidebar{
+    width:min(290px,86vw);
+    transform:translateX(-102%);
+    transition:transform .25s var(--ease),box-shadow .25s var(--ease);
+    z-index:100;
+    box-shadow:none;
+    padding:16px 12px;
+  }
+  .sidebar .brand{justify-content:flex-start;padding:4px 8px 18px}
+  .sidebar .brand-copy,.sidebar .nav-title,.sidebar .nav-btn span,.sidebar .profile-mini strong,.sidebar .profile-mini span{display:block}
+  .sidebar .nav-btn{justify-content:flex-start;padding:10px 11px}
+  .sidebar .profile-mini{justify-content:flex-start;padding:8px}
+  .main{margin-left:0}
+  .menu-toggle{display:grid}
+  body.menu-open .sidebar{transform:translateX(0);box-shadow:14px 0 38px rgba(36,27,23,.16)}
+  .mobile-overlay{display:block;position:fixed;inset:0;z-index:90;background:rgba(30,18,18,.38);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s var(--ease)}
+  body.menu-open .mobile-overlay{opacity:1;pointer-events:auto}
+  .content{padding-top:24px}
+  .profile-hero{grid-template-columns:auto minmax(0,1fr)}
+  .profile-actions{grid-column:1/-1;justify-content:flex-start}
+}
+
+/* Phone landscape / portrait. */
+@media (max-width:760px){
+  .topbar{height:66px;padding-inline:12px;gap:10px}
+  .page-title{gap:8px;flex:1;min-width:0}
+  .page-title h1{font-size:1.55rem}
+  .page-title p{display:none}
+  .top-actions{gap:6px}
+  .icon-btn{width:38px;height:38px}
+  .search-trigger{min-width:38px;width:38px;padding:0}
+  .search-trigger span{display:none}
+  .profile-btn{width:38px;height:38px}
+  .content{padding:20px 14px 42px}
+  .section{padding:30px 0}
+  .section-head{gap:12px;margin-bottom:16px}
+  .section-head h3{font-size:clamp(2.15rem,8vw,3.2rem)}
+  .section-head p{font-size:.82rem}
+  .hero{min-height:0;padding:8px 0 30px;gap:26px}
+  .hero h2{font-size:clamp(3rem,13vw,4.6rem);line-height:.88}
+  .hero p{font-size:.9rem;line-height:1.7}
+  .metrics{gap:16px;flex-wrap:wrap;margin-top:26px}
+  .metric{min-width:78px}
+  .grid3,.authors,.journal-grid,.form-grid{grid-template-columns:1fr}
+  .two-col{grid-template-columns:1fr}
+  .panel{padding:17px;border-radius:15px}
+  .card{border-radius:15px}
+  .card-art{height:180px}
+  .card-body{padding:15px}
+  .card-body h4{font-size:1.55rem}
+  .card-body p{font-size:.81rem}
+  .card-foot{align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .social-actions,.work-management,.post-actions{gap:6px}
+  .social-btn,.danger-btn,.post-actions .post-action{min-height:38px;padding:9px 10px;font-size:.69rem}
+  .social-btn{flex:0 1 auto}
+  .reaction-picker{max-width:calc(100vw - 20px);padding:6px;gap:2px}
+  .reaction-choice{padding:8px 7px;min-height:38px}
+  .reaction-choice .reaction-icon{font-size:1.05rem}
+  .reader{max-width:100%}
+  .reader h2{font-size:clamp(2.7rem,12vw,4.6rem);line-height:.9}
+  .reader-body{font-size:1.12rem;line-height:1.75}
+  .reader-tools{margin:18px 0;gap:6px}
+  .reader-tools button{padding:8px 10px}
+  .reader-social-bottom{margin-top:28px;padding-top:18px;justify-content:stretch}
+  .reader-social-bottom .social-btn{flex:1;min-width:0}
+  .profile-hero{grid-template-columns:1fr;text-align:center;padding:18px}
+  .profile-big-avatar{margin:auto}
+  .profile-actions{justify-content:center}
+  .profile-actions .follow,.profile-actions .secondary{flex:1 1 120px}
+  .profile-stats{justify-content:center;gap:16px}
+  .following-control{gap:12px}
+  .feed-tabs{width:100%;flex-direction:column}
+  .feed-tab{width:100%;min-width:0}
+  .following-toolbar-left,.following-toolbar-right{width:100%}
+  .following-range{width:100%}
+  .range-btn{flex:1}
+  .search{padding:6px}
+  .search input{font-size:.82rem;padding:7px}
+  .search button{padding:8px 11px}
+  .modal{padding:10px}
+  .modal-box{width:min(100%,680px);max-height:calc(100dvh - 20px);border-radius:15px;padding:17px}
+  .comment-modal .modal-box,.search-modal .modal-box{padding:16px}
+  .comment-popup-actions,.delete-modal-actions{flex-wrap:wrap}
+  .comment-popup-actions > *, .delete-modal-actions > *{flex:1 1 120px}
+}
+
+@media (max-width:480px){
+  .topbar{height:62px}
+  .page-title h1{font-size:1.42rem}
+  .content{padding-inline:11px;padding-top:16px}
+  .hero h2{font-size:clamp(2.75rem,14vw,3.7rem)}
+  .hero p{font-size:.86rem}
+  .actions{gap:7px}
+  .actions > button{flex:1 1 100%;width:100%}
+  .metrics{justify-content:space-between;gap:10px}
+  .metric strong{font-size:1.55rem}
+  .metric span{font-size:.55rem}
+  .book{width:min(220px,72vw)}
+  .orbit{width:min(260px,84vw);height:min(260px,84vw)}
+  .card-art{height:165px}
+  .social-actions,.work-management,.post-actions{align-items:stretch}
+  .social-actions .social-btn,.work-management .secondary,.work-management .danger-btn,.post-actions .post-action{flex:1 1 calc(50% - 6px);min-width:0}
+  .reaction-wrap{flex:1 1 auto;min-width:0}
+  .reaction-wrap > .social-btn{width:100%}
+  .reader-social-bottom .social-btn{flex:1 1 calc(50% - 6px)}
+  .reader-social-bottom{justify-content:center}
+  .reader-social-bottom .reaction-wrap{flex:1 1 calc(50% - 6px)}
+  .reader-social-bottom .reaction-wrap > .social-btn{width:100%;min-width:0}
+  .reader-body{font-size:1.06rem;line-height:1.72}
+  .reader-body p{margin-bottom:18px}
+  .profile-stats{gap:12px}
+  .profile-actions .follow,.profile-actions .secondary{flex:1 1 100%;width:100%}
+  .feed-post{padding:16px 0}
+  .author{align-items:flex-start}
+  .author > div:last-child{min-width:0}
+  .author-link{max-width:100%;overflow-wrap:anywhere}
+  .comment-modal-item-head{align-items:flex-start;flex-direction:column;gap:3px}
+  .pin-modal .modal-box{padding:22px 16px 18px}
+}
+
+@media (max-width:360px){
+  .content{padding-inline:9px}
+  .top-actions{gap:4px}
+  .icon-btn,.profile-btn{width:36px;height:36px}
+  .page-title h1{font-size:1.3rem}
+  .panel{padding:14px}
+  .social-btn,.danger-btn,.post-actions .post-action{font-size:.64rem;padding:8px 8px}
+  .reaction-choice span:not(.reaction-icon):not(.reaction-count){display:none}
+  .reaction-choice{min-width:39px;justify-content:center}
+  .reader-social-bottom .social-btn{font-size:.64rem}
+}
+
+/* Respect users who prefer reduced motion on every device. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+
 </style>
 </head>
 <body>
@@ -622,7 +801,6 @@ a{text-decoration:none;color:inherit}
             <div class="field"><label>Category</label><select required><option>Website Design</option><option>Navigation</option><option>Reading Experience</option><option>Literature Library</option><option>Account System</option><option>Bug Report</option><option>Suggestion</option><option>Other</option></select></div>
             <div class="field full"><label>Feedback</label><textarea required placeholder="Tell us what you think..."></textarea></div>
             <div class="field full"><div class="feedback-identity"><span>Your profile identity:</span><strong id="feedbackIdentity">READER</strong></div></div>
-            <div class="field full"><label>Screenshot (optional)</label><input type="file" accept="image/*"></div>
             <div class="actions"><button class="primary">Submit Feedback</button></div>
           </form>
           <div class="panel"><div class="kicker">Feedback Wall</div><h3 style="font:600 2.5rem 'Cormorant Garamond',serif;color:var(--wine);margin:8px 0 18px">Reader feedback</h3><div class="empty"><h4>No feedback yet</h4><p>Submitted feedback can appear here once a shared backend is connected.</p></div></div>
@@ -659,6 +837,7 @@ a{text-decoration:none;color:inherit}
     </main>
   </div>
 </div>
+<div class="mobile-overlay" id="mobileOverlay" onclick="toggleSidebar()" aria-hidden="true"></div>
 
 <div class="modal search-modal" id="globalSearchModal" onclick="outsideModal(event,this)">
   <div class="modal-box">
@@ -859,7 +1038,7 @@ function publicNameOf(user){
   return String(user?.penName||'Anonymous Author').trim()||'Anonymous Author';
 }
 const REACTION_TYPES={
-  heart:{label:'Heart',icon:'♥'},
+  heart:{label:'Heart',icon:'❤️'},
   like:{label:'Like',icon:'👍'},
   dislike:{label:'Dislike',icon:'👎'},
   wow:{label:'Wow',icon:'😮'},
@@ -1037,6 +1216,7 @@ function saveState(){
 }
 
 function showPage(name){
+ document.body.classList.remove('menu-open');
  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
  const page=document.getElementById('page-'+name)||document.getElementById('page-home');
  page.classList.add('active');
