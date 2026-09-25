@@ -624,6 +624,58 @@ button,input,textarea,select{max-width:100%}
   .notification-meta{font-size:.58rem}
 }
 
+
+/* Profile connection controls and responsive popups. */
+.profile-stat-button{border:0;background:transparent;padding:0;text-align:inherit;cursor:pointer;border-radius:10px;transition:.18s var(--ease)}
+.profile-stat-button:hover{background:#FBF7F2;transform:translateY(-1px)}
+.profile-stat-button:focus-visible{outline:3px solid rgba(179,138,82,.25);outline-offset:3px}
+.connections-modal-box{width:min(720px,calc(100vw - 28px));padding:22px}
+.connections-search{display:flex;margin:15px 0 12px;padding:7px 11px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.connections-search input{width:100%;border:0;outline:0;background:transparent;color:var(--ink);font-size:.84rem}
+.connections-list{display:grid;gap:8px;max-height:min(62vh,540px);overflow:auto;padding:2px 2px 6px}
+.connection-item{display:flex;align-items:center;gap:11px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:#fff;min-width:0}
+.connection-item:hover{background:#FBF8F5}
+.connection-link{display:flex;align-items:center;gap:11px;min-width:0;flex:1;border:0;background:transparent;padding:0;text-align:left;color:inherit}
+.connection-avatar{width:42px;height:42px;min-width:42px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:linear-gradient(145deg,#8A5E63,#32191B);color:#F7EAD6;font-weight:800}
+.connection-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.connection-copy{min-width:0}
+.connection-copy strong{display:block;color:var(--wine);font-size:.79rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.connection-copy span{display:block;color:#958A83;font-size:.64rem;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.connection-follow{flex:none}
+.connections-empty{padding:24px 12px;text-align:center;color:#8D827B}
+.connections-empty h4{font:600 1.8rem "Cormorant Garamond",serif;color:var(--wine);margin:0 0 5px}
+
+
+@media(max-width:760px){
+  .connections-modal-box{width:calc(100vw - 20px);padding:16px;border-radius:15px}
+  .connections-list{max-height:58vh}
+  .connection-item{padding:10px}
+  .connection-avatar{width:38px;height:38px;min-width:38px}
+  .profile-stat-button{min-width:76px}
+}
+@media(max-width:480px){
+  .modal{padding:8px}
+  .modal-box{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:15px;border-radius:14px}
+  .modal-head{gap:10px}
+  .modal-head h3{font-size:1.85rem}
+  .connections-modal-box{width:calc(100vw - 16px);padding:14px}
+  .connections-search{margin:12px 0 10px}
+  .connections-list{max-height:60vh}
+  .connection-item{gap:8px}
+  .connection-copy strong{font-size:.74rem}
+  .connection-copy span{font-size:.6rem}
+  .connection-follow{padding:7px 9px!important}
+}
+@media(max-width:360px){
+  .modal{padding:6px}
+  .modal-box{width:calc(100vw - 12px)}
+  .connections-modal-box{width:calc(100vw - 12px)}
+  .profile-stats{gap:8px}
+  .profile-stat strong{font-size:1.4rem}
+  .profile-stat span{font-size:.55rem}
+  .connection-follow{font-size:.6rem!important;padding:6px 7px!important}
+}
+
 </style>
 </head>
 <body>
@@ -952,6 +1004,19 @@ button,input,textarea,select{max-width:100%}
   </div>
 </div>
 
+<div class="modal connections-modal" id="connectionsModal" onclick="outsideModal(event,this)">
+  <div class="modal-box connections-modal-box">
+    <div class="modal-head">
+      <div><div class="kicker" id="connectionsKicker">Profile connections</div><h3 id="connectionsTitle">Followers</h3></div>
+      <button class="close" onclick="closeModal('connectionsModal')">×</button>
+    </div>
+    <div class="connections-search">
+      <input id="connectionsSearchInput" type="search" placeholder="Search followers..." aria-label="Search connections" oninput="renderConnectionsList()">
+    </div>
+    <div id="connectionsList" class="connections-list"></div>
+  </div>
+</div>
+
 <div class="modal" id="editProfileModal" onclick="outsideModal(event,this)">
   <div class="modal-box">
     <div class="modal-head"><div><div class="kicker">Your identity</div><h3>Edit Profile</h3></div><button class="close" onclick="closeModal('editProfileModal')">×</button></div>
@@ -1135,7 +1200,7 @@ const IDENTITY_OPTIONS={
 };
 function normalizeIdentity(value){return IDENTITY_OPTIONS[value]?value:'reader'}
 function identityLabelOf(user){return IDENTITY_OPTIONS[normalizeIdentity(user?.identity)]?.label||'Reader'}
-function canPublish(user){return !!user}
+function canPublish(user){return !!user&&normalizeIdentity(user.identity)!=='reader'}
 function normalizeUser(user){
   if(!user)return null;
   const identity=normalizeIdentity(user.identity);
@@ -1426,7 +1491,7 @@ function renderHome(){
  const latest=works.slice(0,3);
  document.getElementById('homeFeed').innerHTML=latest.length?latest.map(feedHTML).join(''):'<div class="empty"><h4>No literature yet</h4><p>Student posts will appear here after they are published.</p></div>';
  document.getElementById('worksCount').textContent=String(works.length);
- document.getElementById('authorsCount').textContent=String(users.length);
+ document.getElementById('authorsCount').textContent=String(users.filter(u=>canPublish(u)).length);
 }
 function cardHTML(w){
  const owner=!!currentUser&&userMatchesWork(currentUser,w);
@@ -1588,8 +1653,10 @@ function loadDraft(id){const d=drafts.find(x=>x.id===id&&x.email===currentUser?.
 function deleteDraft(id){drafts=drafts.filter(d=>d.id!==id);saveState();renderMyWorks();showToast('Draft deleted.')}
 
 function renderAuthors(){
- if(!users.length){document.getElementById('authorGrid').innerHTML='<div class="empty"><h4>No student profiles yet</h4><p>Create an account to appear in the community.</p></div>';return}
- document.getElementById('authorGrid').innerHTML=users.slice(0,12).map(user=>{
+ const root=document.getElementById('authorGrid'); if(!root)return;
+ const authors=users.filter(u=>canPublish(u));
+ if(!authors.length){root.innerHTML='<div class="empty"><h4>No student authors yet</h4><p>Verified author profiles will appear here after they set up an identity.</p></div>';return}
+ root.innerHTML=authors.slice(0,12).map(user=>{
    const key=userIdOf(user);
    const count=getUserWorks(user).length;
    const following=!!currentUser&&currentUser.following.some(x=>String(x)===key || canonicalEmail(x)===canonicalEmail(user.email||''));
@@ -1597,6 +1664,85 @@ function renderAuthors(){
    return `<article class="author-card"><button class="result-link" onclick="openProfile('${escapeAttr(key)}')"><div class="author-big">${user.photo?`<img src="${escapeAttr(user.photo)}" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:escapeHTML(initialsOf(publicNameOf(user)))}</div><h4>${escapeHTML(publicNameOf(user))}</h4><p>@${escapeHTML(usernameOf(user))} · ${escapeHTML(identityLabelOf(user))} · ${count} published work${count===1?'':'s'}</p></button><button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(key)}',this)">${self?'You':(following?'Following':'Follow')}</button></article>`;
  }).join('');
 }
+let connectionsContext={userKey:'',type:'followers',items:[],loading:false};
+async function fetchConnectionUsers(userKey,type){
+  const user=findUser(userKey); if(!user)return [];
+  const targetUid=userIdOf(user); if(!targetUid)return [];
+  if(!window.firebaseDB||!window.firebaseCollection||!window.firebaseGetDocs)return type==='followers'?(user.followers||[]):(user.following||[]);
+  try{
+    const col=window.firebaseCollection(window.firebaseDB,'users',targetUid,type);
+    const snap=await window.firebaseGetDocs(col);
+    const ids=snap.docs.map(d=>String(d.id||'').trim()).filter(Boolean);
+    const results=[];
+    for(const uid of ids){
+      const cached=findUser(uid);
+      if(cached){results.push(cached);continue}
+      if(window.firebaseGetDoc&&window.firebaseDoc){
+        try{
+          const ds=await window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB,'users',uid));
+          if(ds.exists()){
+            const raw={...ds.data(),uid:ds.id};
+            mergeCloudUserIntoLocal(raw);
+            const fresh=findUser(uid); if(fresh)results.push(fresh);
+          }
+        }catch(_e){}
+      }
+    }
+    return results;
+  }catch(err){
+    console.warn('Connection list lookup failed:',err);
+    const ids=type==='followers'?(user.followers||[]):(user.following||[]);
+    return ids.map(findUser).filter(Boolean);
+  }
+}
+async function hydrateUserConnections(user){
+  if(!user?.uid)return user;
+  try{
+    const followers=await fetchConnectionUsers(userIdOf(user),'followers');
+    const following=await fetchConnectionUsers(userIdOf(user),'following');
+    user.followerCount=followers.length;
+    user.followingCount=following.length;
+    user.followers=followers.map(userIdOf);
+    user.following=following.map(userIdOf);
+    const idx=users.findIndex(u=>userIdOf(u)===userIdOf(user));
+    if(idx>=0)users[idx]=normalizeUser({...users[idx],followerCount:user.followerCount,followingCount:user.followingCount,followers:user.followers,following:user.following});
+    return user;
+  }catch(_e){return user}
+}
+async function openConnectionsModal(userKey,type){
+  const user=findUser(userKey); if(!user){showToast('Student profile not found.');return;}
+  connectionsContext={userKey:userIdOf(user),type,items:[],loading:true};
+  const title=type==='followers'?'Followers':'Following';
+  const input=document.getElementById('connectionsSearchInput');
+  if(input){input.value='';input.placeholder=type==='followers'?'Search followers...':'Search following...';}
+  document.getElementById('connectionsKicker').textContent=publicNameOf(user)+' · '+title;
+  document.getElementById('connectionsTitle').textContent=title;
+  document.getElementById('connectionsModal').classList.add('open');
+  renderConnectionsList();
+  const items=await fetchConnectionUsers(userIdOf(user),type);
+  connectionsContext.items=items;
+  connectionsContext.loading=false;
+  renderConnectionsList();
+}
+function renderConnectionsList(){
+  const root=document.getElementById('connectionsList'); if(!root)return;
+  if(connectionsContext.loading){root.innerHTML='<div class="connections-empty"><p>Loading profiles...</p></div>';return;}
+  const q=String(document.getElementById('connectionsSearchInput')?.value||'').trim().toLowerCase();
+  const items=(connectionsContext.items||[]).filter(u=>{
+    if(!q)return true;
+    return publicNameOf(u).toLowerCase().includes(q)||usernameOf(u).toLowerCase().includes(q);
+  });
+  if(!items.length){root.innerHTML='<div class="connections-empty"><h4>'+((connectionsContext.items||[]).length?'No matches':'No '+escapeHTML(connectionsContext.type)+' yet')+'</h4><p>Try another name or @username.</p></div>';return;}
+  root.innerHTML=items.map(u=>{
+    const self=!!currentUser&&userIdOf(currentUser)===userIdOf(u);
+    const followed=!!currentUser&&currentUser.following.some(x=>String(x)===userIdOf(u)||canonicalEmail(x)===canonicalEmail(u.email||''));
+    const photo=u.photoURL||u.photo||'';
+    const avatar=photo?`<img src="${escapeAttr(photo)}" alt="">`:`<span>${escapeHTML(initialsOf(publicNameOf(u)))}</span>`;
+    const followLabel=self?'You':(followed?'Following':'Follow');
+    return `<div class="connection-item"><button class="connection-link" type="button" onclick="openProfile('${escapeAttr(userIdOf(u))}');closeModal('connectionsModal')"><span class="connection-avatar">${avatar}</span><span class="connection-copy"><strong>${escapeHTML(publicNameOf(u))}</strong><span>@${escapeHTML(usernameOf(u))} · ${escapeHTML(identityLabelOf(u))}</span></span></button>${currentUser&&!self?`<button class="follow connection-follow ${followed?'on':''}" onclick="toggleFollow('${escapeAttr(userIdOf(u))}',this)">${followLabel}</button>`:''}</div>`;
+  }).join('');
+}
+
 function openIdentitySetup(){
  if(!currentUser){openAccount();return;}
  const modal=document.getElementById('identityModal');
@@ -1647,7 +1793,7 @@ async function saveIdentitySetup(){
  showToast('Identity verified: '+IDENTITY_OPTIONS[key].label);
 }
 
-function renderProfile(){
+async function renderProfile(){
  const root=document.getElementById('profilePage'); if(!root)return;
  if(!profileEmail){
    if(currentUser){profileEmail=userIdOf(currentUser);}
@@ -1655,6 +1801,9 @@ function renderProfile(){
  }
  const user=findUser(profileEmail);
  if(!user){root.innerHTML='<div class="empty"><h4>Profile not found</h4><p>This student profile is no longer available.</p></div>';return;}
+ // Refresh connection counts from Firestore when possible so the displayed counts
+ // do not depend on stale localStorage arrays.
+ await hydrateUserConnections(user);
  const allUserWorks=getUserWorks(user);
  const following=!!currentUser&&currentUser.following.some(x=>String(x)===userIdOf(user) || canonicalEmail(x)===canonicalEmail(user.email||''));
  const self=!!currentUser&&userIdOf(currentUser)===userIdOf(user);
@@ -1666,7 +1815,8 @@ function renderProfile(){
  const identityAction=self&&normalizeIdentity(user.identity)==='reader'?'<button class="primary" onclick="openIdentitySetup()">Set Up Identity</button>':'';
  const editAction=self?'<button class="secondary" onclick="openEditProfile()">Edit Profile</button>':'';
  const publishNote=normalizeIdentity(user.identity)==='reader'?'This account is a Reader. Verify an identity to publish literature.':'This profile can publish literature as a verified 12-SHAKESPEARE identity.';
- root.innerHTML=`<div class="profile-hero"><div class="profile-big-avatar">${user.photoURL||user.photo?`<img src="${escapeAttr(user.photoURL||user.photo)}" alt="Profile picture">`:escapeHTML(initialsOf(publicNameOf(user)))}</div><div class="profile-copy"><div class="kicker">Profile identity</div><div class="identity-badge ${identityClass}">${escapeHTML(identity)}</div><h2>${escapeHTML(publicNameOf(user))}</h2><p class="profile-handle">@${escapeHTML(usernameOf(user))}</p><p>${escapeHTML(user.bio||'A reader in 12-SHAKESPEARE.')}</p><div class="profile-stats"><div class="profile-stat"><strong>${userWorks.length}</strong><span>Works</span></div><div class="profile-stat"><strong>${user.followers.length}</strong><span>Followers</span></div><div class="profile-stat"><strong>${user.following.length}</strong><span>Following</span></div></div></div><div class="profile-actions">${identityAction}${editAction}<button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(userIdOf(user))}',this)">${followLabel}</button><button class="secondary" onclick="openGlobalSearch()">Search</button></div></div><div class="section"><div class="profile-work-head"><div><div class="kicker">Published shelf</div><h3 style="font:600 3rem 'Cormorant Garamond',serif;color:var(--wine);margin:7px 0">${escapeHTML(publicNameOf(user))}'s Works</h3></div><p style="color:var(--muted);margin:0">${escapeHTML(publishNote)}</p></div><div class="grid3" style="margin-top:20px">${userWorks.length?userWorks.map(cardHTML).join(''):'<div class="empty"><h4>No published works yet</h4><p>This student has not published a work.</p></div>'}</div></div>`;
+ const profileKey=userIdOf(user);
+ root.innerHTML=`<div class="profile-hero"><div class="profile-big-avatar">${user.photoURL||user.photo?`<img src="${escapeAttr(user.photoURL||user.photo)}" alt="Profile picture">`:escapeHTML(initialsOf(publicNameOf(user)))}</div><div class="profile-copy"><div class="kicker">Profile identity</div><div class="identity-badge ${identityClass}">${escapeHTML(identity)}</div><h2>${escapeHTML(publicNameOf(user))}</h2><p class="profile-handle">@${escapeHTML(usernameOf(user))}</p><p>${escapeHTML(user.bio||'A reader in 12-SHAKESPEARE.')}</p><div class="profile-stats"><button class="profile-stat profile-stat-button" type="button" onclick="openConnectionsModal('${escapeAttr(profileKey)}','followers')"><strong>${Number(user.followerCount??(user.followers||[]).length)}</strong><span>Followers</span></button><button class="profile-stat profile-stat-button" type="button" onclick="openConnectionsModal('${escapeAttr(profileKey)}','following')"><strong>${Number(user.followingCount??(user.following||[]).length)}</strong><span>Following</span></button><div class="profile-stat"><strong>${userWorks.length}</strong><span>Works</span></div></div></div><div class="profile-actions">${identityAction}${editAction}<button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(profileKey)}',this)">${followLabel}</button><button class="secondary" onclick="openGlobalSearch()">Search</button></div></div><div class="section"><div class="profile-work-head"><div><div class="kicker">Published shelf</div><h3 style="font:600 3rem 'Cormorant Garamond',serif;color:var(--wine);margin:7px 0">${escapeHTML(publicNameOf(user))}'s Works</h3></div><p style="color:var(--muted);margin:0">${escapeHTML(publishNote)}</p></div><div class="grid3" style="margin-top:20px">${userWorks.length?userWorks.map(cardHTML).join(''):'<div class="empty"><h4>No published works yet</h4><p>This student has not published a work.</p></div>'}</div></div>`;
 }
 function openProfile(key){
  const user=findUser(key); if(!user){showToast('Student profile not found.');return;}
@@ -1701,7 +1851,8 @@ async function toggleFollow(key,btn){
  }
  currentUser=normalizeUser({...users[meIndex]}); saveState();
  try{if(currentUser.uid)await saveCloudUserProfile(currentUser);}catch(err){console.warn('Following list cloud sync failed:',err)}
- renderAuthors(); renderProfile(); renderGlobalSearch(); updateProfileUI();
+ try{await hydrateUserConnections(target);}catch(_e){}
+ renderAuthors(); renderProfile(); renderGlobalSearch(); updateProfileUI(); if(document.getElementById('connectionsModal')?.classList.contains('open'))renderConnectionsList();
 }
 
 function toggleCreateGate(){
@@ -2297,7 +2448,7 @@ async function saveProfile(e){
 }
 
 function openAccount(){if(!sessionUnlocked&&currentUser){openPinGate('enter',currentUser);return}document.getElementById('accountModal').classList.add('open');updateProfileUI()}
-function closeModal(id){document.getElementById(id)?.classList.remove('open');if(id==='commentModal'){commentModalWork=null;commentReplyTarget=null;updateCommentPopupForm();document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'))}if(id==='deleteWorkModal'){pendingDeleteWorkId=null}}
+function closeModal(id){document.getElementById(id)?.classList.remove('open');if(id==='commentModal'){commentModalWork=null;commentReplyTarget=null;updateCommentPopupForm();document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'))}if(id==='deleteWorkModal'){pendingDeleteWorkId=null}if(id==='connectionsModal'){connectionsContext={userKey:'',type:'followers',items:[],loading:false};}}
 function outsideModal(e,m){if(e.target===m && m.id!=='pinModal')closeModal(m.id)}
 function switchAuth(mode){
  authMode=mode;document.getElementById('loginTab').classList.toggle('active',mode==='login');document.getElementById('signupTab').classList.toggle('active',mode==='signup');
@@ -2541,6 +2692,8 @@ async function saveCloudUserProfile(user){
     identityLabel:identityLabelOf(user),
     following:Array.isArray(user.following)?user.following.map(x=>String(x||'').trim()).filter(Boolean).slice(0,500):[],
     followingUids:Array.isArray(user.following)?user.following.map(x=>String(x||'').trim()).filter(Boolean).slice(0,500):[],
+    followerCount:Number(user.followerCount||0),
+    followingCount:Number(user.followingCount||0),
     updatedAt:window.firebaseServerTimestamp(),
     createdAt
   },{merge:true});
@@ -2718,7 +2871,7 @@ function mergeCloudUserIntoLocal(raw){
   const uid=String(raw?.uid||'').trim();
   if(!uid)return false;
   const existing=users.find(u=>String(u.uid||'')===uid)||null;
-  const merged=normalizeUser({...existing,...raw,uid,email:existing?.email||''});
+  const merged=normalizeUser({...existing,...raw,uid,email:existing?.email||'',followerCount:Number(raw?.followerCount||existing?.followerCount||0),followingCount:Number(raw?.followingCount||existing?.followingCount||0)});
   const idx=existing?users.indexOf(existing):-1;
   if(idx>=0){
     const before=JSON.stringify(users[idx]);
@@ -2756,7 +2909,7 @@ async function hydrateCloudUsers(attempt=0){
     // the author count reflects the cloud collection immediately.
     renderAuthors();
     const count=document.getElementById('authorsCount');
-    if(count)count.textContent=String(users.length);
+    if(count)count.textContent=String(users.filter(u=>canPublish(u)).length);
     return true;
   }catch(err){
     console.warn('Cloud user hydration failed:',err);
@@ -2783,6 +2936,18 @@ function attachCloudUserListener(){
     if(changed){localStorage.setItem('shkUsers',JSON.stringify(users));renderAll();}
   },err=>console.warn('Cloud user listener failed:',err));
 }
+async function repairCurrentUserFollowRecords(){
+  if(!currentUser?.uid)return;
+  const ids=Array.isArray(currentUser.following)?currentUser.following.map(x=>String(x||'').trim()).filter(Boolean):[];
+  if(!ids.length)return;
+  for(const id of ids){
+    const target=findUser(id);
+    if(target?.uid&&String(target.uid)!==String(currentUser.uid)){
+      await syncFollowCloud(target,true);
+    }
+  }
+}
+
 function startCloudUserSync(){
   if(cloudUsersStarted)return;
   cloudUsersStarted=true;
@@ -2797,7 +2962,7 @@ function startCloudUserSync(){
         return;
       }
       const ok=await hydrateCloudUsers();
-      if(ok)attachCloudUserListener();
+      if(ok){await repairCurrentUserFollowRecords().catch(()=>{});attachCloudUserListener();}
       // Re-check after the auth/profile write settles. This also repairs a
       // stale 0-author screen caused by a transient Firestore permission race.
       setTimeout(()=>{hydrateCloudUsers();},700);
