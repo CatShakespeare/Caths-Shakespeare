@@ -2706,6 +2706,7 @@ function startCloudWorkSync(){
 // ---------------------------------------------------------------------------
 let cloudUsersUnsubscribe=null;
 let cloudUsersStarted=false;
+let cloudUsersAuthUnsubscribe=null;
 let cloudWorkSocialUnsubscribe=null;
 let cloudWorkSocialId='';
 
@@ -2719,42 +2720,98 @@ function mergeCloudUserIntoLocal(raw){
   const existing=users.find(u=>String(u.uid||'')===uid)||null;
   const merged=normalizeUser({...existing,...raw,uid,email:existing?.email||''});
   const idx=existing?users.indexOf(existing):-1;
-  if(idx>=0){users[idx]=merged;return true;}
-  users.push(merged);return true;
+  if(idx>=0){
+    const before=JSON.stringify(users[idx]);
+    users[idx]=merged;
+    return before!==JSON.stringify(merged);
+  }
+  users.push(merged);
+  return true;
 }
-async function hydrateCloudUsers(){
-  if(!window.firebaseDB||!window.firebaseGetDocs||!cloudUsersCollection())return;
+async function hydrateCloudUsers(attempt=0){
+  if(!window.firebaseDB||!window.firebaseGetDocs||!cloudUsersCollection())return false;
   try{
     if(window.firebaseReady)await window.firebaseReady;
+    const authUser=window.firebaseAuth?.currentUser;
+    if(!authUser){
+      // A newly loaded device may finish Firebase Auth restoration a moment
+      // after the page JS has started. Retry a few times instead of leaving
+      // the author list stuck at the local-cache count (often 0).
+      if(attempt<5){
+        await new Promise(r=>setTimeout(r,250*(attempt+1)));
+        return hydrateCloudUsers(attempt+1);
+      }
+      console.warn('Cloud user hydration skipped: no Firebase auth session.');
+      return false;
+    }
     const snap=await window.firebaseGetDocs(cloudUsersCollection());
     let changed=false;
     snap.forEach(ds=>{changed=mergeCloudUserIntoLocal({...ds.data(),uid:ds.id})||changed});
-    if(changed){localStorage.setItem('shkUsers',JSON.stringify(users));renderAll();}
+    if(changed){
+      localStorage.setItem('shkUsers',JSON.stringify(users));
+      renderAll();
+    }
     if(currentUser?.uid)await saveCloudUserProfile(currentUser).catch(()=>{});
-  }catch(err){console.warn('Cloud user hydration failed:',err)}
+    // Even when the array was already populated from cache, refresh the UI so
+    // the author count reflects the cloud collection immediately.
+    renderAuthors();
+    const count=document.getElementById('authorsCount');
+    if(count)count.textContent=String(users.length);
+    return true;
+  }catch(err){
+    console.warn('Cloud user hydration failed:',err);
+    if(attempt<5){
+      await new Promise(r=>setTimeout(r,350*(attempt+1)));
+      return hydrateCloudUsers(attempt+1);
+    }
+    return false;
+  }
+}
+function attachCloudUserListener(){
+  if(!window.firebaseOnSnapshot||!cloudUsersCollection())return;
+  if(cloudUsersUnsubscribe){try{cloudUsersUnsubscribe()}catch(_e){} cloudUsersUnsubscribe=null;}
+  cloudUsersUnsubscribe=window.firebaseOnSnapshot(cloudUsersCollection(),snap=>{
+    let changed=false;
+    snap.docChanges().forEach(change=>{
+      if(change.type==='removed'){
+        const idx=users.findIndex(u=>String(u.uid||'')===String(change.doc.id));
+        if(idx>=0){users.splice(idx,1);changed=true}
+        return;
+      }
+      changed=mergeCloudUserIntoLocal({...change.doc.data(),uid:change.doc.id})||changed;
+    });
+    if(changed){localStorage.setItem('shkUsers',JSON.stringify(users));renderAll();}
+  },err=>console.warn('Cloud user listener failed:',err));
 }
 function startCloudUserSync(){
   if(cloudUsersStarted)return;
   cloudUsersStarted=true;
   Promise.resolve(window.firebaseReady).then(async()=>{
+    // Keep the listener attached to Firebase Auth, because some devices start
+    // with no Firebase session and only obtain one after the user logs in.
+    // That transition must trigger the shared /users hydration again.
     if(window.firebaseAuthReady)await window.firebaseAuthReady;
-    // Do not query users until Firebase has restored the current auth state.
-    // Otherwise Firestore correctly returns permission-denied because the
-    // rules require request.auth != null.
-    await hydrateCloudUsers();
-    if(!window.firebaseOnSnapshot||!cloudUsersCollection())return;
-    cloudUsersUnsubscribe=window.firebaseOnSnapshot(cloudUsersCollection(),snap=>{
-      let changed=false;
-      snap.docChanges().forEach(change=>{
-        if(change.type==='removed'){
-          const idx=users.findIndex(u=>String(u.uid||'')===String(change.doc.id));
-          if(idx>=0){users.splice(idx,1);changed=true}
-          return;
-        }
-        changed=mergeCloudUserIntoLocal({...change.doc.data(),uid:change.doc.id})||changed;
-      });
-      if(changed){localStorage.setItem('shkUsers',JSON.stringify(users));renderAll();}
-    },err=>console.warn('Cloud user listener failed:',err));
+    const handleAuth=async authUser=>{
+      if(!authUser){
+        if(cloudUsersUnsubscribe){try{cloudUsersUnsubscribe()}catch(_e){} cloudUsersUnsubscribe=null;}
+        return;
+      }
+      const ok=await hydrateCloudUsers();
+      if(ok)attachCloudUserListener();
+      // Re-check after the auth/profile write settles. This also repairs a
+      // stale 0-author screen caused by a transient Firestore permission race.
+      setTimeout(()=>{hydrateCloudUsers();},700);
+      setTimeout(()=>{hydrateCloudUsers();},2200);
+    };
+    if(window.firebaseOnAuthStateChanged&&window.firebaseAuth){
+      cloudUsersAuthUnsubscribe=window.firebaseOnAuthStateChanged(window.firebaseAuth,handleAuth);
+    }else{
+      await handleAuth(window.firebaseAuth?.currentUser||null);
+    }
+    const refresh=()=>hydrateCloudUsers().then(ok=>{if(ok)attachCloudUserListener();});
+    window.addEventListener('online',refresh);
+    window.addEventListener('focus',refresh);
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh();});
   }).catch(err=>console.warn('Cloud user sync unavailable:',err));
 }
 
@@ -3225,6 +3282,10 @@ switchAuthDefault();applyDarkMode();renderAll();initShkNavigationSounds();
 restoreFirebaseSession().finally(()=>{
   startCloudUserSync();
   startCloudWorkSync();
+  // Give newly restored/authenticated sessions an immediate shared-data pass.
+  hydrateCloudUsers();
+  setTimeout(()=>hydrateCloudUsers(),900);
+  setTimeout(()=>hydrateCloudUsers(),2500);
 });
 </script>
 </body>
