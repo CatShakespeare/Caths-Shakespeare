@@ -1023,8 +1023,8 @@ button,input,textarea,select{max-width:100%}
   window.firebaseReady = (async () => {
     try {
       const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js");
-      const { getAuth, GoogleAuthProvider, signInWithPopup, signOut, getAdditionalUserInfo } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
-      const { getFirestore, doc, getDoc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js");
+      const { getAuth, GoogleAuthProvider, signInWithPopup, signOut, getAdditionalUserInfo, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
+      const { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, onSnapshot, deleteDoc } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js");
       const firebaseConfig = {
         apiKey: "AIzaSyDlfOgtbipWy83ItjN7rVVp-guAYEVkIy0",
         authDomain: "shakespeare-e3ab7.firebaseapp.com",
@@ -1045,12 +1045,26 @@ button,input,textarea,select{max-width:100%}
       window.firebaseGetDoc = getDoc;
       window.firebaseSetDoc = setDoc;
       window.firebaseServerTimestamp = serverTimestamp;
+      window.firebaseCollection = collection;
+      window.firebaseGetDocs = getDocs;
+      window.firebaseOnSnapshot = onSnapshot;
+      window.firebaseDeleteDoc = deleteDoc;
       window.firebaseGoogleProvider = firebaseGoogleProvider;
       window.firebaseSignInWithPopup = signInWithPopup;
       window.firebaseSignOut = signOut;
       window.firebaseGetAdditionalUserInfo = getAdditionalUserInfo;
+      window.firebaseSignInAnonymously = signInAnonymously;
+
+      // Give non-Google/local accounts an authenticated Firestore session too.
+      // This lets public works sync across devices when Firestore rules require
+      // request.auth != null, without exposing the user's private account data.
+      if(!firebaseAuth.currentUser && typeof signInAnonymously==='function') {
+        try{ await signInAnonymously(firebaseAuth); }
+        catch(err){ console.warn('Anonymous Firestore auth unavailable:',err); }
+      }
+
       window.firebaseReadyState = {ok:true,projectId:firebaseConfig.projectId};
-      return {firebaseApp,firebaseAuth,firebaseDB,firebaseGoogleProvider,signInWithPopup,signOut,getAdditionalUserInfo};
+      return {firebaseApp,firebaseAuth,firebaseDB,firebaseGoogleProvider,signInWithPopup,signOut,getAdditionalUserInfo,signInAnonymously};
     } catch(error) {
       window.firebaseReadyState = {ok:false,error:error?.message||String(error)};
       console.error("Firebase initialization failed:",error);
@@ -1709,6 +1723,7 @@ function saveEditedWorkAndBack(){
   const old=works[idx];
   const payload={title:document.getElementById('postTitle').value.trim()||'Untitled',author:publicNameOf(currentUser),email:currentUser.email,genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
   works[idx]=normalizeWork({...old,...payload,updatedAt:now});
+  queueCloudWorkSync(works[idx]);
   closeModal('saveEditModal');
   resetCreateForm();
   saveState();renderAll();showPage('myworks');showToast('Your edited work was saved.');
@@ -1755,6 +1770,7 @@ document.getElementById('createForm').addEventListener('submit',function(e){
   const idx=works.findIndex(w=>w.id===editingWorkId&&w.email===currentUser.email);
   if(idx<0){showToast('Work not found.');return}
   works[idx]=normalizeWork({...works[idx],...payload,updatedAt:now});
+  queueCloudWorkSync(works[idx]);
   showToast('Your work was updated.');
  }else if(editingDraftId){
   const draftIdx=drafts.findIndex(d=>d.id===editingDraftId&&d.email===currentUser.email);
@@ -1772,10 +1788,13 @@ document.getElementById('createForm').addEventListener('submit',function(e){
    updatedAt:now
   });
   if(existingWorkIdx>=0)works[existingWorkIdx]=publishedWork;else works.unshift(publishedWork);
+  queueCloudWorkSync(publishedWork);
   drafts=drafts.filter(d=>d.id!==editingDraftId);
   showToast('Your draft was published as the same work.');
  }else{
-  works.unshift(normalizeWork({id:'work-'+now,...payload,likes:[],comments:[],views:0,createdAt:now}));
+  const newWork=normalizeWork({id:'work-'+now,...payload,likes:[],comments:[],views:0,createdAt:now,updatedAt:now,ownerUid:cloudAuthUid()});
+  works.unshift(newWork);
+  queueCloudWorkSync(newWork);
   showToast('Your literature has been published.');
  }
  saveState();resetCreateForm();renderAll();showPage('feed');
@@ -1805,6 +1824,7 @@ function confirmDeleteWork(){
  if(!w||w.email!==currentUser?.email){pendingDeleteWorkId=null;closeModal('deleteWorkModal');showToast('You can only delete your own work.');return;}
  works=works.filter(x=>x.id!==id);
  saved=saved.filter(x=>x!==id);
+ deleteCloudWork(id);
  if(readerWork?.id===id)readerWork=null;
  if(commentModalWork?.id===id)commentModalWork=null;
  pendingDeleteWorkId=null;
@@ -1943,7 +1963,7 @@ function renderComments(){
  const list=comments.length?comments.map(c=>renderCommentItem(readerWork.id,c,false)).join(''):'<div class="empty" style="padding:20px 0"><h4>No comments yet</h4><p>Be the first to leave a comment.</p></div>';
  root.innerHTML=list;
 }
-function submitComment(e){e.preventDefault();contentUser();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now(),reactions:emptyReactions(),replies:[]};works[idx].comments=[...(works[idx].comments||[]),comment];works[idx]=normalizeWork(works[idx]);readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title);saveState();renderComments();renderReaderSocial();showToast('Comment posted.')}
+function submitComment(e){e.preventDefault();contentUser();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now(),reactions:emptyReactions(),replies:[]};works[idx].comments=[...(works[idx].comments||[]),comment];works[idx]=normalizeWork(works[idx]);readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title);saveState();queueCloudWorkSync(readerWork);renderComments();renderReaderSocial();showToast('Comment posted.')}
 function openCommentModal(id){
  contentUser();
  const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
@@ -1999,7 +2019,7 @@ function toggleCommentReaction(e,workId,commentId,type,isReply=false){
  Object.keys(r).forEach(k=>{r[k]=r[k].filter(x=>canonicalEmail(x)!==email)});
  if(before!==type)r[type].push(email);
  found.comment.reactions=r;works[idx]=normalizeWork(w);readerWork=readerWork?.id===workId?works[idx]:readerWork;commentModalWork=commentModalWork?.id===workId?works[idx]:commentModalWork;
- saveState();renderCommentModal();renderComments();renderReaderSocial();
+ saveState();queueCloudWorkSync(works[idx]);renderCommentModal();renderComments();renderReaderSocial();
  document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'));
  showToast(before===type?'Comment reaction removed':`${REACTION_TYPES[type].label} reaction added to comment.`);
 }
@@ -2021,7 +2041,7 @@ function deleteComment(workId,commentId,isReply=false){
  targetList.splice(removeIndex,1);
  works[idx]=normalizeWork(w);if(readerWork?.id===workId)readerWork=works[idx];if(commentModalWork?.id===workId)commentModalWork=works[idx];
  if(commentReplyTarget?.id===commentId)commentReplyTarget=null;
- saveState();renderCommentModal();renderComments();renderReaderSocial();updateCommentPopupForm();showToast('Comment deleted.');
+ saveState();queueCloudWorkSync(works[idx]);renderCommentModal();renderComments();renderReaderSocial();updateCommentPopupForm();showToast('Comment deleted.');
 }
 function submitPopupComment(e){
  e.preventDefault();
@@ -2037,7 +2057,7 @@ function submitPopupComment(e){
  else w.comments=[...(w.comments||[]),comment];
  works[idx]=normalizeWork(w);commentModalWork=works[idx];if(readerWork?.id===commentModalWork.id)readerWork=works[idx];
  if(commentModalWork.email!==currentUser.email)addNotification(commentModalWork.email,`${publicNameOf(currentUser)} ${targetId?'replied to a comment on':'commented on'} your work`,commentModalWork.title);
- saveState();renderAll();renderCommentModal();renderComments();renderReaderSocial();
+ saveState();queueCloudWorkSync(works[idx]);renderAll();renderCommentModal();renderComments();renderReaderSocial();
  if(input)input.value='';commentReplyTarget=null;updateCommentPopupForm();
  showToast(targetId?'Reply posted.':'Comment posted.');
 }
@@ -2301,6 +2321,143 @@ async function saveCloudUserProfile(user){
     updatedAt:window.firebaseServerTimestamp(),
     createdAt
   },{merge:true});
+}
+
+
+
+// ---------------------------------------------------------------------------
+// Shared public work sync
+// ---------------------------------------------------------------------------
+// The app keeps a local cache in localStorage for instant UI updates, but
+// published public works also need a shared cloud copy so different devices
+// can see the same archive. Firestore is used only for the work collection;
+// the private PIN data remains under users/{uid}/private/security.
+let cloudWorksUnsubscribe=null;
+let cloudWorksStarted=false;
+let cloudWorksBusy=false;
+
+function cloudWorksCollection(){
+  if(!window.firebaseDB||!window.firebaseCollection)return null;
+  return window.firebaseCollection(window.firebaseDB,'works');
+}
+function cloudAuthUid(){return String(window.firebaseAuth?.currentUser?.uid||currentUser?.uid||'').trim()}
+function cloudWorkPayload(work){
+  const normalized=normalizeWork(work);
+  return {
+    id:normalized.id,
+    ownerUid:String(normalized.ownerUid||cloudAuthUid()||''),
+    ownerEmail:String(normalized.email||''),
+    author:String(normalized.author||'Anonymous Author'),
+    title:String(normalized.title||'Untitled'),
+    genre:String(normalized.genre||'Poetry'),
+    tags:Array.isArray(normalized.tags)?normalized.tags.slice(0,25):[],
+    excerpt:String(normalized.excerpt||''),
+    content:String(normalized.content||''),
+    cover:String(normalized.cover||''),
+    privacy:String(normalized.privacy||'public'),
+    likes:Array.isArray(normalized.likes)?normalized.likes.slice():[],
+    reactions:normalizeReactions(normalized.reactions),
+    comments:normalizeComments(normalized.comments),
+    views:Number(normalized.views||0),
+    createdAt:Number(normalized.createdAt||Date.now()),
+    updatedAt:Number(normalized.updatedAt||normalized.createdAt||Date.now()),
+    syncedAt:window.firebaseServerTimestamp ? window.firebaseServerTimestamp() : null
+  };
+}
+
+async function pushWorkToCloud(work){
+  try{
+    if(!work||work.privacy!=='public')return false;
+    if(!window.firebaseDB||!window.firebaseDoc||!window.firebaseSetDoc||!cloudWorksCollection())return false;
+    if(window.firebaseReady)await window.firebaseReady;
+    const authUid=cloudAuthUid();
+    if(!authUid)return false;
+    const payload=cloudWorkPayload({...work,ownerUid:work.ownerUid||authUid});
+    await window.firebaseSetDoc(window.firebaseDoc(window.firebaseDB,'works',String(work.id)),payload,{merge:true});
+    return true;
+  }catch(err){
+    console.warn('Cloud work sync failed:',err);
+    return false;
+  }
+}
+function queueCloudWorkSync(work){
+  if(!work||work.privacy!=='public')return;
+  // Fire-and-forget: local UI should never wait for network I/O.
+  Promise.resolve().then(()=>pushWorkToCloud(work));
+}
+async function deleteCloudWork(id){
+  try{
+    if(!id||!window.firebaseDB||!window.firebaseDoc||!window.firebaseDeleteDoc)return false;
+    if(window.firebaseReady)await window.firebaseReady;
+    await window.firebaseDeleteDoc(window.firebaseDoc(window.firebaseDB,'works',String(id)));
+    return true;
+  }catch(err){
+    console.warn('Cloud work delete failed:',err);
+    return false;
+  }
+}
+
+function mergeCloudWorkIntoLocal(raw){
+  const cloud=normalizeWork(raw);
+  if(!cloud?.id||cloud.privacy!=='public')return false;
+  const idx=works.findIndex(w=>w.id===cloud.id);
+  if(idx<0){works.unshift(cloud);return true;}
+  const local=normalizeWork(works[idx]);
+  const localTime=Number(local.updatedAt||local.createdAt||0);
+  const cloudTime=Number(cloud.updatedAt||cloud.createdAt||0);
+  if(cloudTime>=localTime){
+    works[idx]=normalizeWork({...local,...cloud});
+    return true;
+  }
+  return false;
+}
+
+async function hydrateCloudWorks(){
+  if(cloudWorksBusy||!window.firebaseDB||!window.firebaseGetDocs||!cloudWorksCollection())return;
+  cloudWorksBusy=true;
+  try{
+    if(window.firebaseReady)await window.firebaseReady;
+    const snap=await window.firebaseGetDocs(cloudWorksCollection());
+    let changed=false;
+    snap.forEach(docSnap=>{changed=mergeCloudWorkIntoLocal({...docSnap.data(),id:docSnap.id})||changed});
+    if(changed){
+      localStorage.setItem('shkWorks',JSON.stringify(works));
+      renderAll();
+    }
+    // Migrate this device's existing public works into the shared archive.
+    // Only works owned by the currently logged-in app user are pushed.
+    const email=canonicalEmail(currentUser?.email);
+    const ownPublic=works.filter(w=>w.privacy==='public'&&email&&canonicalEmail(w.email)===email);
+    await Promise.all(ownPublic.map(w=>pushWorkToCloud(w)));
+  }catch(err){
+    console.warn('Cloud work hydration failed:',err);
+  }finally{
+    cloudWorksBusy=false;
+  }
+}
+
+function startCloudWorkSync(){
+  if(cloudWorksStarted)return;
+  cloudWorksStarted=true;
+  Promise.resolve(window.firebaseReady).then(async()=>{
+    await hydrateCloudWorks();
+    if(!window.firebaseOnSnapshot||!cloudWorksCollection())return;
+    cloudWorksUnsubscribe=window.firebaseOnSnapshot(cloudWorksCollection(),snap=>{
+      let changed=false;
+      snap.docChanges().forEach(change=>{
+        if(change.type==='removed'){
+          const idx=works.findIndex(w=>w.id===change.doc.id);
+          if(idx>=0&&works[idx].privacy==='public'){works.splice(idx,1);changed=true;}
+          return;
+        }
+        changed=mergeCloudWorkIntoLocal({...change.doc.data(),id:change.doc.id})||changed;
+      });
+      if(changed){
+        localStorage.setItem('shkWorks',JSON.stringify(works));
+        renderAll();
+      }
+    },err=>console.warn('Cloud work listener failed:',err));
+  }).catch(err=>console.warn('Cloud work sync unavailable:',err));
 }
 
 async function hashPin(pin){const data=new TextEncoder().encode('12SHAKESPEARE::PIN::'+pin);const digest=await crypto.subtle.digest('SHA-256',data);return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('')}
@@ -2570,7 +2727,7 @@ function initShkNavigationSounds(){
 
 function switchAuthDefault(){switchAuth('login')}
 document.addEventListener('click',(e)=>{if(!e.target.closest('.reaction-wrap'))document.querySelectorAll('.reaction-picker.open').forEach(closeReactionPicker);if(!e.target.closest('.comment-reaction-wrap'))document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'));});
-switchAuthDefault();applyDarkMode();renderAll();initShkNavigationSounds();
+switchAuthDefault();applyDarkMode();renderAll();initShkNavigationSounds();startCloudWorkSync();
 </script>
 </body>
 </html>
