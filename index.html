@@ -3848,5 +3848,207 @@ restoreFirebaseSession().finally(()=>{
   setTimeout(()=>hydrateCloudUsers(),2500);
 });
 </script>
+<style id="literary-upgrade-style">
+.reader-upgrade-progress{margin:14px auto 22px;max-width:700px;padding:10px 12px 9px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#FFFEFC,#FBF7F2);box-shadow:0 8px 22px rgba(36,27,23,.035)}
+.reader-upgrade-progress-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px;color:#857A73;font-size:.62rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase}.reader-upgrade-progress-percent{color:var(--wine);font-variant-numeric:tabular-nums}.reader-upgrade-progress-track{height:6px;border-radius:999px;background:#EEE7E0;overflow:hidden}.reader-upgrade-progress-bar{height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#B38A52,#6E2F34);transition:width .28s ease}.reader-upgrade-progress-note{margin-top:6px;color:#A09790;font-size:.58rem;text-align:right}
+.reader-upgrade-focus-exit{display:none;position:fixed;right:18px;top:16px;z-index:220;align-items:center;gap:7px;border:1px solid rgba(231,225,219,.94);background:rgba(255,253,249,.94);color:var(--wine);padding:9px 12px;border-radius:999px;font-size:.68rem;font-weight:850;box-shadow:0 10px 30px rgba(36,27,23,.12);backdrop-filter:blur(14px)}.reader-upgrade-focus-exit:hover{transform:translateY(-1px)}
+body.reader-upgrade-focus .sidebar,body.reader-upgrade-focus .topbar{display:none!important}body.reader-upgrade-focus .main{margin-left:0}body.reader-upgrade-focus .reader{max-width:980px}body.reader-upgrade-focus .reader-upgrade-focus-exit{display:inline-flex}body.reader-upgrade-focus .reader-upgrade-progress{position:sticky;top:14px;z-index:90;backdrop-filter:blur(14px);box-shadow:0 10px 28px rgba(36,27,23,.08)}
+.reader-upgrade-focus-button{font-weight:800!important}.draft-upgrade-status{display:flex;align-items:center;gap:7px;min-height:21px;margin:7px 0 0;color:#9A9089;font-size:.6rem}.draft-upgrade-dot{width:7px;height:7px;border-radius:50%;background:#C9B08B;animation:upgradePulse 2s ease-in-out infinite}.draft-upgrade-status.saving .draft-upgrade-dot{background:#B38A52}.draft-upgrade-status.saved .draft-upgrade-dot{background:#7E9A7A}@keyframes upgradePulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.5);opacity:1}}
+.upgrade-milestones{margin:16px 0 18px;padding:16px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#FFFEFC,#FBF7F2);box-shadow:0 10px 28px rgba(36,27,23,.035)}.upgrade-milestone-head{display:flex;justify-content:space-between;align-items:end;gap:10px;margin-bottom:11px}.upgrade-milestone-head strong{font:600 1.75rem/1 "Cormorant Garamond",serif;color:var(--wine)}.upgrade-milestone-head span{font-size:.6rem;color:#9A9089}.upgrade-milestone-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.upgrade-milestone-card{position:relative;overflow:hidden;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff;transition:.2s var(--ease)}.upgrade-milestone-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(36,27,23,.05)}.upgrade-milestone-card.unlocked{background:linear-gradient(150deg,#FFFDF9,#F8F0E6);border-color:#E1CFB7}.upgrade-milestone-icon{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#F5EEE7;color:var(--wine);font-size:1rem;margin-bottom:8px}.upgrade-milestone-card.unlocked .upgrade-milestone-icon{animation:upgradeMilestonePop 2.4s ease-in-out infinite}.upgrade-milestone-card h4{margin:0;color:var(--wine);font-size:.71rem}.upgrade-milestone-card p{margin:4px 0 0;color:#8B8079;font-size:.58rem;line-height:1.45}.upgrade-milestone-progress{height:4px;border-radius:99px;background:#EEE7E0;margin-top:8px;overflow:hidden}.upgrade-milestone-progress>span{display:block;height:100%;background:linear-gradient(90deg,#B38A52,#6E2F34);border-radius:inherit}.upgrade-milestone-card small{display:block;margin-top:5px;color:#A09790;font-size:.52rem}@keyframes upgradeMilestonePop{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-2px) rotate(-3deg)}}
+.upgrade-empty-art{width:86px;height:86px;margin:0 auto 11px;display:grid;place-items:center;border-radius:24px;background:linear-gradient(150deg,#FBF6EF,#F1E7DC);border:1px solid #E4D7C7;overflow:hidden}.upgrade-empty-art svg{width:70px;height:70px}.upgrade-empty-orbit{fill:none;stroke:#D5C2AA;stroke-width:1;transform-origin:42px 42px;animation:upgradeOrbit 7s linear infinite}.upgrade-empty-pulse{animation:upgradeEmptyPulse 2.2s ease-in-out infinite}.upgrade-empty-float{animation:upgradeEmptyFloat 3.1s ease-in-out infinite}@keyframes upgradeOrbit{to{transform:rotate(360deg)}}@keyframes upgradeEmptyPulse{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.12);opacity:1}}@keyframes upgradeEmptyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.upgrade-notif-pref-box{width:min(560px,calc(100vw - 24px));padding:20px}.upgrade-notif-pref-box h3{font:600 2.1rem/.95 "Cormorant Garamond",serif;color:var(--wine);margin:0}.upgrade-notif-pref-box p{margin:5px 0 0;color:#8B8079;font-size:.68rem;line-height:1.55}.upgrade-notif-pref-list{display:grid;gap:8px;margin-top:16px}.upgrade-notif-pref-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:#fff}.upgrade-notif-pref-copy strong{display:block;color:var(--wine);font-size:.72rem}.upgrade-notif-pref-copy span{display:block;margin-top:3px;color:#968C85;font-size:.59rem}.upgrade-notif-toggle{position:relative;width:40px;height:23px;flex:none}.upgrade-notif-toggle input{position:absolute;opacity:0}.upgrade-notif-toggle span{position:absolute;inset:0;border-radius:999px;background:#DDD6D0;transition:.18s var(--ease);cursor:pointer}.upgrade-notif-toggle span:before{content:"";position:absolute;width:17px;height:17px;left:3px;top:3px;border-radius:50%;background:#fff;box-shadow:0 2px 7px rgba(36,27,23,.16);transition:.18s var(--ease)}.upgrade-notif-toggle input:checked+span{background:var(--wine)}.upgrade-notif-toggle input:checked+span:before{transform:translateX(17px)}
+@media(max-width:900px){.upgrade-milestone-grid{grid-template-columns:1fr 1fr}}@media(max-width:560px){.reader-upgrade-focus-exit{right:10px;top:10px;padding:8px 10px;font-size:.6rem}.upgrade-milestones{padding:12px}.upgrade-milestone-grid{gap:7px}.upgrade-milestone-card{padding:10px}.upgrade-milestone-head strong{font-size:1.55rem}.upgrade-notif-pref-box{padding:14px}.upgrade-notif-pref-row{padding:10px}.draft-upgrade-status{font-size:.58rem}}@media(prefers-reduced-motion:reduce){.reader-upgrade-progress-bar,.draft-upgrade-dot,.upgrade-milestone-card.unlocked .upgrade-milestone-icon,.upgrade-empty-orbit,.upgrade-empty-pulse,.upgrade-empty-float{animation:none!important;transition:none!important}}
+</style>
+<script>
+(function(){
+  const STORAGE_PROGRESS='shkReadingProgress';
+  const STORAGE_PREFS='shkNotificationPrefs';
+  const DEFAULT_PREFS={follow:true,reaction:true,comment:true,saved:true,new_work:true,mention:true,reading:true,writing:true,share:true,activity:true};
+  const oldOpenReader=window.openReader;
+  const oldShowPage=window.showPage;
+  const oldAddNotification=window.addNotification;
+  const oldRenderActivity=window.renderActivity;
+  const oldRenderHistory=window.renderHistory;
+  const oldRenderSaved=window.renderSaved;
+
+  function readStore(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
+  function writeStore(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}
+  }
+  window.shkUpgradeProgress=readStore(STORAGE_PROGRESS,{});
+  window.shkUpgradePrefs={...DEFAULT_PREFS,...readStore(STORAGE_PREFS,{})};
+  window.shkUpgradeFocus=false;
+  let readerTimer=0;
+  let readerCloudTimer=0;
+  let draftTimer=0;
+  let draftBusy=false;
+
+  function userKey(){
+    try{return (typeof userIdOf==='function'&&userIdOf(currentUser||null)) || (currentUser?.email||'guest').toLowerCase()}catch(_){return (currentUser?.email||'guest').toLowerCase()}
+  }
+  function currentReaderEntry(workId){
+    const bucket=window.shkUpgradeProgress[userKey()]||{};
+    return bucket[String(workId)]||null;
+  }
+  function readerMetrics(){
+    const page=document.getElementById('page-reader');
+    if(!page)return {start:0,y:0,percent:0};
+    const start=Math.max(0,page.offsetTop||0);
+    const pageHeight=Math.max(page.offsetHeight||0,page.scrollHeight||0);
+    const max=Math.max(start,start+pageHeight-window.innerHeight);
+    const y=Math.max(0,window.scrollY-start);
+    const range=Math.max(1,max-start);
+    return {start,y,percent:Math.max(0,Math.min(100,y/range*100))};
+  }
+  function updateReaderProgressUI(value){
+    const entry=readerMetrics();
+    const p=value==null?entry.percent:Number(value)||0;
+    const bar=document.getElementById('readerUpgradeProgressBar');
+    const label=document.getElementById('readerUpgradeProgressPercent');
+    const note=document.getElementById('readerUpgradeProgressNote');
+    if(bar)bar.style.width=Math.max(0,Math.min(100,p))+'%';
+    if(label)label.textContent=Math.round(p)+'%';
+    if(note)note.textContent=p>=99.5?'You reached the end of this work.':p>0.5?'Your reading position saves automatically.':'Start reading — your position will be remembered.';
+  }
+  async function saveCloudProgress(uid){
+    if(!uid||!window.firebaseDB||!window.firebaseDoc||!window.firebaseSetDoc)return;
+    try{
+      if(window.firebaseReady)await window.firebaseReady;
+      const authUser=window.firebaseAuth?.currentUser;
+      if(!authUser||authUser.isAnonymous||String(authUser.uid)!==String(uid))return;
+      await window.firebaseSetDoc(window.firebaseDoc(window.firebaseDB,'users',String(uid),'private','readingProgress'),{items:window.shkUpgradeProgress[String(uid)]||{},updatedAt:window.firebaseServerTimestamp()},{merge:true});
+    }catch(err){console.warn('Reading progress cloud sync failed:',err)}
+  }
+  async function hydrateCloudProgress(uid){
+    if(!uid||!window.firebaseDB||!window.firebaseDoc||!window.firebaseGetDoc)return;
+    try{
+      if(window.firebaseReady)await window.firebaseReady;
+      const snap=await window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB,'users',String(uid),'private','readingProgress'));
+      if(snap.exists()){
+        const items=snap.data()?.items;
+        if(items&&typeof items==='object'){window.shkUpgradeProgress[String(uid)]={...(window.shkUpgradeProgress[String(uid)]||{}),...items};writeStore(STORAGE_PROGRESS,window.shkUpgradeProgress);if(readerWork)updateReaderProgressUI(currentReaderEntry(readerWork.id)?.progress||0)}
+      }
+    }catch(err){console.warn('Reading progress cloud hydration failed:',err)}
+  }
+  function saveReaderPosition(syncCloud){
+    if(!readerWork||!document.getElementById('page-reader')?.classList.contains('active'))return;
+    const m=readerMetrics();const key=userKey();window.shkUpgradeProgress[key]||={};
+    const old=currentReaderEntry(readerWork.id)||{};
+    window.shkUpgradeProgress[key][String(readerWork.id)]={scrollY:m.y,progress:m.percent,updatedAt:Date.now(),durationSeconds:Number(old.durationSeconds||0)};
+    writeStore(STORAGE_PROGRESS,window.shkUpgradeProgress);updateReaderProgressUI(m.percent);
+    if(syncCloud&&currentUser?.uid){clearTimeout(readerCloudTimer);readerCloudTimer=setTimeout(()=>saveCloudProgress(currentUser.uid),20)}
+  }
+  function scheduleReaderSave(){
+    if(!readerWork||!document.getElementById('page-reader')?.classList.contains('active'))return;
+    updateReaderProgressUI();clearTimeout(readerTimer);readerTimer=setTimeout(()=>saveReaderPosition(false),420);clearTimeout(readerCloudTimer);
+    if(currentUser?.uid)readerCloudTimer=setTimeout(()=>saveCloudProgress(currentUser.uid),3200);
+  }
+  function restoreReaderPosition(id){
+    const entry=currentReaderEntry(id);updateReaderProgressUI(entry?.progress||0);if(!entry||Number(entry.scrollY||0)<=6)return;
+    const go=()=>{
+      if(!document.getElementById('page-reader')?.classList.contains('active'))return;
+      const page=document.getElementById('page-reader');const start=Math.max(0,page.offsetTop||0);const max=Math.max(0,document.documentElement.scrollHeight-window.innerHeight);const target=Math.max(0,Math.min(max,start+Number(entry.scrollY||0)));window.scrollTo(0,target);updateReaderProgressUI(entry.progress||0);
+      const note=document.getElementById('readerUpgradeProgressNote');if(note&&Number(entry.progress||0)>1&&Number(entry.progress||0)<99.5)note.textContent='Resumed at '+Math.round(Number(entry.progress||0))+'% — your position is saved automatically.';
+    };
+    requestAnimationFrame(()=>setTimeout(go,120));requestAnimationFrame(()=>setTimeout(go,450));
+  }
+  function injectReaderUI(){
+    const tools=document.querySelector('#page-reader .reader-tools');
+    if(tools&&!document.getElementById('readerUpgradeFocusButton')){
+      const b=document.createElement('button');b.type='button';b.id='readerUpgradeFocusButton';b.className='reader-upgrade-focus-button';b.textContent='◎ Focus Mode';b.onclick=toggleFocus;tools.appendChild(b);
+    }
+    const meta=document.getElementById('readerSubmeta');
+    if(meta&&!document.getElementById('readerUpgradeProgress')){
+      const wrap=document.createElement('div');wrap.className='reader-upgrade-progress';wrap.id='readerUpgradeProgress';wrap.innerHTML='<div class="reader-upgrade-progress-head"><span>Reading progress</span><span class="reader-upgrade-progress-percent" id="readerUpgradeProgressPercent">0%</span></div><div class="reader-upgrade-progress-track"><div class="reader-upgrade-progress-bar" id="readerUpgradeProgressBar"></div></div><div class="reader-upgrade-progress-note" id="readerUpgradeProgressNote">Your reading position saves automatically.</div>';
+      meta.insertAdjacentElement('afterend',wrap);
+    }
+    const readerPage=document.getElementById('page-reader');
+    if(readerPage&&!document.getElementById('readerUpgradeFocusExit')){
+      const e=document.createElement('button');e.type='button';e.id='readerUpgradeFocusExit';e.className='reader-upgrade-focus-exit';e.innerHTML='×&nbsp; Exit Focus';e.onclick=toggleFocus;readerPage.appendChild(e);
+    }
+  }
+  function updateFocusUI(){
+    const active=!!window.shkUpgradeFocus;document.body.classList.toggle('reader-upgrade-focus',active);
+    const b=document.getElementById('readerUpgradeFocusButton');if(b)b.textContent=active?'◉ Exit Focus':'◎ Focus Mode';
+    const e=document.getElementById('readerUpgradeFocusExit');if(e)e.style.display=active?'inline-flex':'none';
+  }
+  function toggleFocus(){
+    if(!document.getElementById('page-reader')?.classList.contains('active'))return;
+    window.shkUpgradeFocus=!window.shkUpgradeFocus;updateFocusUI();saveReaderPosition(true);showToast(window.shkUpgradeFocus?'Focus Reading Mode enabled.':'Focus Reading Mode closed.');
+  }
+
+  window.openReader=function(id){
+    saveReaderPosition(true);window.shkUpgradeFocus=false;updateFocusUI();oldOpenReader(id);injectReaderUI();updateReaderProgressUI(currentReaderEntry(id)?.progress||0);restoreReaderPosition(id);
+  };
+  window.showPage=function(name){
+    if(document.getElementById('page-reader')?.classList.contains('active')&&name!=='reader')saveReaderPosition(true);
+    if(name!=='reader'){window.shkUpgradeFocus=false;updateFocusUI();}
+    return oldShowPage(name);
+  };
+
+  // Draft autosave
+  function setDraftStatus(kind,text){const el=document.getElementById('draftUpgradeStatus');if(!el)return;el.className='draft-upgrade-status '+(kind||'');const dot=el.querySelector('.draft-upgrade-dot');const copy=el.querySelector('.draft-upgrade-copy');if(dot)dot.setAttribute('aria-label',kind==='saved'?'Saved':'');if(copy)copy.textContent=text;}
+  function collectDraftState(){
+    if(!currentUser||editingWorkId)return null;
+    const g=id=>document.getElementById(id);
+    return {email:currentUser.email,title:g('postTitle')?.value.trim()||'Untitled',genre:g('postGenre')?.value||'Poetry',tags:(g('postTags')?.value||'').split(',').map(x=>x.trim()).filter(Boolean),excerpt:g('postExcerpt')?.value.trim()||'',content:g('postContent')?.value||'',cover:g('postCover')?.value.trim()||'',privacy:g('postPrivacy')?.value||'public',updatedAt:Date.now()};
+  }
+  function autosaveDraft(){
+    if(draftBusy||!currentUser||editingWorkId)return;const payload=collectDraftState();if(!payload)return;if(!payload.content&&!payload.excerpt&&payload.title==='Untitled')return;draftBusy=true;
+    try{
+      let id=editingDraftId;
+      if(id){const idx=(drafts||[]).findIndex(d=>d.id===id&&String(d.email).toLowerCase()===String(currentUser.email).toLowerCase());if(idx>=0)drafts[idx]={...drafts[idx],...payload,autosaved:true};else id=null;}
+      if(!id){const d={id:'draft-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),createdAt:Date.now(),...payload,autosaved:true};drafts.unshift(d);editingDraftId=d.id;if(typeof syncCreateEditUI==='function')syncCreateEditUI();}
+      if(typeof saveState==='function')saveState();setDraftStatus('saved','Draft autosaved just now.');
+    }finally{draftBusy=false;}
+  }
+  function scheduleDraft(){
+    if(!currentUser)return;if(editingWorkId){setDraftStatus('','Autosave paused while editing a published work.');return;}
+    const title=document.getElementById('postTitle')?.value.trim()||'';const content=document.getElementById('postContent')?.value||'';const excerpt=document.getElementById('postExcerpt')?.value.trim()||'';if(!title&&!content&&!excerpt){setDraftStatus('','Autosave is ready for drafts.');return;}
+    setDraftStatus('saving','Saving draft…');clearTimeout(draftTimer);draftTimer=setTimeout(autosaveDraft,900);
+  }
+  function initDraftAutosave(){
+    const form=document.getElementById('createForm');if(!form)return;
+    let status=document.getElementById('draftUpgradeStatus');if(!status){status=document.createElement('div');status.id='draftUpgradeStatus';status.className='draft-upgrade-status';status.innerHTML='<span class="draft-upgrade-dot"></span><span class="draft-upgrade-copy">Autosave is ready for drafts.</span>';form.querySelector('.actions')?.insertAdjacentElement('afterend',status);}
+    ['postTitle','postGenre','postTags','postExcerpt','postContent','postCover','postPrivacy'].forEach(id=>document.getElementById(id)?.addEventListener('input',scheduleDraft));form.addEventListener('change',scheduleDraft);
+  }
+
+  // Notification preferences
+  const prefMeta={follow:['Follows','When someone follows you'],reaction:['Reactions','When someone reacts to your work or comment'],comment:['Comments & replies','When someone comments or replies'],saved:['Saves','When someone saves your work'],new_work:['New work','When someone you follow publishes'],mention:['Mentions','When someone mentions @yourusername'],reading:['Reading','Personal reading and progress activity'],writing:['Writing','Your draft and publication activity'],share:['Shares','Your sharing activity'],activity:['Other activity','Other account activity']};
+  function prefKey(type){const t=String(type||'activity');if(t==='reply'||t==='comment_reaction'||t==='comment')return'comment';return prefMeta[t]?t:'activity';}
+  function persistPrefs(){writeStore(STORAGE_PREFS,window.shkUpgradePrefs);if(currentUser?.uid&&window.firebaseDB&&window.firebaseDoc&&window.firebaseSetDoc){window.firebaseSetDoc(window.firebaseDoc(window.firebaseDB,'users',String(currentUser.uid),'private','preferences'),{notifications:window.shkUpgradePrefs,updatedAt:window.firebaseServerTimestamp()},{merge:true}).catch(()=>{})}}
+  function renderPrefs(){const root=document.getElementById('upgradeNotificationPrefList');if(!root)return;root.innerHTML=Object.entries(prefMeta).map(([k,v])=>'<label class="upgrade-notif-pref-row"><span class="upgrade-notif-pref-copy"><strong>'+escapeHTML(v[0])+'</strong><span>'+escapeHTML(v[1])+'</span></span><span class="upgrade-notif-toggle"><input type="checkbox" '+(window.shkUpgradePrefs[k]?'checked':'')+' onchange="window.__upgradeSetPref(\''+k+'\',this.checked)"><span></span></span></label>').join('')}
+  window.__upgradeSetPref=function(k,v){if(!prefMeta[k])return;window.shkUpgradePrefs[k]=!!v;persistPrefs();showToast(prefMeta[k][0]+': '+(v?'On':'Off'))};
+  window.openNotificationPreferences=function(){if(!currentUser){showToast('Sign in to change notification settings.');openAccount();return}renderPrefs();document.getElementById('upgradeNotificationPreferencesModal')?.classList.add('open')};
+  function injectNotificationSettings(){const toolbar=document.querySelector('#notificationsModal .notification-modal-toolbar');if(toolbar&&!toolbar.querySelector('[data-upgrade-notif-settings]')){const b=document.createElement('button');b.className='secondary';b.type='button';b.dataset.upgradeNotifSettings='1';b.textContent='Notification settings';b.onclick=openNotificationPreferences;toolbar.insertBefore(b,toolbar.lastElementChild)}if(!document.getElementById('upgradeNotificationPreferencesModal')){const m=document.createElement('div');m.className='modal';m.id='upgradeNotificationPreferencesModal';m.onclick=e=>{if(e.target===m)m.classList.remove('open')};m.innerHTML='<div class="modal-box upgrade-notif-pref-box"><div class="kicker">Personal controls</div><h3>Notification Settings</h3><p>Choose which moments should reach your notification inbox. Changes save automatically.</p><div class="upgrade-notif-pref-list" id="upgradeNotificationPrefList"></div><div class="actions" style="justify-content:flex-end;margin-top:15px"><button class="secondary" type="button" onclick="closeModal(\'upgradeNotificationPreferencesModal\')">Done</button></div></div>';document.body.appendChild(m)}}
+  window.addNotification=function(to,text,workTitle,meta){meta=meta||{};if(window.shkUpgradePrefs[prefKey(meta.type)]===false)return;return oldAddNotification(to,text,workTitle,meta)};
+
+  // Activity milestones + animated empty states
+  function wordCount(text){const t=String(text||'').trim();return t?t.split(/\s+/).length:0}
+  function milestoneData(){
+    const mine=typeof myActivityList==='function'?myActivityList():[];const historyList=history?.[typeof historyKey==='function'?historyKey():'guest']||[];const reads=historyList.length;const follows=mine.filter(x=>x.type==='follow'&&/^You followed /i.test(x.text||'')).length;const reactions=mine.filter(x=>['reaction','comment_reaction'].includes(x.type)).length;const comments=mine.filter(x=>['comment','reply'].includes(x.type)).length;const saves=(saved||[]).length;const worksMine=(works||[]).filter(w=>typeof userMatchesWork==='function'&&userMatchesWork(currentUser,w)).length;const words=(works||[]).filter(w=>typeof userMatchesWork==='function'&&userMatchesWork(currentUser,w)).reduce((n,w)=>n+wordCount(w.content),0)+(drafts||[]).filter(d=>String(d.email).toLowerCase()===String(currentUser?.email||'').toLowerCase()).reduce((n,d)=>n+wordCount(d.content),0);const streak=typeof readingStreakForUser==='function'?readingStreakForUser():0;
+    return [{i:'📖',t:'First Read',d:'Open your first literary work.',v:reads,g:1,l:Math.min(reads,1)+'/1'},{i:'➕',t:'First Follow',d:'Connect with another writer or reader.',v:follows,g:1,l:Math.min(follows,1)+'/1'},{i:'❤️',t:'First Reaction',d:'Leave your first reaction.',v:reactions,g:1,l:Math.min(reactions,1)+'/1'},{i:'💬',t:'First Conversation',d:'Join the literary discussion.',v:comments,g:1,l:Math.min(comments,1)+'/1'},{i:'🔖',t:'First Save',d:'Keep a work for later.',v:saves,g:1,l:Math.min(saves,1)+'/1'},{i:'✍️',t:'Three Works',d:'Publish three pieces to your shelf.',v:worksMine,g:3,l:Math.min(worksMine,3)+'/3'},{i:'📝',t:'1,000 Words',d:'Write a thousand words across your work.',v:words,g:1000,l:Math.min(words,1000)+'/1k'},{i:'🔥',t:'7-Day Reading Streak',d:'Read on seven different days.',v:streak,g:7,l:Math.min(streak,7)+'/7'}];
+  }
+  function renderMilestones(){
+    const host=document.getElementById('activityMilestones');if(!host||!currentUser)return;const items=milestoneData();host.innerHTML='<div class="upgrade-milestone-head"><strong>Your Literary Milestones</strong><span>'+items.filter(x=>x.v>=x.g).length+'/'+items.length+' unlocked</span></div><div class="upgrade-milestone-grid">'+items.map(x=>'<article class="upgrade-milestone-card '+(x.v>=x.g?'unlocked':'')+'"><div class="upgrade-milestone-icon">'+x.i+'</div><h4>'+escapeHTML(x.t)+'</h4><p>'+escapeHTML(x.d)+'</p><div class="upgrade-milestone-progress"><span style="width:'+Math.max(0,Math.min(100,x.v/x.g*100))+'%"></span></div><small>'+escapeHTML(x.v>=x.g?'Unlocked':x.l)+'</small></article>').join('')+'</div>';
+  }
+  function ensureMilestoneHost(){if(document.getElementById('activityMilestones'))return;const sum=document.getElementById('activitySummary');if(!sum)return;const host=document.createElement('div');host.className='upgrade-milestones';host.id='activityMilestones';sum.insertAdjacentElement('afterend',host);}
+  window.renderActivity=function(){const r=oldRenderActivity();ensureMilestoneHost();renderMilestones();return r};
+  function addAnimatedEmpty(root,type,title,desc){if(!root||root.querySelector('.upgrade-empty-art'))return;const art=document.createElement('div');art.className='upgrade-empty-art';art.innerHTML=type==='saved'?'<svg viewBox="0 0 84 84" fill="none" aria-hidden="true"><circle class="upgrade-empty-orbit" cx="42" cy="42" r="28"/><path class="upgrade-empty-pulse" d="M29 23h26a3 3 0 0 1 3 3v36l-16-9-16 9V26a3 3 0 0 1 3-3Z" fill="#fff" stroke="#6E2F34" stroke-width="1.4"/><path d="M35 35h14M35 41h14" stroke="#B38A52" stroke-width="1.4" stroke-linecap="round"/></svg>':'<svg viewBox="0 0 84 84" fill="none" aria-hidden="true"><circle class="upgrade-empty-orbit" cx="42" cy="42" r="28"/><path class="upgrade-empty-float" d="M28 31h28v26H28z" fill="#fff" stroke="#6E2F34" stroke-width="1.4"/><path d="M34 38h16M34 44h16M34 50h10" stroke="#B38A52" stroke-width="1.4" stroke-linecap="round"/></svg>';root.prepend(art)}
+  window.renderHistory=function(){const r=oldRenderHistory();const root=document.getElementById('historyGrid');if(root&&!root.querySelector('.card')){const h=root.querySelector('h4');const p=root.querySelector('p');addAnimatedEmpty(root,'history',h?.textContent||'No reading history yet',p?.textContent||'Open a work to begin.')}return r};
+  window.renderSaved=function(){const r=oldRenderSaved();const root=document.getElementById('savedGrid');if(root&&!root.querySelector('.card'))addAnimatedEmpty(root,'saved','Your saved library is empty','Save a work for later.');return r};
+
+  // Initial UI injection and event hooks
+  function boot(){
+    injectReaderUI();injectNotificationSettings();initDraftAutosave();updateFocusUI();
+    window.addEventListener('scroll',scheduleReaderSave,{passive:true});window.addEventListener('pagehide',()=>saveReaderPosition(true));window.addEventListener('beforeunload',()=>saveReaderPosition(true));document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveReaderPosition(true)});
+    if(window.firebaseOnAuthStateChanged&&window.firebaseAuth){window.firebaseOnAuthStateChanged(window.firebaseAuth,authUser=>{if(authUser&&!authUser.isAnonymous){hydrateCloudProgress(authUser.uid);if(currentUser){try{const savedPrefs=window.firebaseGetDoc?window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB,'users',String(authUser.uid),'private','preferences')):null;if(savedPrefs&&typeof savedPrefs.then==='function')savedPrefs.then(s=>{if(s.exists()&&s.data()?.notifications){window.shkUpgradePrefs={...DEFAULT_PREFS,...s.data().notifications};writeStore(STORAGE_PREFS,window.shkUpgradePrefs)}}).catch(()=>{})}catch(_){} }}})}
+    if(document.getElementById('page-reader')?.classList.contains('active'))updateReaderProgressUI(currentReaderEntry(readerWork?.id||'')?.progress||0);
+    if(typeof window.renderActivity==='function')window.renderActivity();
+    if(typeof window.renderHistory==='function')window.renderHistory();
+    if(typeof window.renderSaved==='function')window.renderSaved();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else setTimeout(boot,0);
+})();
+</script>
 </body>
 </html>
