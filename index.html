@@ -2014,16 +2014,29 @@ async function toggleFollow(key,btn){
    currentUser.following=currentUser.following.filter(x=>String(x)!==targetKey && canonicalEmail(x)!==canonicalEmail(target.email||''));
    users[meIndex].following=currentUser.following.slice();
    if(btn){btn.classList.remove('on');btn.textContent='Follow';}
-   if(currentUser.uid&&target.uid)await syncFollowCloud(target,false);
    addMyActivity('follow',`You unfollowed @${usernameOf(target)}.`,{targetUid:targetKey,targetEmail:target.email||'',targetName:publicNameOf(target)});
+   if(currentUser.uid&&target.uid)await syncFollowCloud(target,false);
    showToast('Unfollowed @'+usernameOf(target)+'.');
  }else{
    currentUser.following=[...new Set([...currentUser.following,targetKey])];
    users[meIndex].following=currentUser.following.slice();
    if(btn){btn.classList.add('on');btn.textContent='Following';}
-   if(currentUser.uid&&target.uid)await syncFollowCloud(target,true);
-   if(userIdOf(target))addNotification(userIdOf(target),`${publicNameOf(currentUser)} followed you`,'',{type:'follow',actorUid:currentUser.uid||'',actorEmail:currentUser.email||'',actorName:publicNameOf(currentUser),actorUsername:usernameOf(currentUser),actorPhoto:currentUser.photoURL||currentUser.photo||''});
+
+   // Create the recipient notification immediately. Cloud follow syncing can
+   // take a moment, but the notification must not be delayed behind it.
+   if(userIdOf(target)){
+     addNotification(target,`${publicNameOf(currentUser)} followed you`,'',{
+       type:'follow',
+       toUid:target.uid||'',
+       actorUid:currentUser.uid||'',
+       actorEmail:currentUser.email||'',
+       actorName:publicNameOf(currentUser),
+       actorUsername:usernameOf(currentUser),
+       actorPhoto:currentUser.photoURL||currentUser.photo||''
+     });
+   }
    addMyActivity('follow',`You followed @${usernameOf(target)}.`,{targetUid:targetKey,targetEmail:target.email||'',targetName:publicNameOf(target)});
+   if(currentUser.uid&&target.uid)await syncFollowCloud(target,true);
    showToast('Following @'+usernameOf(target)+'.');
  }
  currentUser=normalizeUser({...users[meIndex]}); saveState();
@@ -2381,7 +2394,12 @@ function renderComments(){
  const list=comments.length?comments.map(c=>renderCommentItem(readerWork.id,c,false)).join(''):'<div class="empty" style="padding:20px 0"><h4>No comments yet</h4><p>Be the first to leave a comment.</p></div>';
  root.innerHTML=list;
 }
-function submitComment(e){e.preventDefault();contentUser();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now(),reactions:emptyReactions(),replies:[]};works[idx].comments=[...(works[idx].comments||[]),comment];works[idx]=normalizeWork(works[idx]);readerWork=works[idx];addMyActivity('comment',`You commented on “${readerWork.title}”.`,{workId:readerWork.id,workTitle:readerWork.title});if(readerWork.email!==currentUser.email)addNotification(readerWork.ownerUid||readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title,{type:'comment',workId:readerWork.id,commentId:comment.id});notifyMentionedUsers(text,readerWork,{workId:readerWork.id,commentId:comment.id});saveState();syncCommentToCloud(readerWork.id,comment,null);renderComments();renderReaderSocial();showToast('Comment posted.')}
+function submitComment(e){e.preventDefault();contentUser();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,userUid:currentCloudUid(),name:publicNameOf(currentUser),text,at:Date.now(),reactions:emptyReactions(),replies:[]};works[idx].comments=[...(works[idx].comments||[]),comment];works[idx]=normalizeWork(works[idx]);readerWork=works[idx];
+ const owner=findUser(readerWork.ownerUid||readerWork.email);
+ const ownerKey=owner?userIdOf(owner):(readerWork.ownerUid||readerWork.email||'');
+ if(ownerKey && ownerKey!==userIdOf(currentUser)) addNotification(owner||ownerKey,`${publicNameOf(currentUser)} commented on your work`,readerWork.title,{type:'comment',toUid:owner?.uid||readerWork.ownerUid||'',workId:readerWork.id,commentId:comment.id,actorUid:currentUser.uid||'',actorEmail:currentUser.email||'',actorName:publicNameOf(currentUser),actorUsername:usernameOf(currentUser),actorPhoto:currentUser.photoURL||currentUser.photo||''});
+ addMyActivity('comment',`You commented on “${readerWork.title}”.`,{workId:readerWork.id,workTitle:readerWork.title});
+ notifyMentionedUsers(text,readerWork,{workId:readerWork.id,commentId:comment.id});saveState();syncCommentToCloud(readerWork.id,comment,null);renderComments();renderReaderSocial();showToast('Comment posted.')}
 function openCommentModal(id){
  contentUser();
  const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
@@ -2509,8 +2527,22 @@ function submitPopupComment(e){
    const parentAuthor=findUser(parent?.userUid||parent?.email);
    const parentKey=parentAuthor?userIdOf(parentAuthor):(parent?.userUid||parent?.email||'');
    if(parentKey && parentKey!==userIdOf(currentUser))addNotification(parentKey,`${publicNameOf(currentUser)} replied to your comment`,commentModalWork.title,{type:'reply',workId:commentModalWork.id,commentId:comment.id,parentCommentId:targetId});
- }else if(commentModalWork.email!==currentUser.email){
-   addNotification(commentModalWork.ownerUid||commentModalWork.email,`${publicNameOf(currentUser)} commented on your work`,commentModalWork.title,{type:'comment',workId:commentModalWork.id,commentId:comment.id});
+ }else{
+   const owner=findUser(commentModalWork.ownerUid||commentModalWork.email);
+   const ownerKey=owner?userIdOf(owner):(commentModalWork.ownerUid||commentModalWork.email||'');
+   if(ownerKey && ownerKey!==userIdOf(currentUser)){
+     addNotification(owner||ownerKey,`${publicNameOf(currentUser)} commented on your work`,commentModalWork.title,{
+       type:'comment',
+       toUid:owner?.uid||commentModalWork.ownerUid||'',
+       workId:commentModalWork.id,
+       commentId:comment.id,
+       actorUid:currentUser.uid||'',
+       actorEmail:currentUser.email||'',
+       actorName:publicNameOf(currentUser),
+       actorUsername:usernameOf(currentUser),
+       actorPhoto:currentUser.photoURL||currentUser.photo||''
+     });
+   }
  }
  saveState();queueCloudWorkSync(works[idx]);renderAll();renderCommentModal();renderComments();renderReaderSocial();
  if(input)input.value='';commentReplyTarget=null;updateCommentPopupForm();
@@ -2661,56 +2693,118 @@ function notificationDateTime(ts){
    year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'
  });
 }
+let pendingNotificationWrites=(()=>{
+ try{
+   const raw=localStorage.getItem('shkPendingNotifications');
+   const parsed=raw?JSON.parse(raw):[];
+   return Array.isArray(parsed)?parsed.slice(0,100):[];
+ }catch(_e){return [];}
+})();
+let notificationWriteBusy=false;
+function persistPendingNotificationWrites(){
+ try{localStorage.setItem('shkPendingNotifications',JSON.stringify(pendingNotificationWrites.slice(0,100)))}catch(_e){}
+}
+
 function buildNotificationRecord(to,text,workTitle='',meta={}){
  const actor=currentUser?normalizeUser(currentUser):null;
- const target=findUser(to);
- const id='n-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);
+ const target=typeof to==='object'&&to?to:findUser(to);
+ const rawTargetKey=typeof to==='string'?String(to||'').trim():'';
+ const targetUid=String(meta.toUid||target?.uid||((rawTargetKey && !rawTargetKey.includes('@'))?rawTargetKey:'')).trim();
+ const targetEmail=canonicalEmail(target?.email||meta.toEmail||((rawTargetKey&&rawTargetKey.includes('@'))?rawTargetKey:''));
+ const id=String(meta.id||('n-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)));
  return {
-   id,to:target?.email||canonicalEmail(to)||'',toUid:target?.uid||meta.toUid||'',text:String(text||''),workTitle:String(workTitle||''),
-   type:String(meta.type||'activity'),workId:String(meta.workId||''),commentId:String(meta.commentId||''),parentCommentId:String(meta.parentCommentId||''),
-   at:Date.now(),read:false,
-   actorUid:String(meta.actorUid||actor?.uid||''),actorEmail:String(meta.actorEmail||actor?.email||''),
+   id,
+   to:targetEmail,
+   toUid:targetUid,
+   text:String(text||''),
+   workTitle:String(workTitle||''),
+   type:String(meta.type||'activity'),
+   workId:String(meta.workId||''),
+   commentId:String(meta.commentId||''),
+   parentCommentId:String(meta.parentCommentId||''),
+   at:Number(meta.at||Date.now()),
+   read:false,
+   actorUid:String(meta.actorUid||actor?.uid||''),
+   actorEmail:String(meta.actorEmail||actor?.email||''),
    actorName:String(meta.actorName||actor?.penName||publicNameOf(actor||{})),
    actorUsername:String(meta.actorUsername||actor?.username||'reader'),
    actorPhoto:String(meta.actorPhoto||actor?.photo||actor?.photoURL||'')
  };
 }
+
 async function saveCloudNotification(notification){
  if(!notification?.toUid||!window.firebaseDB||!window.firebaseDoc||!window.firebaseSetDoc)return false;
- try{
-   if(window.firebaseReady)await window.firebaseReady;
-   const authUser=window.firebaseAuth?.currentUser;
-   if(!authUser||authUser.isAnonymous)return false;
-   const ref=window.firebaseDoc(window.firebaseDB,'users',String(notification.toUid),'notifications',String(notification.id));
-   await window.firebaseSetDoc(ref,{
-     id:notification.id,
-     type:notification.type||'activity',
-     text:notification.text||'',
-     workTitle:notification.workTitle||'',
-     workId:notification.workId||'',
-     commentId:notification.commentId||'',
-     parentCommentId:notification.parentCommentId||'',
-     actorUid:notification.actorUid||'',
-     actorName:notification.actorName||'Anonymous Author',
-     actorUsername:notification.actorUsername||'reader',
-     actorPhoto:notification.actorPhoto||'',
-     at:Number(notification.at||Date.now()),
-     read:!!notification.read,
-     createdAt:window.firebaseServerTimestamp(),
-     updatedAt:window.firebaseServerTimestamp()
-   },{merge:true});
-   return true;
- }catch(err){console.warn('Cloud notification write failed:',err);return false;}
+ for(let attempt=0;attempt<5;attempt++){
+   try{
+     const uid=await waitForStableCloudIdentity(10);
+     if(!uid)return false;
+     if(window.firebaseReady)await window.firebaseReady;
+     const authUser=window.firebaseAuth?.currentUser;
+     if(!authUser||authUser.isAnonymous||String(authUser.uid)!==String(uid))return false;
+     const ref=window.firebaseDoc(window.firebaseDB,'users',String(notification.toUid),'notifications',String(notification.id));
+     await window.firebaseSetDoc(ref,{
+       id:notification.id,
+       type:notification.type||'activity',
+       text:notification.text||'',
+       workTitle:notification.workTitle||'',
+       workId:notification.workId||'',
+       commentId:notification.commentId||'',
+       parentCommentId:notification.parentCommentId||'',
+       // Always use the stable Firebase Auth UID for the actor. This is
+       // critical for strict Firestore notification-create rules and also
+       // repairs legacy/local sessions whose currentUser.uid is stale/empty.
+       actorUid:uid,
+       actorName:notification.actorName||'Anonymous Author',
+       actorUsername:notification.actorUsername||'reader',
+       actorPhoto:notification.actorPhoto||'',
+       at:Number(notification.at||Date.now()),
+       read:!!notification.read,
+       createdAt:window.firebaseServerTimestamp(),
+       updatedAt:window.firebaseServerTimestamp()
+     },{merge:true});
+     return true;
+   }catch(err){
+     if(attempt===4)console.warn('Cloud notification write failed:',err);
+     await new Promise(r=>setTimeout(r,250*(attempt+1)));
+   }
+ }
+ return false;
 }
+
+async function flushPendingNotifications(){
+ if(notificationWriteBusy||!pendingNotificationWrites.length)return;
+ notificationWriteBusy=true;
+ const queue=pendingNotificationWrites.splice(0,pendingNotificationWrites.length);
+ persistPendingNotificationWrites();
+ try{
+   for(const note of queue){
+     const ok=await saveCloudNotification(note);
+     if(!ok)pendingNotificationWrites.push(note);
+   }
+ }finally{
+   pendingNotificationWrites=pendingNotificationWrites.slice(0,100);
+   persistPendingNotificationWrites();
+   notificationWriteBusy=false;
+ }
+}
+
 function addNotification(to,text,workTitle='',meta={}){
  const note=buildNotificationRecord(to,text,workTitle,meta);
- if(notificationBelongsToCurrentUser(note))return;
+ if(!note.toUid && !note.to){return null;}
+ if(notificationBelongsToCurrentUser(note))return null;
  notifications.unshift(note);
  notifications=notifications.slice(0,200);
  persistSessionData();
  renderNotificationsBadge();
  if(document.getElementById('notificationsModal')?.classList.contains('open'))renderNotifications();
- saveCloudNotification(note).catch(()=>{});
+ // Persist locally first so a notification is not lost if the browser
+ // closes while Firebase Auth/Firestore is still settling. The same document
+ // ID makes retries idempotent.
+ const duplicate=pendingNotificationWrites.some(x=>String(x?.id||'')===String(note.id));
+ if(!duplicate)pendingNotificationWrites.push(note);
+ persistPendingNotificationWrites();
+ flushPendingNotifications().catch(()=>{});
+ return note;
 }
 function renderNotificationsBadge(){
  const badge=document.getElementById('notificationBadge');if(!badge)return;
@@ -2798,7 +2892,16 @@ function renderNotifications(){
 }
 function openNotifications(){
  if(!currentUser){showToast('Sign in to view notifications.');openAccount();return}
- renderNotifications();document.getElementById('notificationsModal').classList.add('open')
+ renderNotifications();
+ document.getElementById('notificationsModal').classList.add('open');
+ const uid=currentCloudUid();
+ if(uid){
+   hydrateCloudNotifications(uid).then(()=>{
+     attachCloudNotificationListener(uid);
+     renderNotificationsBadge();
+     renderNotifications();
+   }).catch(()=>{});
+ }
 }
 function markNotificationsRead(){
  if(!currentUser)return;
@@ -3193,19 +3296,35 @@ function startCloudNotificationSync(){
       if(cloudNotificationsUnsubscribe){try{cloudNotificationsUnsubscribe()}catch(_e){} cloudNotificationsUnsubscribe=null;}
       cloudNotificationsUid='';
       if(!authUser||authUser.isAnonymous)return;
-      const uid=String(authUser.uid||'').trim();
+      const uid=await waitForStableCloudIdentity(12) || String(authUser.uid||'').trim();
       if(!uid)return;
-      // wait briefly for restoreFirebaseSession to align currentUser with Firebase Auth
-      for(let i=0;i<8&&(!currentUser||String(currentUser.uid||'')!==uid);i++)await new Promise(r=>setTimeout(r,120));
+      // Align the app session with the same Firebase UID before filtering or
+      // rendering notifications. This prevents a valid cloud notification from
+      // being hidden because currentUser still points at an older local session.
       await hydrateCloudMyActivity(uid);
       await hydrateCloudNotifications(uid);
       attachCloudNotificationListener(uid);
+      flushPendingNotifications().catch(()=>{});
     };
     if(window.firebaseOnAuthStateChanged&&window.firebaseAuth){
       cloudNotificationsAuthUnsubscribe=window.firebaseOnAuthStateChanged(window.firebaseAuth,handleAuth);
     }else{
       await handleAuth(window.firebaseAuth?.currentUser||null);
     }
+
+    const refresh=()=>{
+      const authUser=window.firebaseAuth?.currentUser;
+      if(authUser&&!authUser.isAnonymous){
+        hydrateCloudNotifications(String(authUser.uid)).then(()=>{
+          attachCloudNotificationListener(String(authUser.uid));
+          flushPendingNotifications().catch(()=>{});
+        });
+      }
+    };
+    window.addEventListener('online',refresh);
+    window.addEventListener('focus',refresh);
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh()});
+    setTimeout(()=>flushPendingNotifications().catch(()=>{}),1000);
   }).catch(err=>console.warn('Cloud notification sync unavailable:',err));
 }
 
