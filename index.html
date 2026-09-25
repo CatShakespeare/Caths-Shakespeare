@@ -1491,6 +1491,9 @@ let pinBusy = false;
 let editingWorkId = null;
 let editingDraftId = null;
 let pendingDeleteWorkId = null;
+// Keep a local tombstone while a work deletion is being synced so a stale
+// Firestore snapshot cannot immediately add the deleted work back.
+let cloudDeletedWorkIds = new Set();
 
 if(currentUser && LEGACY_DEMO_EMAILS.has(String(currentUser.email||'').toLowerCase())) currentUser=null;
 if(currentUser){
@@ -2221,13 +2224,25 @@ function confirmDeleteWork(){
  const id=pendingDeleteWorkId;
  const w=works.find(x=>x.id===id);
  if(!w||!userMatchesWork(currentUser,w)){pendingDeleteWorkId=null;closeModal('deleteWorkModal');showToast('You can only delete your own work.');return;}
+ const deletedWork=normalizeWork(w);
+ const deletedId=String(id);
+ cloudDeletedWorkIds.add(deletedId);
  works=works.filter(x=>x.id!==id);
  saved=saved.filter(x=>x!==id);
- deleteCloudWork(id);
  if(readerWork?.id===id)readerWork=null;
  if(commentModalWork?.id===id)commentModalWork=null;
  pendingDeleteWorkId=null;
- saveState();closeModal('deleteWorkModal');renderAll();showToast('Work deleted permanently.');
+ saveState();closeModal('deleteWorkModal');renderAll();showToast('Work deleted.');
+
+ // Finish the cloud deletion after all queued work writes. This prevents a
+ // recent publish/edit write from recreating the work after it was deleted.
+ deleteCloudWork(deletedId).then(ok=>{
+   if(ok)return;
+   cloudDeletedWorkIds.delete(deletedId);
+   if(!works.some(x=>String(x.id)===deletedId))works.unshift(deletedWork);
+   saveState();renderAll();
+   showToast('Cloud sync failed, so the work was restored. Please try deleting it again.');
+ });
 }
 
 function openReader(id){
@@ -3327,6 +3342,9 @@ async function syncPublishedWorkToCloud(work){
 async function deleteCloudWork(id){
   try{
     if(!id||!window.firebaseDB||!window.firebaseDoc||!window.firebaseDeleteDoc)return false;
+    // A publish/edit may still be queued. Wait for those writes first so the
+    // final operation is the delete, not a stale write that recreates the doc.
+    try{await cloudWorkWriteQueue}catch(_e){}
     if(window.firebaseReady)await window.firebaseReady;
     await window.firebaseDeleteDoc(window.firebaseDoc(window.firebaseDB,'works',String(id)));
     return true;
@@ -3339,6 +3357,7 @@ async function deleteCloudWork(id){
 function mergeCloudWorkIntoLocal(raw){
   const cloud=normalizeWork(raw);
   if(!cloud?.id||cloud.privacy!=='public')return false;
+  if(cloudDeletedWorkIds.has(String(cloud.id)))return false;
   const idx=works.findIndex(w=>w.id===cloud.id);
   if(idx<0){works.unshift(cloud);return true;}
   const local=normalizeWork(works[idx]);
