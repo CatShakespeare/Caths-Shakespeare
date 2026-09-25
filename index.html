@@ -1053,7 +1053,7 @@ button,input,textarea,select{max-width:100%}
   window.firebaseReady = (async () => {
     try {
       const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js");
-      const { getAuth, GoogleAuthProvider, signInWithPopup, signOut, getAdditionalUserInfo, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
+      const { getAuth, GoogleAuthProvider, signInWithPopup, signOut, getAdditionalUserInfo, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
       const { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, onSnapshot, deleteDoc } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js");
       const firebaseConfig = {
         apiKey: "AIzaSyDlfOgtbipWy83ItjN7rVVp-guAYEVkIy0",
@@ -1086,17 +1086,28 @@ button,input,textarea,select{max-width:100%}
       window.firebaseSignInAnonymously = signInAnonymously;
       window.firebaseCreateUserWithEmailAndPassword = createUserWithEmailAndPassword;
       window.firebaseSignInWithEmailAndPassword = signInWithEmailAndPassword;
+      window.firebaseOnAuthStateChanged = onAuthStateChanged;
 
-      // Give non-Google/local accounts an authenticated Firestore session too.
-      // This lets public works sync across devices when Firestore rules require
-      // request.auth != null, without exposing the user's private account data.
-      if(!firebaseAuth.currentUser && typeof signInAnonymously==='function') {
-        try{ await signInAnonymously(firebaseAuth); }
-        catch(err){ console.warn('Anonymous Firestore auth unavailable:',err); }
-      }
+      // Wait for Firebase to restore its persisted auth session before deciding
+      // whether a guest needs an anonymous Firestore session. This prevents an
+      // existing logged-in account from being replaced by a new anonymous user
+      // during page reload.
+      window.firebaseAuthReady = new Promise(resolve=>{
+        let settled=false;
+        const finish=user=>{if(!settled){settled=true;resolve(user||null)}};
+        onAuthStateChanged(firebaseAuth,async user=>{
+          if(user){finish(user);return;}
+          if(typeof signInAnonymously==='function'){
+            try{const cred=await signInAnonymously(firebaseAuth);finish(cred?.user||firebaseAuth.currentUser||null);return;}
+            catch(err){console.warn('Anonymous Firestore auth unavailable:',err);}
+          }
+          finish(null);
+        });
+      });
+      await window.firebaseAuthReady;
 
       window.firebaseReadyState = {ok:true,projectId:firebaseConfig.projectId};
-      return {firebaseApp,firebaseAuth,firebaseDB,firebaseGoogleProvider,signInWithPopup,signOut,getAdditionalUserInfo,signInAnonymously};
+      return {firebaseApp,firebaseAuth,firebaseDB,firebaseGoogleProvider,signInWithPopup,signOut,getAdditionalUserInfo,signInAnonymously,onAuthStateChanged};
     } catch(error) {
       window.firebaseReadyState = {ok:false,error:error?.message||String(error)};
       console.error("Firebase initialization failed:",error);
@@ -1126,7 +1137,7 @@ function normalizeUser(user){
   const identity=normalizeIdentity(user.identity);
   const username=(user.username||'').replace(/^@/,'').trim();
   const penName=String(user.penName||'Anonymous Author').trim()||'Anonymous Author';
-  return {...user,followers:Array.isArray(user.followers)?user.followers:[],following:Array.isArray(user.following)?user.following:[],username,penName,photoURL:user.photoURL||user.photo||'',photo:user.photo||user.photoURL||'',identity,identityLabel:IDENTITY_OPTIONS[identity].label};
+  return {...user,followers:Array.isArray(user.followers)?user.followers:[],following:Array.isArray(user.following)?user.following:(Array.isArray(user.followingUids)?user.followingUids:[]),username,penName,photoURL:user.photoURL||user.photo||'',photo:user.photo||user.photoURL||'',identity,identityLabel:IDENTITY_OPTIONS[identity].label};
 }
 function publicNameOf(user){
   return String(user?.penName||'Anonymous Author').trim()||'Anonymous Author';
@@ -1302,7 +1313,7 @@ if(currentUser){
 // Keep the signed-in content identity available after a page refresh so public
 // actions (drafts, publishing, reactions, comments) do not silently stop
 // working. The PIN still protects the Account panel itself.
-sessionUnlocked=!!currentUser&&sessionStorage.getItem('shkSessionUnlocked')==='1';
+sessionUnlocked=!!currentUser;
 migratePinRecords();
 
 function sanitizePublicIdentities(){
@@ -1684,7 +1695,9 @@ async function toggleFollow(key,btn){
    if(target.email)addNotification(target.email,`${publicNameOf(currentUser)} followed you`,'');
    showToast('Following @'+usernameOf(target)+'.');
  }
- currentUser=normalizeUser({...users[meIndex]}); saveState(); renderAuthors(); renderProfile(); renderGlobalSearch(); updateProfileUI();
+ currentUser=normalizeUser({...users[meIndex]}); saveState();
+ try{if(currentUser.uid)await saveCloudUserProfile(currentUser);}catch(err){console.warn('Following list cloud sync failed:',err)}
+ renderAuthors(); renderProfile(); renderGlobalSearch(); updateProfileUI();
 }
 
 function toggleCreateGate(){
@@ -2514,6 +2527,8 @@ async function saveCloudUserProfile(user){
     bio:user.bio||'Student writer in 12-SHAKESPEARE.',
     identity:normalizeIdentity(user.identity),
     identityLabel:identityLabelOf(user),
+    following:Array.isArray(user.following)?user.following.map(x=>String(x||'').trim()).filter(Boolean).slice(0,500):[],
+    followingUids:Array.isArray(user.following)?user.following.map(x=>String(x||'').trim()).filter(Boolean).slice(0,500):[],
     updatedAt:window.firebaseServerTimestamp(),
     createdAt
   },{merge:true});
@@ -3126,21 +3141,65 @@ function initShkNavigationSounds(){
 }
 
 function switchAuthDefault(){switchAuth('login')}
-async function reconcileFirebaseIdentity(){
+async function restoreFirebaseSession(){
   try{
     if(window.firebaseReady)await window.firebaseReady;
-    if(!currentUser)return;
+    if(window.firebaseAuthReady)await window.firebaseAuthReady;
     const authUser=window.firebaseAuth?.currentUser;
-    if(authUser && !authUser.isAnonymous && currentUser.uid && String(authUser.uid)===String(currentUser.uid))return;
-    // A legacy local-only session cannot safely own cloud documents. Require a real Firebase sign-in
-    // so the same stable UID is used on every device.
-    currentUser=null;sessionUnlocked=false;profileEmail=null;sessionStorage.removeItem('shkSessionUnlocked');
-    localStorage.removeItem('shkUser');
-    renderAll();
-  }catch(err){console.warn('Firebase identity reconciliation failed:',err)}
+
+    // Firebase persistence is the source of truth for cross-device identity.
+    // Never clear a locally cached profile merely because the auth state was
+    // still restoring during reload.
+    if(authUser && !authUser.isAnonymous){
+      const cloudProfile=await readCloudUserProfile(authUser.uid);
+      const cloudData=cloudProfile.data||{};
+      const cached=currentUser && String(currentUser.uid||'')===String(authUser.uid)
+        ? currentUser
+        : findUser(authUser.uid);
+      const base=normalizeUser({
+        ...cached,
+        ...cloudData,
+        uid:authUser.uid,
+        email:authUser.email||cached?.email||'',
+        name:cloudData.displayName||cached?.name||authUser.displayName||'Student Account',
+        penName:cloudData.penName||cached?.penName||'Anonymous Author',
+        username:cloudData.username||cached?.username||((authUser.email||'student').split('@')[0]||'student'),
+        photoURL:authUser.photoURL||cloudData.photoURL||cached?.photoURL||cached?.photo||'',
+        photo:authUser.photoURL||cloudData.photoURL||cached?.photo||cached?.photoURL||'',
+        provider:cached?.provider||'firebase',
+        bio:cloudData.bio||cached?.bio||'Student writer in 12-SHAKESPEARE.',
+        followers:cached?.followers||[],
+        following:cloudData.following||cloudData.followingUids||cached?.following||[],
+        identity:cloudData.identity||cached?.identity||'reader'
+      });
+      currentUser=base;
+      const idx=users.findIndex(u=>userIdOf(u)===authUser.uid||canonicalEmail(u.email)===canonicalEmail(base.email));
+      if(idx>=0)users[idx]=normalizeUser({...users[idx],...base});
+      else users.push(base);
+      sessionUnlocked=true;
+      sessionStorage.setItem('shkSessionUnlocked','1');
+      saveState();
+      try{await saveCloudUserProfile(currentUser)}catch(err){console.warn('Current user cloud profile refresh failed:',err)}
+      renderAll();
+      return;
+    }
+
+    // Anonymous auth is only a Firestore guest session. It must never log out
+    // a cached real account. Keep the local session until the user explicitly
+    // chooses Log Out.
+    if(currentUser){
+      sessionUnlocked=true;
+      sessionStorage.setItem('shkSessionUnlocked','1');
+      return;
+    }
+  }catch(err){
+    console.warn('Firebase session restoration failed:',err);
+    // Keep the cached account visible instead of forcing a logout.
+    if(currentUser){sessionUnlocked=true;sessionStorage.setItem('shkSessionUnlocked','1');}
+  }
 }
 document.addEventListener('click',(e)=>{if(!e.target.closest('.reaction-wrap'))document.querySelectorAll('.reaction-picker.open').forEach(closeReactionPicker);if(!e.target.closest('.comment-reaction-wrap'))document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'));});
-switchAuthDefault();applyDarkMode();renderAll();initShkNavigationSounds();startCloudUserSync();startCloudWorkSync();reconcileFirebaseIdentity();
+switchAuthDefault();applyDarkMode();renderAll();initShkNavigationSounds();restoreFirebaseSession();startCloudUserSync();startCloudWorkSync();
 </script>
 </body>
 </html>
