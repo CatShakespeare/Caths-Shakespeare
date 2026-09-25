@@ -625,6 +625,26 @@ button,input,textarea,select{max-width:100%}
 }
 
 
+/* =========================
+   Activity Center
+   ========================= */
+.notification-modal-box{width:min(760px,calc(100vw - 24px));padding:20px}
+.notification-modal-intro{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:13px;align-items:center;margin-bottom:10px;padding:4px 2px 3px}
+.notification-modal-icon{width:50px;height:50px;border-radius:16px;display:grid;place-items:center;color:var(--wine);background:linear-gradient(145deg,#FBF7F2,#F2E9DF);border:1px solid var(--line);animation:activityFloat 4.8s ease-in-out infinite}.notification-modal-icon svg{width:37px;height:37px}
+.notification-modal-intro h3{margin:0;font:600 2rem/.95 "Cormorant Garamond",serif;color:var(--wine)}.notification-modal-intro p{margin:4px 0 0;color:#8B8079;font-size:.68rem;line-height:1.45}
+.notification-modal-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 12px;padding-top:9px;border-top:1px solid var(--line)}.notification-modal-toolbar .secondary{padding:9px 11px;font-size:.68rem}
+.activity-hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(340px,.95fr);gap:30px;align-items:center;min-height:410px;padding:24px 0 10px}.activity-hero-copy{padding-right:10px}.activity-hero h2{font:600 clamp(3rem,5vw,5.5rem)/.86 "Cormorant Garamond",serif;color:var(--wine);letter-spacing:-.045em;margin:14px 0 18px;max-width:700px}.activity-hero-copy p{max-width:650px;color:var(--muted);font-size:.94rem;line-height:1.8;margin:0}
+.activity-hero-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}.activity-primary,.activity-secondary{border-radius:11px;padding:11px 14px;font-size:.72rem;font-weight:800;transition:.2s var(--ease)}.activity-primary{border:0;background:var(--wine);color:#fff;box-shadow:0 9px 18px rgba(50,25,27,.14)}.activity-secondary{border:1px solid var(--line);background:#fff;color:var(--wine)}.activity-primary:hover,.activity-secondary:hover{transform:translateY(-2px)}
+.activity-art{position:relative;min-height:310px;display:grid;place-items:center;overflow:hidden;border:1px solid var(--line);border-radius:28px;background:radial-gradient(circle at 50% 45%,#FCFAF7 0%,#F6F0EA 62%,#EFE5DC 100%);box-shadow:0 20px 50px rgba(36,27,23,.08);isolation:isolate}.activity-art:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 15%,rgba(179,138,82,.12) 50%,transparent 82%);transform:translateX(-100%);animation:activitySheen 7s ease-in-out infinite}.activity-art-glow{position:absolute;width:170px;height:170px;border-radius:50%;background:rgba(179,138,82,.13);filter:blur(26px);animation:activityGlow 4.5s ease-in-out infinite}.activity-svg{position:relative;width:min(100%,390px);height:auto;overflow:visible}
+.activity-ring{fill:none;stroke:#DCCDBA;stroke-width:1;opacity:.6;transform-origin:180px 140px;animation:activityRing 14s linear infinite}.ring-b{animation-duration:10s;animation-direction:reverse;opacity:.42}.ring-c{animation-duration:7s;opacity:.72}.activity-orbit-line{animation:activityDash 7s linear infinite}.activity-orbit-line.delayed{animation-duration:11s;animation-delay:-3s}.activity-bell{transform-origin:180px 140px;animation:activityBell 3.8s ease-in-out infinite}.activity-bell-dot{animation:activityPing 2.4s ease-in-out infinite}.activity-float-chip{filter:drop-shadow(0 10px 16px rgba(36,27,23,.07));animation:activityChip 4.2s ease-in-out infinite}.chip-two{animation-delay:-1.2s}.chip-three{animation-delay:-2.1s}.chip-four{animation-delay:-.7s}.activity-spark{animation:activitySpark 3.2s ease-in-out infinite}.spark-b{animation-delay:-1.2s}.spark-c{animation-delay:-2s}
+.activity-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 16px}.activity-summary-card{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:#fff;padding:13px 14px;box-shadow:0 8px 20px rgba(36,27,23,.035)}.activity-summary-card:after{content:"";position:absolute;right:-18px;top:-22px;width:74px;height:74px;border-radius:50%;border:1px solid #E9DDCF;opacity:.75}.activity-summary-card small{display:block;text-transform:uppercase;letter-spacing:.12em;color:#9A9089;font-size:.56rem;font-weight:800}.activity-summary-card strong{display:block;margin-top:6px;color:var(--wine);font:600 1.7rem/1 "Cormorant Garamond",serif}.activity-summary-card span{display:block;margin-top:5px;color:#8B8079;font-size:.6rem;line-height:1.35}
+.activity-switcher{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;border:1px solid var(--line);border-radius:14px;background:#FBF8F5}.activity-tab{border:0;background:transparent;color:#847A73;text-align:left;padding:11px 12px;border-radius:10px;transition:.18s var(--ease)}.activity-tab span{display:block;font-size:.77rem;font-weight:850}.activity-tab small{display:block;margin-top:3px;font-size:.6rem;color:#A09790}.activity-tab.active{background:#fff;color:var(--wine);box-shadow:0 4px 14px rgba(36,27,23,.07)}
+.activity-filter-row{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 10px}.activity-filter{border:1px solid var(--line);background:#fff;color:#81766F;padding:8px 10px;border-radius:999px;font-size:.61rem;font-weight:800;transition:.18s var(--ease)}.activity-filter:hover{background:#F7F2ED;transform:translateY(-1px)}.activity-filter.active{background:var(--wine);border-color:var(--wine);color:#fff}
+.activity-feed{display:grid;gap:9px}.activity-item{position:relative;display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 13px;border:1px solid var(--line);border-radius:15px;background:#fff;cursor:pointer;transition:.2s var(--ease)}.activity-item:hover{transform:translateY(-2px);background:#FBF8F5;box-shadow:0 10px 24px rgba(36,27,23,.055)}.activity-item.unread{background:#FFFBF5;border-color:#E4D7C7}.activity-item.unread:before{content:"";position:absolute;left:5px;top:20px;width:6px;height:6px;border-radius:50%;background:var(--gold)}.activity-item-avatar{width:42px;height:42px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:linear-gradient(145deg,#8A5E63,#32191B);color:#F7EAD6;font-weight:850}.activity-item-avatar img{width:100%;height:100%;object-fit:cover;display:block}.activity-item-main{min-width:0}.activity-item-head{display:flex;gap:7px;align-items:baseline;flex-wrap:wrap}.activity-item-name{font-size:.78rem;color:var(--wine);font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.activity-item-handle{font-size:.59rem;color:#9A9089}.activity-item-text{margin-top:4px;color:#625751;font-size:.69rem;line-height:1.55}.activity-item-text b{color:var(--wine)}.activity-item-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;color:#A09790;font-size:.57rem}.activity-type-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;border-radius:999px;background:#F5EEE7;color:#7A655E;font-size:.56rem;font-weight:850}.activity-item-arrow{width:28px;height:28px;border:1px solid var(--line);border-radius:9px;background:#fff;color:#8B817B;display:grid;place-items:center}.activity-item:hover .activity-item-arrow{color:var(--wine);border-color:#D9C8B3}
+.activity-empty{padding:38px 18px;text-align:center;border:1px dashed #DCCDBA;border-radius:17px;background:linear-gradient(180deg,#FCFAF7,#FFF)}.activity-empty-icon{width:58px;height:58px;margin:0 auto 11px;border-radius:18px;display:grid;place-items:center;background:#F6EFE8;color:var(--wine);font-size:1.4rem}.activity-empty h4{font:600 1.9rem/.98 "Cormorant Garamond",serif;color:var(--wine);margin:0 0 5px}.activity-empty p{max-width:500px;margin:0 auto;color:#8B8079;font-size:.68rem;line-height:1.6}.activity-nav-dot{animation:activityPing 2.4s ease-in-out infinite}
+@keyframes activityFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes activitySheen{0%,45%{transform:translateX(-110%)}70%,100%{transform:translateX(115%)}}@keyframes activityGlow{0%,100%{transform:scale(.92);opacity:.68}50%{transform:scale(1.1);opacity:1}}@keyframes activityRing{to{transform:rotate(360deg)}}@keyframes activityDash{to{stroke-dashoffset:-85}}@keyframes activityBell{0%,100%{transform:rotate(0deg)}12%{transform:rotate(-5deg)}24%{transform:rotate(5deg)}36%{transform:rotate(-3deg)}48%{transform:rotate(0deg)}}@keyframes activityPing{0%,100%{transform:scale(1);opacity:.65}50%{transform:scale(1.45);opacity:1}}@keyframes activityChip{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-8px) rotate(1deg)}}@keyframes activitySpark{0%,100%{transform:scale(.6);opacity:.25}50%{transform:scale(1.35);opacity:1}}
+@media(max-width:900px){.activity-hero{grid-template-columns:1fr}.activity-art{min-height:300px}.activity-summary{grid-template-columns:1fr 1fr}}@media(max-width:560px){.notification-modal-box{width:calc(100vw - 12px);padding:14px}.notification-modal-intro{grid-template-columns:44px minmax(0,1fr) auto;gap:9px}.notification-modal-icon{width:43px;height:43px;border-radius:13px}.notification-modal-icon svg{width:31px;height:31px}.notification-modal-intro h3{font-size:1.75rem}.notification-modal-intro p{font-size:.61rem}.notification-modal-toolbar .secondary{font-size:.6rem;padding:8px 9px}.activity-hero{min-height:0;padding-top:8px}.activity-hero h2{font-size:3.3rem}.activity-hero-copy p{font-size:.82rem}.activity-art{min-height:250px;border-radius:20px}.activity-summary{grid-template-columns:1fr 1fr;gap:7px}.activity-summary-card{padding:11px}.activity-summary-card strong{font-size:1.4rem}.activity-switcher{grid-template-columns:1fr}.activity-tab{padding:10px}.activity-item{grid-template-columns:38px minmax(0,1fr);gap:10px;padding:10px}.activity-item-avatar{width:36px;height:36px}.activity-item-arrow{display:none}.activity-item-text{font-size:.66rem}.activity-filter-row{gap:5px}.activity-filter{padding:7px 9px;font-size:.58rem}}@media (prefers-reduced-motion:reduce){.activity-art:before,.activity-art-glow,.activity-ring,.activity-orbit-line,.activity-bell,.activity-bell-dot,.activity-float-chip,.activity-spark,.notification-modal-icon,.activity-nav-dot{animation:none!important}}
+
 /* Profile connection controls and responsive popups. */
 .profile-stat-button{border:0;background:transparent;padding:0;text-align:inherit;cursor:pointer;border-radius:10px;transition:.18s var(--ease)}
 .profile-stat-button:hover{background:#FBF7F2;transform:translateY(-1px)}
@@ -702,6 +722,7 @@ button,input,textarea,select{max-width:100%}
       <button class="nav-btn" data-page="following" onclick="showPage('following')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 20c.8-3.3 3-5 5.5-5s4.7 1.7 5.5 5M16 12h5M18.5 9.5V14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Following Feed</span></button>
       <button class="nav-btn" data-page="profile" onclick="openOwnProfile()"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/><path d="M5 20c.9-3.7 3.3-5.6 7-5.6s6.1 1.9 7 5.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M18 4.5h2.5M19.25 3.25v2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span>My Profile</span></button>
       <button class="nav-btn" data-page="history" onclick="showPage('history')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Reading History</span></button>
+      <button class="nav-btn activity-nav-btn" data-page="activity" onclick="showPage('activity')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M6 17.5V10a6 6 0 0 1 12 0v7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.5 18.5h15M9.5 21h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle class="activity-nav-dot" cx="17.5" cy="6.5" r="2.1" fill="currentColor" stroke="none"/></svg><span>Activity Center</span></button>
     </nav>
 
     <div class="nav-title">Archive</div>
@@ -879,6 +900,52 @@ button,input,textarea,select{max-width:100%}
         <div class="panel"><div class="grid3" id="historyGrid"></div></div>
       </section>
 
+      <section class="page" id="page-activity">
+        <div class="activity-hero">
+          <div class="activity-hero-copy">
+            <div class="kicker">Live archive pulse</div>
+            <h2>Every interaction leaves a trace.</h2>
+            <p>Follow new writers, react to a poem, join a conversation, save a piece for later, and keep your literary trail in one place.</p>
+            <div class="activity-hero-actions">
+              <button class="activity-primary" type="button" onclick="setActivityView('forYou')">View For You</button>
+              <button class="activity-secondary" type="button" onclick="setActivityView('mine')">My Activity</button>
+            </div>
+          </div>
+          <div class="activity-art" aria-hidden="true">
+            <div class="activity-art-glow"></div>
+            <svg viewBox="0 0 360 280" fill="none" class="activity-svg">
+              <defs>
+                <linearGradient id="activityStroke" x1="50" y1="30" x2="300" y2="240" gradientUnits="userSpaceOnUse"><stop stop-color="#B38A52"/><stop offset="1" stop-color="#6C3039"/></linearGradient>
+              </defs>
+              <circle class="activity-ring ring-a" cx="180" cy="140" r="102"/>
+              <circle class="activity-ring ring-b" cx="180" cy="140" r="76"/>
+              <circle class="activity-ring ring-c" cx="180" cy="140" r="52"/>
+              <path class="activity-orbit-line" d="M55 177C88 99 135 50 204 51c57 1 90 40 100 75" stroke="url(#activityStroke)" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="7 10"/>
+              <path class="activity-orbit-line delayed" d="M76 215c36-55 82-83 134-81 52 2 82 31 98 57" stroke="url(#activityStroke)" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="3 11"/>
+              <g class="activity-bell">
+                <path d="M151 132v-11a29 29 0 0 1 58 0v11c0 8 5 14 10 18H141c5-4 10-10 10-18Z" fill="#fff" stroke="url(#activityStroke)" stroke-width="2"/>
+                <path d="M147 150h66M169 159c1.8 5 5.5 7.5 11 7.5s9.2-2.5 11-7.5" stroke="#6C3039" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="180" cy="101" r="5" fill="#B38A52" class="activity-bell-dot"/>
+              </g>
+              <g class="activity-float-chip chip-one"><rect x="38" y="74" width="60" height="34" rx="17" fill="#fff" stroke="#E4D7C7"/><text x="68" y="96" text-anchor="middle" font-size="15">❤️</text></g>
+              <g class="activity-float-chip chip-two"><rect x="270" y="86" width="58" height="34" rx="17" fill="#fff" stroke="#E4D7C7"/><text x="299" y="108" text-anchor="middle" font-size="15">💬</text></g>
+              <g class="activity-float-chip chip-three"><rect x="54" y="190" width="60" height="34" rx="17" fill="#fff" stroke="#E4D7C7"/><text x="84" y="212" text-anchor="middle" font-size="15">➕</text></g>
+              <g class="activity-float-chip chip-four"><rect x="258" y="186" width="64" height="34" rx="17" fill="#fff" stroke="#E4D7C7"/><text x="290" y="208" text-anchor="middle" font-size="15">🔖</text></g>
+              <circle class="activity-spark spark-a" cx="101" cy="45" r="3" fill="#B38A52"/>
+              <circle class="activity-spark spark-b" cx="284" cy="52" r="4" fill="#6C3039"/>
+              <circle class="activity-spark spark-c" cx="312" cy="154" r="3" fill="#B38A52"/>
+            </svg>
+          </div>
+        </div>
+        <div class="activity-summary" id="activitySummary"></div>
+        <div class="activity-switcher" role="tablist" aria-label="Activity views">
+          <button class="activity-tab active" id="activityForYouTab" role="tab" aria-selected="true" onclick="setActivityView('forYou')"><span>For You</span><small>Notifications & community activity</small></button>
+          <button class="activity-tab" id="activityMineTab" role="tab" aria-selected="false" onclick="setActivityView('mine')"><span>My Activity</span><small>Your interactions across the archive</small></button>
+        </div>
+        <div class="activity-filter-row" id="activityFilterRow"></div>
+        <div class="activity-feed" id="activityFeed"></div>
+      </section>
+
       <section class="page" id="page-saved">
         <div class="section-head"><div><div class="kicker">Personal library</div><h3>Saved Works</h3></div><p>Works you saved for later reading.</p></div>
         <div class="panel"><div class="grid3" id="savedGrid"></div></div>
@@ -971,9 +1038,13 @@ button,input,textarea,select{max-width:100%}
 </div>
 
 <div class="modal" id="notificationsModal" onclick="outsideModal(event,this)">
-  <div class="modal-box">
-    <div class="modal-head"><div><div class="kicker">Activity & updates</div><h3>Notifications</h3></div><button class="close" onclick="closeModal('notificationsModal')">×</button></div>
-    <div class="actions" style="justify-content:flex-end;margin:10px 0"><button class="secondary" onclick="markNotificationsRead()">Mark all read</button></div>
+  <div class="modal-box notification-modal-box">
+    <div class="notification-modal-intro">
+      <div class="notification-modal-icon" aria-hidden="true"><svg viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="25" stroke="currentColor" stroke-opacity=".15"/><path d="M18 29v-5a10 10 0 0 1 20 0v5c0 5 2 7 4 9H14c2-2 4-4 4-9Z" stroke="currentColor" stroke-width="1.7"/><path d="M24 42h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="28" cy="13" r="2.2" fill="currentColor"/></svg></div>
+      <div><div class="kicker">Live updates</div><h3>Notifications</h3><p>Follow the little moments happening around your writing.</p></div>
+      <button class="close" onclick="closeModal('notificationsModal')">×</button>
+    </div>
+    <div class="notification-modal-toolbar"><button class="secondary" onclick="openActivityCenter('forYou')">Open Activity Center</button><button class="secondary" onclick="markNotificationsRead()">Mark all read</button></div>
     <div id="notificationsList" class="notifications-list"></div>
   </div>
 </div>
@@ -1298,6 +1369,7 @@ function reactionButtonHTML(w){
 function persistSessionData(){
   localStorage.setItem('shkNotifications',JSON.stringify(notifications));
   localStorage.setItem('shkHistory',JSON.stringify(history));
+  localStorage.setItem('shkActivityLog',JSON.stringify(activityLog));
   localStorage.setItem('shkDarkMode',JSON.stringify(darkMode));
 }
 
@@ -1354,6 +1426,9 @@ let currentUser = normalizeUser(readJSON('shkUser',null));
 let notifications = readJSON('shkNotifications',[]).filter(n=>n&&n.to);
 let history = readJSON('shkHistory',{});
 let darkMode = !!readJSON('shkDarkMode',false);
+let activityLog = readJSON('shkActivityLog',{});
+let activityView = 'forYou';
+let activityFilter = 'all';
 let followingMode = 'latest';
 let followingRangeDays = 0;
 let saved = readJSON('shkSaved',[]).filter(id=>!LEGACY_DEMO_IDS.has(id));
@@ -1411,6 +1486,7 @@ const titleMap = {
  about:['About','The story behind 12-Shakespeare'],
  following:['Following Feed','New work from students you follow'],
  history:['Reading History','Your recently opened literature'],
+ activity:['Activity Center','Your notifications, interactions, and archive activity'],
  profile:['Student Profile','Works, follows, and writing by this student'],
  reader:['Reading','A focused literary reading experience']
 };
@@ -1468,7 +1544,7 @@ function showPage(name){
 
 function renderAll(){
  document.querySelectorAll('.reaction-picker.open').forEach(closeReactionPicker);
- updateProfileUI(); renderHome(); renderFeed(); renderLibrary(); renderSaved(); renderMyWorks(); renderAuthors(); renderProfile(); renderFollowing(); renderHistory(); syncCreateEditUI();
+ updateProfileUI(); renderHome(); renderFeed(); renderLibrary(); renderSaved(); renderMyWorks(); renderAuthors(); renderProfile(); renderFollowing(); renderHistory(); renderActivity(); syncCreateEditUI();
 toggleCreateGate(); renderNotificationsBadge(); applyDarkMode(); const feedbackIdentity=document.getElementById('feedbackIdentity'); if(feedbackIdentity)feedbackIdentity.textContent=identityLabelOf(currentUser).toUpperCase();
 }
 function updateProfileUI(){
@@ -1636,7 +1712,9 @@ function renderHistory(){
 }
 function rememberRead(work){
  const key=historyKey(); const list=Array.isArray(history[key])?history[key]:[];
+ const already=list.some(x=>x.id===work.id);
  history[key]=[{id:work.id,at:Date.now()},...list.filter(x=>x.id!==work.id)].slice(0,25); persistSessionData();
+ if(currentUser&&!already)addMyActivity('reading',`You opened “${work.title}”.`,{workId:work.id,workTitle:work.title});
 }
 function clearHistory(){history[historyKey()]=[];persistSessionData();renderHistory();showToast('Reading history cleared.')}
 
@@ -1840,6 +1918,7 @@ async function toggleFollow(key,btn){
    users[meIndex].following=currentUser.following.slice();
    if(btn){btn.classList.remove('on');btn.textContent='Follow';}
    if(currentUser.uid&&target.uid)await syncFollowCloud(target,false);
+   addMyActivity('follow',`You unfollowed @${usernameOf(target)}.`,{targetUid:targetKey,targetEmail:target.email||'',targetName:publicNameOf(target)});
    showToast('Unfollowed @'+usernameOf(target)+'.');
  }else{
    currentUser.following=[...new Set([...currentUser.following,targetKey])];
@@ -1847,6 +1926,7 @@ async function toggleFollow(key,btn){
    if(btn){btn.classList.add('on');btn.textContent='Following';}
    if(currentUser.uid&&target.uid)await syncFollowCloud(target,true);
    if(userIdOf(target))addNotification(userIdOf(target),`${publicNameOf(currentUser)} followed you`,'',{type:'follow',actorUid:currentUser.uid||'',actorEmail:currentUser.email||'',actorName:publicNameOf(currentUser),actorUsername:usernameOf(currentUser),actorPhoto:currentUser.photoURL||currentUser.photo||''});
+   addMyActivity('follow',`You followed @${usernameOf(target)}.`,{targetUid:targetKey,targetEmail:target.email||'',targetName:publicNameOf(target)});
    showToast('Following @'+usernameOf(target)+'.');
  }
  currentUser=normalizeUser({...users[meIndex]}); saveState();
@@ -1887,8 +1967,9 @@ function toggleCreateGate(){
 
 function setFeedFilter(btn,val){feedFilter=val;document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderFeed()}
 function toggleSaved(id,btn){
- if(saved.includes(id)){saved=saved.filter(x=>x!==id);if(btn)btn.textContent='☆';showToast('Removed from saved works.')}
- else{saved.push(id);if(btn)btn.textContent='★';showToast('Saved to your library.')}
+ const work=works.find(x=>x.id===id);
+ if(saved.includes(id)){saved=saved.filter(x=>x!==id);if(btn)btn.textContent='☆';showToast('Removed from saved works.');if(work)addMyActivity('saved',`You removed “${work.title}” from your saved works.`,{workId:work.id,workTitle:work.title});}
+ else{saved.push(id);if(btn)btn.textContent='★';showToast('Saved to your library.');if(work){addMyActivity('saved',`You saved “${work.title}” to your reading library.`,{workId:work.id,workTitle:work.title});if(work.ownerUid||work.email)addNotification(work.ownerUid||work.email,`${publicNameOf(currentUser)} saved your work`,work.title,{type:'saved',workId:work.id});}}
  saveState();renderSaved();
 }
 function collectDraftPayload(){
@@ -1942,6 +2023,7 @@ function saveEditedWorkAndBack(){
   const payload={title:document.getElementById('postTitle').value.trim()||'Untitled',author:publicNameOf(currentUser),email:currentUser.email,genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
   works[idx]=normalizeWork({...old,...payload,updatedAt:now});
   queueCloudWorkSync(works[idx]);
+  addMyActivity('writing',`You edited “${works[idx].title}”.`,{workId:works[idx].id,workTitle:works[idx].title});
   closeModal('saveEditModal');
   resetCreateForm();
   saveState();renderAll();showPage('myworks');showToast('Your edited work was saved.');
@@ -1971,13 +2053,13 @@ function saveDraft(){
   if(idx<0){showToast('Draft not found. Please reload My Works and try again.');return;}
   drafts[idx]={...drafts[idx],...payload};
   const savedId=drafts[idx].id;
-  saveState();editingDraftId=null;editingWorkId=null;syncCreateEditUI();renderMyWorks();showToast('Draft updated. Your changes were saved to the same draft.');showPage('myworks');
+  saveState();addMyActivity('writing',`You updated draft “${drafts[idx].title||'Untitled'}”.`,{});editingDraftId=null;editingWorkId=null;syncCreateEditUI();renderMyWorks();showToast('Draft updated. Your changes were saved to the same draft.');showPage('myworks');
   return;
  }
  const draft={id:'draft-'+Date.now(),createdAt:Date.now(),...payload};
  drafts.unshift(draft);
  editingDraftId=draft.id;
- saveState();editingDraftId=null;editingWorkId=null;syncCreateEditUI();renderMyWorks();showToast('Draft saved.');showPage('myworks');
+ saveState();addMyActivity('writing',`You saved a draft: “${draft.title||'Untitled'}”.`,{});editingDraftId=null;editingWorkId=null;syncCreateEditUI();renderMyWorks();showToast('Draft saved.');showPage('myworks');
 }
 document.getElementById('createForm').addEventListener('submit',function(e){
  e.preventDefault();contentUser();if(!currentUser){openAccount();return}
@@ -2013,6 +2095,8 @@ document.getElementById('createForm').addEventListener('submit',function(e){
   const newWork=normalizeWork({id:'work-'+now,...payload,likes:[],reactions:emptyReactions(),comments:[],views:0,createdAt:now,updatedAt:now,ownerUid:cloudAuthUid()});
   works.unshift(newWork);
   queueCloudWorkSync(newWork);
+  addMyActivity('writing',`You published “${newWork.title}”.`,{workId:newWork.id,workTitle:newWork.title});
+  if(newWork.privacy==='public')notifyFollowersAboutNewWork(newWork);
   showToast('Your literature has been published.');
  }
  saveState();resetCreateForm();renderAll();showPage('feed');
@@ -2122,7 +2206,10 @@ function chooseReaction(e,id,type){
  syncWorkReactionToCloud(id,before===type?'':type);
  if(readerWork?.id===id)readerWork=w;
  saveState();
- if(before!==type && w.email!==currentUser.email){addNotification(w.ownerUid||w.email,`${publicNameOf(currentUser)} reacted with ${REACTION_TYPES[type].label} to your work`,w.title,{type:'reaction',workId:w.id,actorUid:currentUser.uid||'',actorEmail:currentUser.email||'',actorName:publicNameOf(currentUser),actorUsername:usernameOf(currentUser),actorPhoto:currentUser.photoURL||currentUser.photo||''})}
+ if(before!==type){
+   addMyActivity('reaction',`You reacted ${REACTION_TYPES[type].icon} to “${w.title}”.`,{workId:w.id,workTitle:w.title});
+   if(w.email!==currentUser.email)addNotification(w.ownerUid||w.email,`${publicNameOf(currentUser)} reacted with ${REACTION_TYPES[type].label} to your work`,w.title,{type:'reaction',workId:w.id,actorUid:currentUser.uid||'',actorEmail:currentUser.email||'',actorName:publicNameOf(currentUser),actorUsername:usernameOf(currentUser),actorPhoto:currentUser.photoURL||currentUser.photo||''});
+ }
  renderAll();
  renderReaderSocial();
  renderComments();
@@ -2182,7 +2269,7 @@ function renderComments(){
  const list=comments.length?comments.map(c=>renderCommentItem(readerWork.id,c,false)).join(''):'<div class="empty" style="padding:20px 0"><h4>No comments yet</h4><p>Be the first to leave a comment.</p></div>';
  root.innerHTML=list;
 }
-function submitComment(e){e.preventDefault();contentUser();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now(),reactions:emptyReactions(),replies:[]};works[idx].comments=[...(works[idx].comments||[]),comment];works[idx]=normalizeWork(works[idx]);readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.ownerUid||readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title,{type:'comment',workId:readerWork.id,commentId:comment.id});saveState();syncCommentToCloud(readerWork.id,comment,null);renderComments();renderReaderSocial();showToast('Comment posted.')}
+function submitComment(e){e.preventDefault();contentUser();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now(),reactions:emptyReactions(),replies:[]};works[idx].comments=[...(works[idx].comments||[]),comment];works[idx]=normalizeWork(works[idx]);readerWork=works[idx];addMyActivity('comment',`You commented on “${readerWork.title}”.`,{workId:readerWork.id,workTitle:readerWork.title});if(readerWork.email!==currentUser.email)addNotification(readerWork.ownerUid||readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title,{type:'comment',workId:readerWork.id,commentId:comment.id});notifyMentionedUsers(text,readerWork,{workId:readerWork.id,commentId:comment.id});saveState();syncCommentToCloud(readerWork.id,comment,null);renderComments();renderReaderSocial();showToast('Comment posted.')}
 function openCommentModal(id){
  contentUser();
  const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
@@ -2241,8 +2328,9 @@ function toggleCommentReaction(e,workId,commentId,type,isReply=false){
  syncCommentReactionToCloud(workId,commentId,before===type?'':type);
  const commentAuthor=findUser(found.comment.userUid||found.comment.email);
  const commentAuthorKey=commentAuthor?userIdOf(commentAuthor):(found.comment.userUid||found.comment.email||'');
- if(before!==type && commentAuthorKey && commentAuthorKey!==userIdOf(currentUser)){
-   addNotification(commentAuthorKey,`${publicNameOf(currentUser)} reacted with ${REACTION_TYPES[type].label} to your comment`,w.title,{type:'comment_reaction',workId,commentId});
+ if(before!==type){
+   addMyActivity('comment_reaction',`You reacted ${REACTION_TYPES[type].icon} to a comment on “${w.title}”.`,{workId:w.id,workTitle:w.title});
+   if(commentAuthorKey && commentAuthorKey!==userIdOf(currentUser))addNotification(commentAuthorKey,`${publicNameOf(currentUser)} reacted with ${REACTION_TYPES[type].label} to your comment`,w.title,{type:'comment_reaction',workId,commentId});
  }
  saveState();renderCommentModal();renderComments();renderReaderSocial();
  document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'));
@@ -2282,6 +2370,8 @@ function submitPopupComment(e){
  else w.comments=[...(w.comments||[]),comment];
  works[idx]=normalizeWork(w);commentModalWork=works[idx];if(readerWork?.id===commentModalWork.id)readerWork=works[idx];
  syncCommentToCloud(commentModalWork.id,comment,targetId);
+ addMyActivity(targetId?'reply':'comment',targetId?`You replied to a comment on “${commentModalWork.title}”.`:`You commented on “${commentModalWork.title}”.`,{workId:commentModalWork.id,workTitle:commentModalWork.title});
+ notifyMentionedUsers(text,commentModalWork,{workId:commentModalWork.id,commentId:comment.id});
  if(targetId){
    const parent=findComment(commentModalWork,targetId)?.comment;
    const parentAuthor=findUser(parent?.userUid||parent?.email);
@@ -2318,6 +2408,7 @@ async function shareWork(id){
  const shareUrl=url.toString();
  try{history.replaceState(null,'',url.hash)}catch(_err){}
  const copied=await copyShareLink(shareUrl);
+ const sharedWork=works.find(w=>w.id===id);if(sharedWork)addMyActivity('share',`You shared “${sharedWork.title}”.`,{workId:sharedWork.id,workTitle:sharedWork.title});
  showToast(copied?'Share link copied to clipboard.':'Could not copy automatically. Please copy the link from the address bar.');
 }
 function changeReaderSize(delta){
@@ -2376,6 +2467,8 @@ function notificationActivityOf(text){
  }
  if(/liked your work/i.test(value))return 'liked your work';
  if(/saved your work/i.test(value))return 'saved your work';
+ if(/published a new work/i.test(value))return 'published a new work';
+ if(/mentioned you/i.test(value))return 'mentioned you';
  return value;
 }
 function notificationTypeOf(n){
@@ -2388,6 +2481,8 @@ function notificationTypeOf(n){
  if(t.includes('commented on your work'))return 'comment';
  if(t.includes('liked your work'))return 'reaction';
  if(t.includes('saved your work'))return 'saved';
+ if(t.includes('published a new work'))return 'new_work';
+ if(t.includes('mentioned you'))return 'mention';
  return 'activity';
 }
 function notificationBelongsToCurrentUser(n){
@@ -2420,6 +2515,9 @@ function relativeTimeFrom(ts){
  const years=Math.floor(days/365);
  return `${years} year${years===1?'':'s'} ago`;
 }
+async function notifyMentionedUsers(text,work,meta={}){const mentions=[...String(text||'').matchAll(/@([a-zA-Z0-9_.-]{2,32})/g)].map(m=>m[1].toLowerCase());if(!mentions.length)return;[...new Set(mentions)].forEach(handle=>{const target=users.find(u=>usernameOf(u).toLowerCase()===handle);if(!target||!currentUser||userIdOf(target)===userIdOf(currentUser))return;addNotification(userIdOf(target),`${publicNameOf(currentUser)} mentioned you`,work?.title||'',{type:'mention',workId:work?.id||meta.workId||'',commentId:meta.commentId||'',actorUid:currentUser.uid||'',actorEmail:currentUser.email||'',actorName:publicNameOf(currentUser),actorUsername:usernameOf(currentUser),actorPhoto:currentUser.photoURL||currentUser.photo||''})})}
+async function notifyFollowersAboutNewWork(work){if(!currentUser||!work?.id)return;try{await hydrateUserConnections(currentUser)}catch(_e){}const followers=(currentUser.followers||[]).map(String).filter(Boolean);[...new Set(followers)].forEach(key=>{if(key===userIdOf(currentUser)||canonicalEmail(key)===canonicalEmail(currentUser.email))return;addNotification(key,`${publicNameOf(currentUser)} published a new work`,work.title,{type:'new_work',workId:work.id,actorUid:currentUser.uid||'',actorEmail:currentUser.email||'',actorName:publicNameOf(currentUser),actorUsername:usernameOf(currentUser),actorPhoto:currentUser.photoURL||currentUser.photo||''})})}
+
 function notificationDateTime(ts){
  return new Date(Number(ts||Date.now())).toLocaleString([],{
    year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'
@@ -2579,6 +2677,28 @@ function markNotificationsRead(){
    });
  }
 }
+
+const ACTIVITY_FILTERS={all:'All',follow:'Follows',reaction:'Reactions',comment:'Comments',saved:'Saves',reading:'Reading',writing:'Writing',share:'Shares',mention:'Mentions',new_work:'New Work'};
+function activityTypeOf(record){return String(record?.type||'activity')}
+function activityCategoryOf(record){const type=activityTypeOf(record);if(type==='follow')return'follow';if(['reaction','comment_reaction'].includes(type))return'reaction';if(['comment','reply','comment_reaction','mention'].includes(type))return'comment';if(type==='saved')return'saved';if(type==='reading')return'reading';if(['writing','new_work'].includes(type))return'writing';if(type==='share')return'share';return type}
+function activityIconOf(type){return({follow:'➕',reaction:'❤️',comment:'💬',reply:'↩️',comment_reaction:'❤️',saved:'🔖',reading:'📖',writing:'✍️',share:'↗️',mention:'@',new_work:'✨',system:'✦'})[type]||'✦'}
+function activityLabelOf(type){return({follow:'Follow',reaction:'Reaction',comment:'Comment',reply:'Reply',comment_reaction:'Comment reaction',saved:'Saved',reading:'Reading',writing:'Writing',share:'Shared',mention:'Mention',new_work:'New work',system:'System'})[type]||'Activity'}
+function activityBucketKey(user=currentUser){return userIdOf(user)||canonicalEmail(user?.email)||'guest'}
+function myActivityList(){return Array.isArray(activityLog[activityBucketKey()])?activityLog[activityBucketKey()]:[]}
+async function saveCloudMyActivity(uid){if(!uid||!window.firebaseDB||!window.firebaseDoc||!window.firebaseSetDoc)return false;try{if(window.firebaseReady)await window.firebaseReady;const authUser=window.firebaseAuth?.currentUser;if(!authUser||authUser.isAnonymous||String(authUser.uid)!==String(uid))return false;const ref=window.firebaseDoc(window.firebaseDB,'users',String(uid),'private','activity');await window.firebaseSetDoc(ref,{items:(activityLog[String(uid)]||[]).slice(0,500),updatedAt:window.firebaseServerTimestamp()},{merge:true});return true}catch(err){console.warn('Cloud activity write failed:',err);return false}}
+async function hydrateCloudMyActivity(uid){if(!uid||!window.firebaseDB||!window.firebaseDoc||!window.firebaseGetDoc)return false;try{if(window.firebaseReady)await window.firebaseReady;const snap=await window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB,'users',String(uid),'private','activity'));if(snap.exists()){const items=Array.isArray(snap.data()?.items)?snap.data().items:[];activityLog[String(uid)]=items.slice(0,500);persistSessionData()}return true}catch(err){console.warn('Cloud activity hydration failed:',err);return false}}
+function addMyActivity(type,text,meta={}){if(!currentUser)return null;const key=activityBucketKey();const record={id:'a-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),type:String(type||'activity'),text:String(text||''),workId:String(meta.workId||''),workTitle:String(meta.workTitle||''),targetUid:String(meta.targetUid||''),targetEmail:String(meta.targetEmail||''),targetName:String(meta.targetName||''),at:Date.now(),icon:activityIconOf(type)};if(!Array.isArray(activityLog[key]))activityLog[key]=[];activityLog[key].unshift(record);activityLog[key]=activityLog[key].slice(0,500);persistSessionData();saveCloudMyActivity(key).catch(()=>{});if(document.getElementById('page-activity')?.classList.contains('active'))renderActivity();return record}
+function setActivityView(view){activityView=view==='mine'?'mine':'forYou';document.querySelectorAll('.activity-tab').forEach(x=>{const active=(x.id==='activityMineTab')===(activityView==='mine');x.classList.toggle('active',active);x.setAttribute('aria-selected',active?'true':'false')});renderActivity()}
+function setActivityFilter(filter){activityFilter=ACTIVITY_FILTERS[filter]?filter:'all';document.querySelectorAll('.activity-filter').forEach(x=>x.classList.toggle('active',x.dataset.filter===activityFilter));renderActivity()}
+function activityFilterMatches(record){return activityFilter==='all'||activityCategoryOf(record)===activityFilter||activityTypeOf(record)===activityFilter}
+function openActivityCenter(view='forYou'){if(!currentUser){showToast('Sign in to view your activity.');openAccount();return}closeModal('notificationsModal');activityView=view==='mine'?'mine':'forYou';showPage('activity')}
+function openActivityItem(view,id){if(view==='forYou')return openNotificationById(id);const record=myActivityList().find(x=>String(x.id)===String(id));if(!record)return;if(record.type==='follow'&&record.targetUid){openProfile(record.targetUid);return}if(record.workId){openReader(record.workId);return}if(record.targetUid){openProfile(record.targetUid);return}showToast('Activity recorded.')}
+function renderActivity(){const root=document.getElementById('activityFeed');if(!root)return;const summary=document.getElementById('activitySummary');const filters=document.getElementById('activityFilterRow');if(!currentUser){if(summary)summary.innerHTML='<div class="activity-summary-card"><small>Today</small><strong>—</strong><span>Sign in to see your live activity.</span></div><div class="activity-summary-card"><small>Unread</small><strong>0</strong><span>No account activity loaded.</span></div><div class="activity-summary-card"><small>Your Actions</small><strong>0</strong><span>Follow, react, comment, save.</span></div><div class="activity-summary-card"><small>Archive</small><strong>Open</strong><span>Explore the literary collection.</span></div>';if(filters)filters.innerHTML='';root.innerHTML='<div class="activity-empty"><div class="activity-empty-icon">✦</div><h4>Your archive pulse is waiting.</h4><p>Sign in to see follow alerts, reactions, comment threads, saved works, and your own activity trail.</p><button class="primary" type="button" style="margin-top:14px" onclick="openAccount()">Open Account</button></div>';return}
+ const incoming=notifications.filter(notificationBelongsToCurrentUser).sort((a,b)=>(b.at||0)-(a.at||0));const mine=myActivityList().slice().sort((a,b)=>(b.at||0)-(a.at||0));const source=activityView==='mine'?mine:incoming;const filtered=source.filter(activityFilterMatches);const weekAgo=Date.now()-7*86400000;const myWeek=mine.filter(x=>(x.at||0)>=weekAgo).length;const reactionsMine=mine.filter(x=>activityCategoryOf(x)==='reaction').length;const commentsMine=mine.filter(x=>activityCategoryOf(x)==='comment').length;const unread=incoming.filter(n=>!n.read).length;
+ if(summary)summary.innerHTML=`<div class="activity-summary-card"><small>${activityView==='mine'?'This week':'Unread'}</small><strong>${activityView==='mine'?myWeek:unread}</strong><span>${activityView==='mine'?'new interactions from the last 7 days':'notifications waiting for you'}</span></div><div class="activity-summary-card"><small>Reactions</small><strong>${reactionsMine}</strong><span>reactions you have given</span></div><div class="activity-summary-card"><small>Comments</small><strong>${commentsMine}</strong><span>comments and replies you posted</span></div><div class="activity-summary-card"><small>Timeline</small><strong>${source.length}</strong><span>${activityView==='mine'?'your recorded actions':'community updates for you'}</span></div>`;
+ if(filters)filters.innerHTML=Object.entries(ACTIVITY_FILTERS).map(([key,label])=>`<button type="button" class="activity-filter ${activityFilter===key?'active':''}" data-filter="${key}" onclick="setActivityFilter('${key}',this)">${label}</button>`).join('');
+ if(!filtered.length){root.innerHTML=`<div class="activity-empty"><div class="activity-empty-icon">${activityView==='mine'?'✍️':'🔔'}</div><h4>${activityView==='mine'?'Nothing logged here yet.':'You are all caught up.'}</h4><p>${activityView==='mine'?'Your follow, reaction, comment, save, share, and writing actions will appear here as you use the archive.':'New follows, reactions, comments, replies, mentions, saves, and new works from your circle will appear here.'}</p></div>`;return}
+ root.innerHTML=filtered.map(record=>{const isNotification=activityView==='forYou';const type=activityTypeOf(record);const actor=isNotification?notificationActorOf(record):currentUser;const name=publicNameOf(actor);const username=usernameOf(actor);const photo=actor?.photoURL||actor?.photo||'';const avatar=photo?`<img src="${escapeAttr(photo)}" alt="${escapeAttr(name)} profile picture">`:`<span>${escapeHTML(initialsOf(name))}</span>`;let body='';if(isNotification){const act=notificationActivityOf(record.text);const title=record.workTitle?` on <b>${escapeHTML(record.workTitle)}</b>`:'';body=`${escapeHTML(act)}${title}`}else body=escapeHTML(record.text||'Activity recorded.');return `<article class="activity-item ${record.read?'':'unread'}" role="button" tabindex="0" onclick="openActivityItem('${activityView}','${escapeAttr(record.id||'')}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openActivityItem('${activityView}','${escapeAttr(record.id||'')}')}"><div class="activity-item-avatar">${avatar}</div><div class="activity-item-main"><div class="activity-item-head"><strong class="activity-item-name">${escapeHTML(name)}</strong><span class="activity-item-handle">@${escapeHTML(username)}</span></div><div class="activity-item-text">${body}</div><div class="activity-item-meta"><span class="activity-type-pill">${activityIconOf(type)} ${escapeHTML(activityLabelOf(type))}</span><span>${escapeHTML(relativeTimeFrom(record.at))}</span><span>·</span><span>${escapeHTML(notificationDateTime(record.at))}</span></div></div><div class="activity-item-arrow" aria-hidden="true">›</div></article>`}).join('')}
 
 function applyDarkMode(){document.documentElement.classList.toggle('dark',darkMode)}
 function toggleDarkMode(){darkMode=!darkMode;persistSessionData();applyDarkMode();showToast(darkMode?'Dark mode enabled.':'Light mode enabled.')}
@@ -2928,6 +3048,7 @@ function startCloudNotificationSync(){
       if(!uid)return;
       // wait briefly for restoreFirebaseSession to align currentUser with Firebase Auth
       for(let i=0;i<8&&(!currentUser||String(currentUser.uid||'')!==uid);i++)await new Promise(r=>setTimeout(r,120));
+      await hydrateCloudMyActivity(uid);
       await hydrateCloudNotifications(uid);
       attachCloudNotificationListener(uid);
     };
@@ -3661,6 +3782,7 @@ async function restoreFirebaseSession(){
       saveState();
       try{await saveCloudUserProfile(currentUser)}catch(err){console.warn('Current user cloud profile refresh failed:',err)}
       renderAll();
+      if(currentUser.uid)hydrateCloudMyActivity(currentUser.uid).then(()=>{if(document.getElementById('page-activity')?.classList.contains('active'))renderActivity()});
       return;
     }
 
