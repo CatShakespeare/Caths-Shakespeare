@@ -614,7 +614,7 @@ button,input,textarea,select{max-width:100%}
 .notification-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:6px;color:#9A9089;font-size:.61rem;line-height:1.35}
 .notification-time-relative{color:#756B65;font-weight:700}
 .notification-date{color:#AAA099}
-.notification-arrow{width:26px;height:26px;border:1px solid var(--line);border-radius:8px;background:#fff;color:#8B817B;display:grid;place-items:center;font-size:.78rem;flex:none}
+.notification{cursor:pointer}.notification:focus-visible{outline:3px solid rgba(179,138,82,.24);outline-offset:2px}.notification-arrow{width:26px;height:26px;border:1px solid var(--line);border-radius:8px;background:#fff;color:#8B817B;display:grid;place-items:center;font-size:.78rem;flex:none}.notification:hover .notification-arrow{border-color:#D9C8B3;color:var(--wine)}
 @media(max-width:560px){
   .notification{grid-template-columns:38px minmax(0,1fr);gap:10px;padding:11px}
   .notification-avatar{width:38px;height:38px}
@@ -972,7 +972,7 @@ button,input,textarea,select{max-width:100%}
 
 <div class="modal" id="notificationsModal" onclick="outsideModal(event,this)">
   <div class="modal-box">
-    <div class="modal-head"><div><div class="kicker">Your activity</div><h3>Notifications</h3></div><button class="close" onclick="closeModal('notificationsModal')">×</button></div>
+    <div class="modal-head"><div><div class="kicker">Activity & updates</div><h3>Notifications</h3></div><button class="close" onclick="closeModal('notificationsModal')">×</button></div>
     <div class="actions" style="justify-content:flex-end;margin:10px 0"><button class="secondary" onclick="markNotificationsRead()">Mark all read</button></div>
     <div id="notificationsList" class="notifications-list"></div>
   </div>
@@ -1846,7 +1846,7 @@ async function toggleFollow(key,btn){
    users[meIndex].following=currentUser.following.slice();
    if(btn){btn.classList.add('on');btn.textContent='Following';}
    if(currentUser.uid&&target.uid)await syncFollowCloud(target,true);
-   if(target.email)addNotification(target.email,`${publicNameOf(currentUser)} followed you`,'');
+   if(userIdOf(target))addNotification(userIdOf(target),`${publicNameOf(currentUser)} followed you`,'',{type:'follow',actorUid:currentUser.uid||'',actorEmail:currentUser.email||'',actorName:publicNameOf(currentUser),actorUsername:usernameOf(currentUser),actorPhoto:currentUser.photoURL||currentUser.photo||''});
    showToast('Following @'+usernameOf(target)+'.');
  }
  currentUser=normalizeUser({...users[meIndex]}); saveState();
@@ -2122,7 +2122,7 @@ function chooseReaction(e,id,type){
  syncWorkReactionToCloud(id,before===type?'':type);
  if(readerWork?.id===id)readerWork=w;
  saveState();
- if(before!==type && w.email!==currentUser.email){addNotification(w.email,`${publicNameOf(currentUser)} reacted with ${REACTION_TYPES[type].label}`,w.title)}
+ if(before!==type && w.email!==currentUser.email){addNotification(w.ownerUid||w.email,`${publicNameOf(currentUser)} reacted with ${REACTION_TYPES[type].label} to your work`,w.title,{type:'reaction',workId:w.id,actorUid:currentUser.uid||'',actorEmail:currentUser.email||'',actorName:publicNameOf(currentUser),actorUsername:usernameOf(currentUser),actorPhoto:currentUser.photoURL||currentUser.photo||''})}
  renderAll();
  renderReaderSocial();
  renderComments();
@@ -2182,7 +2182,7 @@ function renderComments(){
  const list=comments.length?comments.map(c=>renderCommentItem(readerWork.id,c,false)).join(''):'<div class="empty" style="padding:20px 0"><h4>No comments yet</h4><p>Be the first to leave a comment.</p></div>';
  root.innerHTML=list;
 }
-function submitComment(e){e.preventDefault();contentUser();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now(),reactions:emptyReactions(),replies:[]};works[idx].comments=[...(works[idx].comments||[]),comment];works[idx]=normalizeWork(works[idx]);readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title);saveState();syncCommentToCloud(readerWork.id,comment,null);renderComments();renderReaderSocial();showToast('Comment posted.')}
+function submitComment(e){e.preventDefault();contentUser();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now(),reactions:emptyReactions(),replies:[]};works[idx].comments=[...(works[idx].comments||[]),comment];works[idx]=normalizeWork(works[idx]);readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.ownerUid||readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title,{type:'comment',workId:readerWork.id,commentId:comment.id});saveState();syncCommentToCloud(readerWork.id,comment,null);renderComments();renderReaderSocial();showToast('Comment posted.')}
 function openCommentModal(id){
  contentUser();
  const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
@@ -2238,7 +2238,13 @@ function toggleCommentReaction(e,workId,commentId,type,isReply=false){
  Object.keys(r).forEach(k=>{r[k]=r[k].filter(x=>!ids.includes(String(x))&&!ids.includes(canonicalEmail(x)))});
  if(before!==type)r[type].push(String(currentUser.uid||currentUser.email));
  found.comment.reactions=r;works[idx]=normalizeWork(w);readerWork=readerWork?.id===workId?works[idx]:readerWork;commentModalWork=commentModalWork?.id===workId?works[idx]:commentModalWork;
- saveState();deleteCommentFromCloud(workId,commentId);renderCommentModal();renderComments();renderReaderSocial();
+ syncCommentReactionToCloud(workId,commentId,before===type?'':type);
+ const commentAuthor=findUser(found.comment.userUid||found.comment.email);
+ const commentAuthorKey=commentAuthor?userIdOf(commentAuthor):(found.comment.userUid||found.comment.email||'');
+ if(before!==type && commentAuthorKey && commentAuthorKey!==userIdOf(currentUser)){
+   addNotification(commentAuthorKey,`${publicNameOf(currentUser)} reacted with ${REACTION_TYPES[type].label} to your comment`,w.title,{type:'comment_reaction',workId,commentId});
+ }
+ saveState();renderCommentModal();renderComments();renderReaderSocial();
  document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'));
  showToast(before===type?'Comment reaction removed':`${REACTION_TYPES[type].label} reaction added to comment.`);
 }
@@ -2260,7 +2266,7 @@ function deleteComment(workId,commentId,isReply=false){
  targetList.splice(removeIndex,1);
  works[idx]=normalizeWork(w);if(readerWork?.id===workId)readerWork=works[idx];if(commentModalWork?.id===workId)commentModalWork=works[idx];
  if(commentReplyTarget?.id===commentId)commentReplyTarget=null;
- saveState();deleteCommentFromCloud(workId,commentId);renderCommentModal();renderComments();renderReaderSocial();updateCommentPopupForm();showToast('Comment deleted.');
+ syncCommentReactionToCloud(workId,commentId,before===type?'':type); saveState();renderCommentModal();renderComments();renderReaderSocial();updateCommentPopupForm();showToast('Comment deleted.');
 }
 function submitPopupComment(e){
  e.preventDefault();
@@ -2276,7 +2282,14 @@ function submitPopupComment(e){
  else w.comments=[...(w.comments||[]),comment];
  works[idx]=normalizeWork(w);commentModalWork=works[idx];if(readerWork?.id===commentModalWork.id)readerWork=works[idx];
  syncCommentToCloud(commentModalWork.id,comment,targetId);
- if(commentModalWork.email!==currentUser.email)addNotification(commentModalWork.email,`${publicNameOf(currentUser)} ${targetId?'replied to a comment on':'commented on'} your work`,commentModalWork.title);
+ if(targetId){
+   const parent=findComment(commentModalWork,targetId)?.comment;
+   const parentAuthor=findUser(parent?.userUid||parent?.email);
+   const parentKey=parentAuthor?userIdOf(parentAuthor):(parent?.userUid||parent?.email||'');
+   if(parentKey && parentKey!==userIdOf(currentUser))addNotification(parentKey,`${publicNameOf(currentUser)} replied to your comment`,commentModalWork.title,{type:'reply',workId:commentModalWork.id,commentId:comment.id,parentCommentId:targetId});
+ }else if(commentModalWork.email!==currentUser.email){
+   addNotification(commentModalWork.ownerUid||commentModalWork.email,`${publicNameOf(currentUser)} commented on your work`,commentModalWork.title,{type:'comment',workId:commentModalWork.id,commentId:comment.id});
+ }
  saveState();queueCloudWorkSync(works[idx]);renderAll();renderCommentModal();renderComments();renderReaderSocial();
  if(input)input.value='';commentReplyTarget=null;updateCommentPopupForm();
  showToast(targetId?'Reply posted.':'Comment posted.');
@@ -2354,21 +2367,42 @@ function handleGlobalSearchKey(e){if(e.key==='Enter'){e.preventDefault();renderG
 function notificationActivityOf(text){
  const value=String(text||'').trim();
  if(!value)return 'Activity on your account';
- const followed=value.match(/followed you/i); if(followed)return 'followed you';
- const reacted=value.match(/reacted with\s+(.+?)(?:\s+on your work)?$/i); if(reacted)return 'reacted with '+reacted[1].trim();
- const commented=value.match(/commented on your work/i); if(commented)return 'commented on your work';
- const replied=value.match(/replied to (?:a comment|your comment).*$/i); if(replied)return value.replace(/^.*?\s/i,'');
- const liked=value.match(/liked your work/i); if(liked)return 'liked your work';
+ if(/followed you/i.test(value))return 'followed you';
+ if(/commented on your work/i.test(value))return 'commented on your work';
+ if(/replied to your comment/i.test(value))return 'replied to your comment';
+ if(/reacted with\s+/i.test(value)){
+   const m=value.match(/reacted with\s+(.+?)(?:\s+to your (?:work|comment))?$/i);
+   return m?'reacted with '+m[1].trim():'reacted to your activity';
+ }
+ if(/liked your work/i.test(value))return 'liked your work';
+ if(/saved your work/i.test(value))return 'saved your work';
  return value;
+}
+function notificationTypeOf(n){
+ const explicit=String(n?.type||'').trim();
+ if(explicit)return explicit;
+ const t=String(n?.text||'').toLowerCase();
+ if(t.includes('followed you'))return 'follow';
+ if(t.includes('replied to'))return 'reply';
+ if(t.includes('reacted with'))return t.includes('comment')?'comment_reaction':'reaction';
+ if(t.includes('commented on your work'))return 'comment';
+ if(t.includes('liked your work'))return 'reaction';
+ if(t.includes('saved your work'))return 'saved';
+ return 'activity';
+}
+function notificationBelongsToCurrentUser(n){
+ if(!currentUser||!n)return false;
+ const uid=userIdOf(currentUser);
+ return (n.toUid&&String(n.toUid)===String(uid)) || (n.to&&canonicalEmail(n.to)===canonicalEmail(currentUser.email));
 }
 function notificationActorOf(n){
  const actorKey=n?.actorUid||n?.actorEmail||n?.fromUid||n?.fromEmail||'';
  const actor=findUser(actorKey);
  if(actor)return actor;
  const text=String(n?.text||'');
- const match=text.match(/^(.+?)\s+(?:reacted with|commented on|replied to|followed you|liked your work)/i);
+ const match=text.match(/^(.+?)\s+(?:reacted with|commented on|replied to|followed you|liked your work|saved your work)/i);
  const name=(n?.actorName||match?.[1]||'Anonymous Author').trim();
- return {penName:name,username:n?.actorUsername||'reader',photo:n?.actorPhoto||'',photoURL:n?.actorPhotoURL||''};
+ return {penName:name,username:n?.actorUsername||'reader',photo:n?.actorPhoto||'',photoURL:n?.actorPhotoURL||'',uid:n?.actorUid||'',email:n?.actorEmail||''};
 }
 function relativeTimeFrom(ts){
  const diff=Math.max(0,Date.now()-Number(ts||Date.now()));
@@ -2391,37 +2425,131 @@ function notificationDateTime(ts){
    year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'
  });
 }
-function addNotification(to,text,workTitle){
+function buildNotificationRecord(to,text,workTitle='',meta={}){
  const actor=currentUser?normalizeUser(currentUser):null;
- notifications.unshift({
-   id:'n-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),
-   to,text,workTitle,at:Date.now(),read:false,
-   actorUid:actor?.uid||'',actorEmail:actor?.email||'',
-   actorName:actor?.penName||publicNameOf(actor||{}),
-   actorUsername:actor?.username||'reader',
-   actorPhoto:actor?.photo||actor?.photoURL||''
- });
- notifications=notifications.slice(0,100);
+ const target=findUser(to);
+ const id='n-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);
+ return {
+   id,to:target?.email||canonicalEmail(to)||'',toUid:target?.uid||meta.toUid||'',text:String(text||''),workTitle:String(workTitle||''),
+   type:String(meta.type||'activity'),workId:String(meta.workId||''),commentId:String(meta.commentId||''),parentCommentId:String(meta.parentCommentId||''),
+   at:Date.now(),read:false,
+   actorUid:String(meta.actorUid||actor?.uid||''),actorEmail:String(meta.actorEmail||actor?.email||''),
+   actorName:String(meta.actorName||actor?.penName||publicNameOf(actor||{})),
+   actorUsername:String(meta.actorUsername||actor?.username||'reader'),
+   actorPhoto:String(meta.actorPhoto||actor?.photo||actor?.photoURL||'')
+ };
+}
+async function saveCloudNotification(notification){
+ if(!notification?.toUid||!window.firebaseDB||!window.firebaseDoc||!window.firebaseSetDoc)return false;
+ try{
+   if(window.firebaseReady)await window.firebaseReady;
+   const authUser=window.firebaseAuth?.currentUser;
+   if(!authUser||authUser.isAnonymous)return false;
+   const ref=window.firebaseDoc(window.firebaseDB,'users',String(notification.toUid),'notifications',String(notification.id));
+   await window.firebaseSetDoc(ref,{
+     id:notification.id,
+     type:notification.type||'activity',
+     text:notification.text||'',
+     workTitle:notification.workTitle||'',
+     workId:notification.workId||'',
+     commentId:notification.commentId||'',
+     parentCommentId:notification.parentCommentId||'',
+     actorUid:notification.actorUid||'',
+     actorName:notification.actorName||'Anonymous Author',
+     actorUsername:notification.actorUsername||'reader',
+     actorPhoto:notification.actorPhoto||'',
+     at:Number(notification.at||Date.now()),
+     read:!!notification.read,
+     createdAt:window.firebaseServerTimestamp(),
+     updatedAt:window.firebaseServerTimestamp()
+   },{merge:true});
+   return true;
+ }catch(err){console.warn('Cloud notification write failed:',err);return false;}
+}
+function addNotification(to,text,workTitle='',meta={}){
+ const note=buildNotificationRecord(to,text,workTitle,meta);
+ if(notificationBelongsToCurrentUser(note))return;
+ notifications.unshift(note);
+ notifications=notifications.slice(0,200);
  persistSessionData();
  renderNotificationsBadge();
+ if(document.getElementById('notificationsModal')?.classList.contains('open'))renderNotifications();
+ saveCloudNotification(note).catch(()=>{});
 }
-function renderNotificationsBadge(){const badge=document.getElementById('notificationBadge');if(!badge)return;const count=currentUser?notifications.filter(n=>n.to===currentUser.email&&!n.read).length:0;badge.textContent=count>9?'9+':String(count);badge.classList.toggle('hidden',count===0)}
-function openNotifications(){if(!currentUser){showToast('Sign in to view notifications.');openAccount();return}renderNotifications();document.getElementById('notificationsModal').classList.add('open')}
+function renderNotificationsBadge(){
+ const badge=document.getElementById('notificationBadge');if(!badge)return;
+ const count=currentUser?notifications.filter(n=>notificationBelongsToCurrentUser(n)&&!n.read).length:0;
+ badge.textContent=count>9?'9+':String(count);badge.classList.toggle('hidden',count===0)
+}
+function findNotificationWork(n){
+ if(!n)return null;
+ if(n.workId){const byId=works.find(w=>String(w.id)===String(n.workId));if(byId)return byId;}
+ if(n.workTitle){
+   const owner=findUser(n.toUid||n.to);
+   const owned=works.find(w=>w.title===n.workTitle && owner && userMatchesWork(owner,w));
+   if(owned)return owned;
+ }
+ return null;
+}
+function markNotificationReadById(id){
+ if(!currentUser)return;
+ const idx=notifications.findIndex(n=>String(n.id)===String(id)&&notificationBelongsToCurrentUser(n));
+ if(idx<0)return;
+ notifications[idx]={...notifications[idx],read:true};
+ const note=notifications[idx];
+ persistSessionData();renderNotificationsBadge();renderNotifications();
+ if(note.toUid&&currentUser.uid&&String(note.toUid)===String(currentUser.uid)){
+   Promise.resolve().then(async()=>{
+     try{
+       if(window.firebaseReady)await window.firebaseReady;
+       if(window.firebaseSetDoc&&window.firebaseDoc&&window.firebaseDB){
+         await window.firebaseSetDoc(window.firebaseDoc(window.firebaseDB,'users',String(currentUser.uid),'notifications',String(note.id)),{read:true,updatedAt:window.firebaseServerTimestamp()},{merge:true});
+       }
+     }catch(err){console.warn('Cloud notification read sync failed:',err)}
+   });
+ }
+}
+function openNotificationById(id){
+ if(!currentUser)return;
+ const note=notifications.find(n=>String(n.id)===String(id)&&notificationBelongsToCurrentUser(n));
+ if(!note)return;
+ markNotificationReadById(id);
+ closeModal('notificationsModal');
+ const type=notificationTypeOf(note);
+ const actor=notificationActorOf(note);
+ if(type==='follow'){
+   const actorKey=userIdOf(actor)||actor?.email||note.actorUid||note.actorEmail;
+   if(actorKey&&findUser(actorKey)){openProfile(actorKey);return;}
+ }
+ const work=findNotificationWork(note);
+ if(work){
+   openReader(work.id);
+   if(type==='comment'||type==='reply'||type==='comment_reaction'){
+     setTimeout(()=>openCommentModal(work.id),90);
+   }
+   return;
+ }
+ const actorKey=userIdOf(actor)||actor?.email||note.actorUid||note.actorEmail;
+ if(actorKey&&findUser(actorKey))openProfile(actorKey);else openOwnProfile();
+}
+function handleNotificationKey(event,id){
+ if(event.key==='Enter'||event.key===' '){event.preventDefault();openNotificationById(id)}
+}
 function renderNotifications(){
  const root=document.getElementById('notificationsList');
  if(!root)return;
- const list=notifications.filter(n=>n.to===currentUser?.email).sort((a,b)=>(b.at||0)-(a.at||0));
+ const list=notifications.filter(notificationBelongsToCurrentUser).sort((a,b)=>(b.at||0)-(a.at||0));
  root.innerHTML=list.length?list.map(n=>{
    const actor=notificationActorOf(n);
    const name=publicNameOf(actor);
    const username=usernameOf(actor);
    const photo=actor?.photoURL||actor?.photo||'';
    const title=n.workTitle?` on <b>${escapeHTML(n.workTitle)}</b>`:'';
-   const activity=notificationActivityOf(n.text).replace(/\s+on your work$/i,'');
+   const activity=notificationActivityOf(n.text);
    const avatar=photo
      ? `<img src="${escapeAttr(photo)}" alt="${escapeAttr(name)} profile picture">`
      : `<span>${escapeHTML(initialsOf(name))}</span>`;
-   return `<article class="notification ${n.read?'':'unread'}" data-notification-id="${escapeAttr(n.id||'')}">
+   return `<article class="notification ${n.read?'':'unread'}" data-notification-id="${escapeAttr(n.id||'')}" role="button" tabindex="0" aria-label="${escapeAttr(`${name} ${activity}${n.workTitle?` on ${n.workTitle}`:''}`)}" onclick="openNotificationById('${escapeAttr(n.id||'')}')" onkeydown="handleNotificationKey(event,'${escapeAttr(n.id||'')}')">
      <div class="notification-avatar">${avatar}</div>
      <div class="notification-main">
        <div class="notification-head"><strong class="notification-name">${escapeHTML(name)}</strong><span class="notification-username">@${escapeHTML(username)}</span></div>
@@ -2432,7 +2560,26 @@ function renderNotifications(){
    </article>`;
  }).join(''):'<div class="empty"><h4>No notifications</h4><p>You are all caught up.</p></div>';
 }
-function markNotificationsRead(){if(!currentUser)return;notifications=notifications.map(n=>n.to===currentUser.email?{...n,read:true}:n);persistSessionData();renderNotifications();renderNotificationsBadge()}
+function openNotifications(){
+ if(!currentUser){showToast('Sign in to view notifications.');openAccount();return}
+ renderNotifications();document.getElementById('notificationsModal').classList.add('open')
+}
+function markNotificationsRead(){
+ if(!currentUser)return;
+ const mine=notifications.filter(notificationBelongsToCurrentUser);
+ notifications=notifications.map(n=>notificationBelongsToCurrentUser(n)?{...n,read:true}:n);
+ persistSessionData();renderNotifications();renderNotificationsBadge();
+ if(currentUser.uid&&window.firebaseGetDocs&&window.firebaseCollection&&window.firebaseSetDoc){
+   Promise.resolve().then(async()=>{
+     try{
+       if(window.firebaseReady)await window.firebaseReady;
+       const snap=await window.firebaseGetDocs(window.firebaseCollection(window.firebaseDB,'users',String(currentUser.uid),'notifications'));
+       await Promise.all((snap.docs||[]).filter(ds=>!ds.data()?.read).map(ds=>window.firebaseSetDoc(ds.ref,{read:true,updatedAt:window.firebaseServerTimestamp()},{merge:true})));
+     }catch(err){console.warn('Cloud mark-all-read sync failed:',err)}
+   });
+ }
+}
+
 function applyDarkMode(){document.documentElement.classList.toggle('dark',darkMode)}
 function toggleDarkMode(){darkMode=!darkMode;persistSessionData();applyDarkMode();showToast(darkMode?'Dark mode enabled.':'Light mode enabled.')}
 function openEditProfile(){if(!currentUser){openAccount();return}document.getElementById('editPenName').value=currentUser.penName||publicNameOf(currentUser);document.getElementById('editUsername').value='@'+usernameOf(currentUser);document.getElementById('editBio').value=currentUser.bio||'';document.getElementById('editProfileModal').classList.add('open')}
@@ -2700,6 +2847,97 @@ async function saveCloudUserProfile(user){
 }
 
 
+
+// ---------------------------------------------------------------------------
+// Shared user notifications
+// ---------------------------------------------------------------------------
+let cloudNotificationsUnsubscribe=null;
+let cloudNotificationsAuthUnsubscribe=null;
+let cloudNotificationsStarted=false;
+let cloudNotificationsUid='';
+
+function cloudUserNotificationsCollection(uid){
+  if(!uid||!window.firebaseDB||!window.firebaseCollection)return null;
+  return window.firebaseCollection(window.firebaseDB,'users',String(uid),'notifications');
+}
+function mergeCloudNotificationIntoLocal(raw,uid){
+  const id=String(raw?.id||raw?.notificationId||'').trim();
+  if(!id||!uid)return false;
+  const existing=notifications.find(n=>String(n.id)===id);
+  const merged={
+    ...existing,
+    ...raw,
+    id,
+    toUid:String(uid),
+    to:existing?.to||currentUser?.email||'',
+    at:Number(raw?.at||existing?.at||Date.now()),
+    read:raw?.read===true,
+    type:String(raw?.type||existing?.type||'activity')
+  };
+  if(existing){
+    const before=JSON.stringify(existing);
+    Object.assign(existing,merged);
+    return before!==JSON.stringify(existing);
+  }
+  notifications.unshift(merged);
+  return true;
+}
+async function hydrateCloudNotifications(uid){
+  if(!uid||!window.firebaseGetDocs||!window.firebaseDB)return false;
+  try{
+    if(window.firebaseReady)await window.firebaseReady;
+    const col=cloudUserNotificationsCollection(uid);if(!col)return false;
+    const snap=await window.firebaseGetDocs(col);
+    let changed=false;
+    (snap.docs||[]).forEach(ds=>{changed=mergeCloudNotificationIntoLocal({...ds.data(),id:ds.id},uid)||changed});
+    if(changed){notifications=notifications.slice(0,200);persistSessionData();}
+    renderNotificationsBadge();
+    if(document.getElementById('notificationsModal')?.classList.contains('open'))renderNotifications();
+    return true;
+  }catch(err){console.warn('Cloud notification hydration failed:',err);return false;}
+}
+function attachCloudNotificationListener(uid){
+  if(cloudNotificationsUnsubscribe){try{cloudNotificationsUnsubscribe()}catch(_e){} cloudNotificationsUnsubscribe=null;}
+  if(!uid||!window.firebaseOnSnapshot)return;
+  const col=cloudUserNotificationsCollection(uid);if(!col)return;
+  cloudNotificationsUid=String(uid);
+  cloudNotificationsUnsubscribe=window.firebaseOnSnapshot(col,snap=>{
+    let changed=false;
+    snap.docChanges().forEach(change=>{
+      const id=String(change.doc.id||'');
+      if(change.type==='removed'){
+        const idx=notifications.findIndex(n=>String(n.id)===id&&String(n.toUid||'')===String(uid));
+        if(idx>=0){notifications.splice(idx,1);changed=true;}
+        return;
+      }
+      changed=mergeCloudNotificationIntoLocal({...change.doc.data(),id},uid)||changed;
+    });
+    if(changed){notifications=notifications.slice(0,200);persistSessionData();renderNotificationsBadge();if(document.getElementById('notificationsModal')?.classList.contains('open'))renderNotifications();}
+  },err=>console.warn('Cloud notification listener failed:',err));
+}
+function startCloudNotificationSync(){
+  if(cloudNotificationsStarted)return;
+  cloudNotificationsStarted=true;
+  Promise.resolve(window.firebaseReady).then(async()=>{
+    if(window.firebaseAuthReady)await window.firebaseAuthReady;
+    const handleAuth=async authUser=>{
+      if(cloudNotificationsUnsubscribe){try{cloudNotificationsUnsubscribe()}catch(_e){} cloudNotificationsUnsubscribe=null;}
+      cloudNotificationsUid='';
+      if(!authUser||authUser.isAnonymous)return;
+      const uid=String(authUser.uid||'').trim();
+      if(!uid)return;
+      // wait briefly for restoreFirebaseSession to align currentUser with Firebase Auth
+      for(let i=0;i<8&&(!currentUser||String(currentUser.uid||'')!==uid);i++)await new Promise(r=>setTimeout(r,120));
+      await hydrateCloudNotifications(uid);
+      attachCloudNotificationListener(uid);
+    };
+    if(window.firebaseOnAuthStateChanged&&window.firebaseAuth){
+      cloudNotificationsAuthUnsubscribe=window.firebaseOnAuthStateChanged(window.firebaseAuth,handleAuth);
+    }else{
+      await handleAuth(window.firebaseAuth?.currentUser||null);
+    }
+  }).catch(err=>console.warn('Cloud notification sync unavailable:',err));
+}
 
 // ---------------------------------------------------------------------------
 // Shared public work sync
@@ -3447,6 +3685,7 @@ switchAuthDefault();applyDarkMode();renderAll();initShkNavigationSounds();
 restoreFirebaseSession().finally(()=>{
   startCloudUserSync();
   startCloudWorkSync();
+  startCloudNotificationSync();
   // Give newly restored/authenticated sessions an immediate shared-data pass.
   hydrateCloudUsers();
   setTimeout(()=>hydrateCloudUsers(),900);
