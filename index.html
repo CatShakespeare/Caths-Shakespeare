@@ -9,13 +9,13 @@
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
 <meta name="googlebot" content="index,follow">
 <meta name="google-site-verification" content="ChntiQgjG3r0kOrC7aGEkdOsD7qrGQ7d4v6KsSmdZ-w">
-<link rel="canonical" href="https://catshakespeare.github.io/">
+<link rel="canonical" href="https://catshakespeare.github.io/Caths-Shakespeare/">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="12-SHAKESPEARE Literary Archive">
 <meta property="og:title" content="12-SHAKESPEARE — Literary Archive">
 <meta property="og:description" content="Discover, read, publish, and preserve student literature in the 12-SHAKESPEARE Literary Archive.">
-<meta property="og:url" content="https://catshakespeare.github.io/">
+<meta property="og:url" content="https://catshakespeare.github.io/Caths-Shakespeare/">
 <meta property="og:locale" content="en_PH">
 
 <meta name="twitter:card" content="summary">
@@ -28,7 +28,7 @@
   "@type":"WebSite",
   "name":"12-SHAKESPEARE Literary Archive",
   "alternateName":"12-SHAKESPEARE",
-  "url":"https://catshakespeare.github.io/",
+  "url":"https://catshakespeare.github.io/Caths-Shakespeare/",
   "description":"A student literary archive for discovering, reading, writing, and preserving original school literature.",
   "inLanguage":"en-PH"
 }
@@ -2394,8 +2394,10 @@ function startCommentReply(commentId){
 function cancelCommentReply(){commentReplyTarget=null;updateCommentPopupForm();const input=document.getElementById('commentPopupInput');if(input)input.focus();}
 function toggleCommentReactionPicker(e,workId,commentId,isReply=false){
  if(e)e.stopPropagation();
- document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>{if(p.dataset.commentPicker!==commentId) p.classList.remove('open')});
- const picker=document.querySelector(`.comment-reaction-picker[data-comment-picker="${CSS.escape(commentId)}"]`);if(!picker)return;
+ document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>{if(String(p.dataset.commentPicker)!==String(commentId)) p.classList.remove('open')});
+ // Avoid CSS.escape compatibility issues by matching data attributes directly.
+ const picker=[...document.querySelectorAll('.comment-reaction-picker')].find(p=>String(p.dataset.commentPicker)===String(commentId));
+ if(!picker)return;
  picker.classList.toggle('open');
 }
 function toggleCommentReaction(e,workId,commentId,type,isReply=false){
@@ -2426,18 +2428,36 @@ function reportComment(workId,commentId,isReply=false){
  const added=reportCommentRecord(w,found.comment,isReply);
  showToast(added?'Comment reported. Thank you.':'You already reported this comment.');
 }
-function deleteComment(workId,commentId,isReply=false){
+async function deleteComment(workId,commentId,isReply=false){
  contentUser();
  if(!currentUser){showToast('Sign in to delete your comment.');openAccount();return;}
  const idx=works.findIndex(x=>x.id===workId);if(idx<0)return;
- const w=normalizeWork(works[idx]);const found=findComment(w,commentId);if(!found?.comment)return;
- const ownComment=(found.comment.userUid&&String(found.comment.userUid)===String(currentCloudUid())) || canonicalEmail(found.comment.email)===canonicalEmail(currentUser.email); if(!ownComment){showToast('You can only delete your own comment.');return;}
+ const w=normalizeWork(works[idx]);
+ const found=findComment(w,commentId);if(!found?.comment)return;
+ const ownComment=(found.comment.userUid&&String(found.comment.userUid)===String(currentCloudUid())) || canonicalEmail(found.comment.email)===canonicalEmail(currentUser.email);
+ if(!ownComment){showToast('You can only delete your own comment.');return;}
  const targetList=found.parent?(found.parent.replies||[]):w.comments||[];
- const removeIndex=targetList.findIndex(c=>c.id===commentId);if(removeIndex<0)return;
+ const removeIndex=targetList.findIndex(c=>String(c.id)===String(commentId));
+ if(removeIndex<0)return;
+
+ // Optimistic local delete so the UI responds immediately.
  targetList.splice(removeIndex,1);
- works[idx]=normalizeWork(w);if(readerWork?.id===workId)readerWork=works[idx];if(commentModalWork?.id===workId)commentModalWork=works[idx];
+ works[idx]=normalizeWork(w);
+ if(readerWork?.id===workId)readerWork=works[idx];
+ if(commentModalWork?.id===workId)commentModalWork=works[idx];
  if(commentReplyTarget?.id===commentId)commentReplyTarget=null;
- syncCommentReactionToCloud(workId,commentId,before===type?'':type); saveState();renderCommentModal();renderComments();renderReaderSocial();updateCommentPopupForm();showToast('Comment deleted.');
+ saveState();
+ renderCommentModal();renderComments();renderReaderSocial();updateCommentPopupForm();
+ showToast('Comment deleted.');
+
+ // Sync the actual comment document to Firestore when this session has a
+ // stable Firebase UID. The local deletion remains valid even when cloud
+ // services are temporarily unavailable.
+ const cloudUid=currentCloudUid();
+ if(cloudUid){
+   const ok=await deleteCommentFromCloud(workId,commentId);
+   if(!ok)showToast('Comment deleted here, but cloud sync could not finish.');
+ }
 }
 function submitPopupComment(e){
  e.preventDefault();
@@ -3461,8 +3481,14 @@ function buildNestedComments(flat){
   const roots=[];
   nodes.forEach(node=>{
     const parent=String(node.parentId||'');
-    if(parent&&map.has(parent))map.get(parent).replies.push(node);
-    else roots.push(node);
+    if(parent){
+      // Do not promote orphaned replies to top-level comments. This keeps
+      // a deleted parent from unexpectedly reappearing as a standalone reply
+      // after Firestore hydration.
+      if(map.has(parent)) map.get(parent).replies.push(node);
+      return;
+    }
+    roots.push(node);
   });
   return roots;
 }
