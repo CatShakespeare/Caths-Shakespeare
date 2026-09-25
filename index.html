@@ -1,9 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-PH">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#32191B">
+<meta name="description" content="12-SHAKESPEARE — a student literary archive for discovering, reading, writing, and preserving original school literature.">
+<meta name="author" content="12-SHAKESPEARE Literary Archive">
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+<meta name="googlebot" content="index,follow">
+<meta name="google-site-verification" content="ChntiQgjG3r0kOrC7aGEkdOsD7qrGQ7d4v6KsSmdZ-w">
+<link rel="canonical" href="https://catshakespeare.github.io/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="12-SHAKESPEARE Literary Archive">
+<meta property="og:title" content="12-SHAKESPEARE — Literary Archive">
+<meta property="og:description" content="Discover, read, publish, and preserve student literature in the 12-SHAKESPEARE Literary Archive.">
+<meta property="og:url" content="https://catshakespeare.github.io/">
+<meta property="og:locale" content="en_PH">
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="12-SHAKESPEARE — Literary Archive">
+<meta name="twitter:description" content="A digital literary archive for student writing, reading, and community.">
+
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"WebSite",
+  "name":"12-SHAKESPEARE Literary Archive",
+  "alternateName":"12-SHAKESPEARE",
+  "url":"https://catshakespeare.github.io/",
+  "description":"A student literary archive for discovering, reading, writing, and preserving original school literature.",
+  "inLanguage":"en-PH"
+}
+</script>
 <title>12-SHAKESPEARE — Literary Archive</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1541,7 +1570,28 @@ function saveState(){
  persistSessionData();
 }
 
+function updateSeoMeta(name){
+ const seo={
+  home:{title:'12-SHAKESPEARE — Literary Archive',description:'Discover, read, publish, and preserve student literature in the 12-SHAKESPEARE Literary Archive.'},
+  feed:{title:'Literature Feed — 12-SHAKESPEARE',description:'Discover newly published student writing and explore the latest literature in the 12-SHAKESPEARE archive.'},
+  library:{title:'Literature Library — 12-SHAKESPEARE',description:'Browse the permanent collection of student literature in the 12-SHAKESPEARE Literary Archive.'},
+  community:{title:'Community — 12-SHAKESPEARE',description:'Explore student writers, readers, profiles, and the literature community.'},
+  journal:{title:'Digital Journal — 12-SHAKESPEARE',description:'Read digital journal issues from the 12-SHAKESPEARE Literary Archive.'},
+  shakespeare:{title:'Shakespeare Study Corner — 12-SHAKESPEARE',description:'Explore the Shakespeare study corner inside the 12-SHAKESPEARE Literary Archive.'},
+  activity:{title:'Activity Center — 12-SHAKESPEARE',description:'View notifications, interactions, milestones, and reading activity in your literary archive account.'},
+  reader:{title:'Reading — 12-SHAKESPEARE Literary Archive',description:'Read student literature in the 12-SHAKESPEARE digital reading experience.'},
+  about:{title:'About — 12-SHAKESPEARE Literary Archive',description:'Learn about the 12-SHAKESPEARE Literary Archive and its student-centered literary community.'}
+ };
+ const cfg=seo[name]||seo.home;
+ document.title=cfg.title;
+ const desc=document.querySelector('meta[name="description"]');
+ if(desc)desc.setAttribute('content',cfg.description);
+ const ogTitle=document.querySelector('meta[property="og:title"]'); if(ogTitle)ogTitle.setAttribute('content',cfg.title);
+ const ogDesc=document.querySelector('meta[property="og:description"]'); if(ogDesc)ogDesc.setAttribute('content',cfg.description);
+}
+
 function showPage(name){
+ updateSeoMeta(name);
  if(name==='following')name='feed';
  document.body.classList.remove('menu-open');
  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -4233,5 +4283,12 @@ body.reader-upgrade-focus .sidebar,body.reader-upgrade-focus .topbar{display:non
 })();
 </script>
 
+<noscript>
+  <section style="max-width:900px;margin:40px auto;padding:24px;font-family:Arial,sans-serif;line-height:1.7">
+    <h1>12-SHAKESPEARE Literary Archive</h1>
+    <p>A student literary archive for discovering, reading, writing, and preserving original school literature.</p>
+    <p>Explore the Literature Feed, Literature Library, Community, Digital Journal, Shakespeare study corner, and student literary works.</p>
+  </section>
+</noscript>
 </body>
 </html>
