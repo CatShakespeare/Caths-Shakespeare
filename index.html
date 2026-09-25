@@ -9,6 +9,8 @@
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
 <meta name="googlebot" content="index,follow">
 <meta name="google-site-verification" content="ChntiQgjG3r0kOrC7aGEkdOsD7qrGQ7d4v6KsSmdZ-w">
+<link rel="icon" type="image/png" sizes="192x192" href="./favicon.png">
+<link rel="apple-touch-icon" sizes="192x192" href="./favicon.png">
 <link rel="canonical" href="https://catshakespeare.github.io/Caths-Shakespeare/">
 
 <meta property="og:type" content="website">
@@ -2144,7 +2146,7 @@ function saveDraft(){
  editingDraftId=draft.id;
  saveState();addMyActivity('writing',`You saved a draft: “${draft.title||'Untitled'}”.`,{});editingDraftId=null;editingWorkId=null;syncCreateEditUI();renderMyWorks();showToast('Draft saved.');showPage('myworks');
 }
-document.getElementById('createForm').addEventListener('submit',function(e){
+document.getElementById('createForm').addEventListener('submit',async function(e){
  e.preventDefault();contentUser();if(!currentUser){openAccount();return}
  if(!canPublish(currentUser)){openIdentitySetup();return}
  const now=Date.now();
@@ -2154,6 +2156,7 @@ document.getElementById('createForm').addEventListener('submit',function(e){
   if(idx<0){showToast('Work not found.');return}
   works[idx]=normalizeWork({...works[idx],...payload,updatedAt:now});
   queueCloudWorkSync(works[idx]);
+  if(hasStableCloudIdentity())await pushWorkToCloud(works[idx]);
   showToast('Your work was updated.');
  }else if(editingDraftId){
   const draftIdx=drafts.findIndex(d=>d.id===editingDraftId&&canonicalEmail(d.email)===canonicalEmail(currentUser.email));
@@ -2172,12 +2175,14 @@ document.getElementById('createForm').addEventListener('submit',function(e){
   });
   if(existingWorkIdx>=0)works[existingWorkIdx]=publishedWork;else works.unshift(publishedWork);
   queueCloudWorkSync(publishedWork);
+  if(hasStableCloudIdentity())await pushWorkToCloud(publishedWork);
   drafts=drafts.filter(d=>d.id!==editingDraftId);
   showToast('Your draft was published as the same work.');
  }else{
   const newWork=normalizeWork({id:'work-'+now,...payload,likes:[],reactions:emptyReactions(),comments:[],views:0,createdAt:now,updatedAt:now,ownerUid:cloudAuthUid()});
   works.unshift(newWork);
   queueCloudWorkSync(newWork);
+  if(hasStableCloudIdentity())await pushWorkToCloud(newWork);
   addMyActivity('writing',`You published “${newWork.title}”.`,{workId:newWork.id,workTitle:newWork.title});
   if(newWork.privacy==='public')notifyFollowersAboutNewWork(newWork);
   showToast('Your literature has been published.');
@@ -3292,6 +3297,19 @@ async function hydrateCloudWorks(){
   }
 }
 
+async function migrateOwnedPublicWorksToCloud(){
+  // Legacy/local accounts may have published works that were created before
+  // Firebase work syncing was enabled. Wait briefly for the Firebase Auth UID
+  // to settle, then push every public work owned by the active account.
+  for(let attempt=0;attempt<10;attempt++){
+    if(hasStableCloudIdentity())break;
+    await new Promise(r=>setTimeout(r,150*(attempt+1)));
+  }
+  if(!hasStableCloudIdentity())return false;
+  await syncOwnedPublicWorksToCloud();
+  return true;
+}
+
 async function syncOwnedPublicWorksToCloud(){
   if(!hasStableCloudIdentity())return;
   const authUid=cloudAuthUid();
@@ -3731,13 +3749,10 @@ async function finishPendingAuth(){
   const finalHash=persistedPinHash||pendingAuthUser.pinHash||'';
   const u=normalizeUser({...pendingAuthUser,email,pinHash:finalHash});
 
-  // Save the public profile record after the PIN succeeds. This is best-effort;
-  // the PIN gate remains tied to the private security record.
-  if(u.uid){
-    try{await saveCloudUserProfile(u)}catch(err){console.warn('Profile sync failed:',err)}
-  }
-  try{await syncOwnedPublicWorksToCloud()}catch(err){console.warn('Owned work sync failed:',err)}
-
+  // Promote the authenticated account to the active session BEFORE running
+  // any cloud migration. Older works may exist only in this browser's local
+  // storage; syncOwnedPublicWorksToCloud() needs currentUser + Firebase UID
+  // to migrate those works into the shared Firestore collection.
   if(finalHash)savePinHash(u,finalHash);
   const idx=users.findIndex(x=>canonicalEmail(x.email)===email);
   if(idx>=0)users[idx]=normalizeUser({...users[idx],...u,pinHash:finalHash});
@@ -3747,8 +3762,20 @@ async function finishPendingAuth(){
   sessionUnlocked=true;
   sessionStorage.setItem('shkSessionUnlocked','1');
   saveState();
-  document.getElementById('pinModal').classList.remove('open');
+
+  // Save the public profile and migrate every public work owned by this
+  // account. This fixes older/local-only works that were created before
+  // Firebase work syncing was active.
+  if(currentUser.uid){
+    try{await saveCloudUserProfile(currentUser)}catch(err){console.warn('Profile sync failed:',err)}
+    try{await migrateOwnedPublicWorksToCloud()}catch(err){console.warn('Owned work migration failed:',err)}
+  }
+
+  // Pull the shared collection again after migration so the same device is
+  // also showing the Firestore source of truth immediately.
+  try{await hydrateCloudWorks()}catch(err){console.warn('Post-login work hydration failed:',err)}
   renderAll();
+  document.getElementById('pinModal').classList.remove('open');
   showToast('Account ready. Welcome, '+getName()+'!');
 }
 
@@ -3907,6 +3934,11 @@ async function restoreFirebaseSession(){
       sessionStorage.setItem('shkSessionUnlocked','1');
       saveState();
       try{await saveCloudUserProfile(currentUser)}catch(err){console.warn('Current user cloud profile refresh failed:',err)}
+      // Migrate legacy public works that still exist only in this browser's
+      // localStorage into the shared Firestore works collection. This is the
+      // key bridge for works created before cloud sync was enabled.
+      try{await migrateOwnedPublicWorksToCloud()}catch(err){console.warn('Legacy public work migration failed:',err)}
+      try{await hydrateCloudWorks()}catch(err){console.warn('Shared work hydration after login failed:',err)}
       renderAll();
       if(currentUser.uid)hydrateCloudMyActivity(currentUser.uid).then(()=>{if(document.getElementById('page-activity')?.classList.contains('active'))renderActivity()});
       return;
