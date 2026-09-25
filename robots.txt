@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
-Sitemap: https://catshakespeare.github.io/sitemap.xml
+
+Sitemap: https://catshakespeare.github.io/Caths-Shakespeare/sitemap.xml
