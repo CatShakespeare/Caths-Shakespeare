@@ -3342,9 +3342,10 @@ async function syncPublishedWorkToCloud(work){
 async function deleteCloudWork(id){
   try{
     if(!id||!window.firebaseDB||!window.firebaseDoc||!window.firebaseDeleteDoc)return false;
-    // A publish/edit may still be queued. Wait for those writes first so the
-    // final operation is the delete, not a stale write that recreates the doc.
+    // Finish any queued publish/edit writes first so delete is the final cloud action.
     try{await cloudWorkWriteQueue}catch(_e){}
+    const authUid=await waitForStableCloudIdentity();
+    if(!authUid)return false;
     if(window.firebaseReady)await window.firebaseReady;
     await window.firebaseDeleteDoc(window.firebaseDoc(window.firebaseDB,'works',String(id)));
     return true;
