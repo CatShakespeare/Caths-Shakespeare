@@ -36,6 +36,26 @@
 }
 </script>
 <title>12-SHAKESPEARE — Literary Archive</title>
+<script>
+(function(){try{
+  // Fresh installation / migration starts in LIGHT mode.
+  // After the user manually chooses a theme, that choice can persist.
+  var themeReady='shkThemePreferenceReadyV3';
+  if(localStorage.getItem(themeReady)!=='1'){
+    localStorage.setItem('shkThemePreference','light');
+    localStorage.setItem(themeReady,'1');
+  }
+  if(localStorage.getItem('shkThemePreference')==='dark'){
+    document.documentElement.classList.add('dark');
+    document.documentElement.style.colorScheme='dark';
+    var tc=document.querySelector('meta[name=theme-color]');
+    if(tc)tc.setAttribute('content','#101012');
+  }else{
+    document.documentElement.classList.remove('dark');
+    document.documentElement.style.colorScheme='light';
+  }
+}catch(_){}})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -107,7 +127,7 @@ a{text-decoration:none;color:inherit}
   border:1px solid var(--line);background:#fff;color:var(--wine);display:grid;place-items:center;
   border-radius:11px;transition:.2s var(--ease)
 }
-.icon-btn{width:40px;height:40px}
+.icon-btn{width:40px;height:40px}.theme-toggle{position:relative}.theme-toggle .theme-icon{width:17px;height:17px;display:block}
 .profile-btn{width:40px;height:40px;border-radius:50%;overflow:hidden;padding:0}
 .icon-btn:hover,.profile-btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(36,27,23,.08)}
 .menu-toggle{display:none}
@@ -710,11 +730,11 @@ button,input,textarea,select{max-width:100%}
   .profile-stat-button{min-width:76px}
 }
 @media(max-width:480px){
-  .modal{padding:8px}
-  .modal-box{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:15px;border-radius:14px}
+  .modal{padding:6px}
+  .modal-box{width:min(100%,calc(100vw - 12px));max-width:100%;max-height:calc(100dvh - 12px);padding:15px;border-radius:14px}
   .modal-head{gap:10px}
   .modal-head h3{font-size:1.85rem}
-  .connections-modal-box{width:calc(100vw - 16px);padding:14px}
+  .connections-modal-box{width:min(100%,calc(100vw - 12px));max-width:100%;padding:14px}
   .connections-search{margin:12px 0 10px}
   .connections-list{max-height:60vh}
   .connection-item{gap:8px}
@@ -722,17 +742,875 @@ button,input,textarea,select{max-width:100%}
   .connection-copy span{font-size:.6rem}
   .connection-follow{padding:7px 9px!important}
 }
-@media(max-width:360px){
-  .modal{padding:6px}
-  .modal-box{width:calc(100vw - 12px)}
-  .connections-modal-box{width:calc(100vw - 12px)}
-  .profile-stats{gap:8px}
-  .profile-stat strong{font-size:1.4rem}
-  .profile-stat span{font-size:.55rem}
-  .connection-follow{font-size:.6rem!important;padding:6px 7px!important}
+
+/* =========================
+   Mobile profile / stalking view polish
+   ========================= */
+#profilePage{width:100%;max-width:100%;min-width:0;overflow:clip}
+#profilePage .profile-hero,
+#profilePage .section,
+#profilePage .profile-copy,
+#profilePage .profile-work-head,
+#profilePage .grid3{min-width:0;max-width:100%;box-sizing:border-box}
+#profilePage .profile-copy{overflow-wrap:anywhere;min-width:0}
+#profilePage .profile-copy h2,
+#profilePage .profile-work-head h3{overflow-wrap:anywhere;word-break:break-word}
+#profilePage img{max-width:100%;height:auto}
+
+@media(max-width:760px){
+  #profilePage{width:100%;overflow:clip}
+  #profilePage .profile-hero{
+    width:100%;
+    grid-template-columns:78px minmax(0,1fr);
+    gap:10px 12px;
+    align-items:start;
+    padding:14px;
+    border-radius:16px;
+    overflow:hidden;
+  }
+  #profilePage .profile-big-avatar{
+    width:78px;
+    height:78px;
+    min-width:78px;
+    margin:0;
+    align-self:start;
+  }
+  #profilePage .profile-copy{width:100%;min-width:0;text-align:left}
+  #profilePage .profile-copy h2{
+    font-size:clamp(2rem,8.8vw,3rem)!important;
+    line-height:.9!important;
+    margin:6px 0 3px!important;
+    max-width:100%;
+  }
+  #profilePage .profile-copy p{
+    max-width:100%;
+    font-size:.72rem;
+    line-height:1.55;
+    overflow-wrap:anywhere;
+  }
+  #profilePage .profile-handle{
+    display:block;
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  #profilePage .profile-stats{
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:4px;
+    margin-top:10px;
+    justify-content:stretch;
+  }
+  #profilePage .profile-stat{
+    min-width:0;
+    width:100%;
+    padding:7px 3px;
+  }
+  #profilePage .profile-stat strong{font-size:1.35rem;line-height:1}
+  #profilePage .profile-stat span{font-size:.46rem;letter-spacing:.07em;white-space:nowrap}
+  #profilePage .profile-actions{
+    grid-column:1/-1;
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+    justify-content:stretch;
+  }
+  #profilePage .profile-actions>*{width:100%;min-width:0;box-sizing:border-box}
+  #profilePage .profile-work-head{display:block;margin-bottom:6px}
+  #profilePage .profile-work-head h3{
+    font-size:clamp(1.9rem,8.5vw,3rem)!important;
+    line-height:.98!important;
+    margin:6px 0 8px!important;
+  }
+  #profilePage .profile-work-head p{font-size:.64rem!important;line-height:1.5!important}
+  #profilePage .grid3{grid-template-columns:minmax(0,1fr)!important}
+  #profilePage .grid3 .card{min-width:0;max-width:100%;width:100%}
 }
 
+@media(max-width:420px){
+  #profilePage .profile-hero{grid-template-columns:68px minmax(0,1fr);gap:9px 10px;padding:12px}
+  #profilePage .profile-big-avatar{width:68px;height:68px;min-width:68px;font-size:1.05rem}
+  #profilePage .identity-badge{font-size:.48rem;padding:5px 7px}
+  #profilePage .profile-copy h2{font-size:clamp(1.9rem,9.6vw,2.7rem)!important}
+  #profilePage .profile-copy p{font-size:.68rem}
+  #profilePage .profile-stats{gap:3px;margin-top:8px}
+  #profilePage .profile-stat{padding:6px 2px}
+  #profilePage .profile-stat strong{font-size:1.22rem}
+  #profilePage .profile-stat span{font-size:.43rem}
+  #profilePage .profile-actions{gap:6px}
+  #profilePage .profile-actions .follow,
+  #profilePage .profile-actions .secondary,
+  #profilePage .profile-actions .primary{font-size:.65rem;padding:9px 8px}
+}
+
+@media(max-width:360px){
+  #profilePage .profile-hero{grid-template-columns:62px minmax(0,1fr);gap:8px;padding:11px}
+  #profilePage .profile-big-avatar{width:62px;height:62px;min-width:62px}
+  #profilePage .profile-copy h2{font-size:1.8rem!important}
+  #profilePage .profile-copy p{font-size:.64rem}
+  #profilePage .profile-stat strong{font-size:1.1rem}
+  #profilePage .profile-stat span{font-size:.4rem}
+}
+
+@media(max-width:560px){
+  .connections-modal-box{width:calc(100vw - 18px)!important;max-width:100%;padding:13px!important;overflow:hidden}
+  .connections-search{width:100%;min-width:0}
+  .connections-list{width:100%;min-width:0}
+  .connection-item{width:100%;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+  .connection-link{min-width:0;overflow:hidden}
+  .connection-copy{min-width:0;overflow:hidden}
+  .connection-copy strong,.connection-copy span{max-width:100%}
+  .connection-follow{max-width:105px;min-width:0}
+}
 </style>
+
+
+<style id="theme-transition-polish">
+/* Smooth theme switching: colors/surfaces fade without shifting layout. */
+html.theme-changing * ,
+html.theme-changing *::before,
+html.theme-changing *::after{
+  transition-property:background-color,color,border-color,box-shadow,fill,stroke,opacity!important;
+  transition-duration:.36s!important;
+  transition-timing-function:cubic-bezier(.22,.75,.2,1)!important;
+}
+.theme-toggle{position:relative;overflow:hidden}
+.theme-toggle .theme-icon{position:absolute;width:17px;height:17px;inset:0;margin:auto;display:block!important;transition:opacity .28s ease,transform .4s cubic-bezier(.2,.8,.2,1);will-change:opacity,transform}
+.theme-toggle .theme-icon-moon{opacity:1;transform:rotate(0) scale(1)}
+.theme-toggle .theme-icon-sun{opacity:0;transform:rotate(-70deg) scale(.65)}
+html.dark .theme-toggle .theme-icon-moon{opacity:0;transform:rotate(70deg) scale(.65)}
+html.dark .theme-toggle .theme-icon-sun{opacity:1;transform:rotate(0) scale(1)}
+html.theme-changing .theme-toggle{box-shadow:0 0 0 3px rgba(199,166,109,.10),0 8px 18px rgba(0,0,0,.08)}
+@media(prefers-reduced-motion:reduce){
+  html.theme-changing *,html.theme-changing *::before,html.theme-changing *::after{transition-duration:.01ms!important}
+  .theme-toggle .theme-icon{transition-duration:.01ms!important}
+}
+</style>
+<style id="theme-transition-pro">
+/* Smoother light/dark transitions. View Transitions are used when supported,
+   while the class-based fallback keeps the effect working in older browsers. */
+html{background:var(--bg)}
+html.theme-changing body,
+html.theme-changing .app,
+html.theme-changing .main,
+html.theme-changing .sidebar,
+html.theme-changing .topbar,
+html.theme-changing .content,
+html.theme-changing .page,
+html.theme-changing .section,
+html.theme-changing .panel,
+html.theme-changing .card,
+html.theme-changing .feed-post,
+html.theme-changing .profile-hero,
+html.theme-changing .profile-menu,
+html.theme-changing .modal-box,
+html.theme-changing .connections-modal-box,
+html.theme-changing .notification,
+html.theme-changing .activity-item,
+html.theme-changing .search-result,
+html.theme-changing input,
+html.theme-changing textarea,
+html.theme-changing select,
+html.theme-changing button{
+  transition:background-color .52s cubic-bezier(.22,.7,.2,1),
+             color .52s cubic-bezier(.22,.7,.2,1),
+             border-color .52s cubic-bezier(.22,.7,.2,1),
+             box-shadow .52s cubic-bezier(.22,.7,.2,1)!important;
+}
+::view-transition-old(root),
+::view-transition-new(root){
+  animation-duration:.48s;
+  animation-timing-function:cubic-bezier(.22,.7,.2,1);
+}
+::view-transition-old(root){animation-name:themeRootOut}
+::view-transition-new(root){animation-name:themeRootIn}
+@keyframes themeRootOut{from{opacity:1}to{opacity:0}}
+@keyframes themeRootIn{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation-duration:.01ms!important}
+}
+</style>
+<style id="dark-mode-theme">
+/* ==========================================================
+   12-SHAKESPEARE DARK MODE
+   Persistent per-device preference + full UI surface coverage.
+   ========================================================== */
+html.dark{
+  color-scheme:dark;
+  --paper:#171517;
+  --bg:#101012;
+  --ink:#F2EAE6;
+  --muted:#B8ACA6;
+  --line:#3A3234;
+  --sidebar:#171517;
+  --card:#201B1D;
+  --wine:#E6CFC7;
+  --burgundy:#D48791;
+  --gold:#C7A66D;
+  --gold2:#E3C79C;
+  --shadow:0 18px 50px rgba(0,0,0,.34);
+}
+html.dark body{background:var(--bg);color:var(--ink)}
+html.dark .main{background:var(--bg)}
+html.dark .sidebar{background:var(--sidebar);border-color:var(--line)}
+html.dark .brand-name,
+html.dark .page-title h1,
+html.dark .hero h2,
+html.dark .hero h2 span{color:var(--burgundy)!important}
+html.dark .hero h2,
+html.dark .section-head h3,
+html.dark .section-head .kicker,
+html.dark .card-body h4,
+html.dark .post-title,
+html.dark .author strong,
+html.dark .reader h2,
+html.dark .reader-section-heading,
+html.dark .profile-copy h2,
+html.dark .profile-stat strong,
+html.dark .author-card h4,
+html.dark .modal-head h3,
+html.dark .close,
+html.dark .modal-box h3,
+html.dark .activity-hero h2,
+html.dark .activity-summary-card strong,
+html.dark .activity-item-name,
+html.dark .notification-name,
+html.dark .notification-activity b,
+html.dark .search-result-copy strong,
+html.dark .connection-copy strong,
+html.dark .upgrade-notif-pref-box h3,
+html.dark .upgrade-notif-pref-copy strong,
+html.dark .lit-toc-head strong,
+html.dark .lit-reader-nav strong,
+html.dark .lit-preview-body h2,
+html.dark .lit-preview-body h3,
+html.dark .lit-editor-meta strong,
+html.dark .lit-home-shelf-head h4,
+html.dark .lit-profile-activity-item strong,
+html.dark .lit-follow-suggest h4,
+html.dark .lit-text-settings h4,
+html.dark .author-link{
+  color:var(--wine)!important;
+}
+html.dark .brand-sub,
+html.dark .nav-title,
+html.dark .page-title p,
+html.dark .kicker,
+html.dark .meta,
+html.dark .metric span,
+html.dark .author span,
+html.dark .author-card p,
+html.dark .reader-meta,
+html.dark .reader-by,
+html.dark .profile-stat span,
+html.dark .profile-handle,
+html.dark .notification-username,
+html.dark .notification-meta,
+html.dark .notification-time-relative,
+html.dark .notification-date,
+html.dark .search-result-copy span,
+html.dark .search-group-head strong,
+html.dark .connection-copy span,
+html.dark .connections-empty,
+html.dark .following-mini-label,
+html.dark .following-control-copy,
+html.dark .insight-note,
+html.dark .following-post .engagement-line,
+html.dark .activity-item-handle,
+html.dark .activity-item-meta,
+html.dark .activity-item-text,
+html.dark .activity-empty p,
+html.dark .upgrade-notif-pref-box p,
+html.dark .upgrade-notif-pref-copy span,
+html.dark .lit-reading-extra,
+html.dark .lit-reading-extra strong,
+html.dark .lit-editor-meta,
+html.dark .lit-home-shelf-head span,
+html.dark .lit-continue-meta,
+html.dark .lit-new-since span,
+html.dark .lit-notif-digest span,
+html.dark .lit-quiet-row select,
+html.dark .lit-profile-activity-item span{
+  color:var(--muted)!important;
+}
+
+html.dark .topbar{
+  background:rgba(16,16,18,.92)!important;
+  border-color:var(--line);
+}
+html.dark .icon-btn,
+html.dark .profile-btn,
+html.dark .profile-mini,
+html.dark .secondary,
+html.dark .social-btn,
+html.dark .danger-btn,
+html.dark .post-actions .post-action,
+html.dark .reaction-picker,
+html.dark .reaction-choice,
+html.dark .comment-action-btn,
+html.dark .comment-reaction-trigger,
+html.dark .comment-reaction-choice,
+html.dark .comment-popup-form textarea,
+html.dark .edit-back-btn,
+html.dark .reader-back-btn,
+html.dark .reader-tools button,
+html.dark .search,
+html.dark .filter,
+html.dark .mini,
+html.dark .follow,
+html.dark .activity-secondary,
+html.dark .activity-filter,
+html.dark .activity-item-arrow,
+html.dark .activity-tab.active,
+html.dark .activity-switcher,
+html.dark .following-range,
+html.dark .range-btn.active,
+html.dark .following-refresh,
+html.dark .feed-tab.active,
+html.dark .feed-tab:hover,
+html.dark .feed-tab-icon,
+html.dark .profile-stat-button:hover,
+html.dark .connections-search,
+html.dark .connection-item,
+html.dark .profile-menu button,
+html.dark .identity-option,
+html.dark .feed-tabs,
+html.dark .lit-reader-toolbar button,
+html.dark .lit-reader-nav button,
+html.dark .lit-collection-btn,
+html.dark .lit-profile-tab,
+html.dark .lit-settings-row button,
+html.dark .lit-continue-card,
+html.dark .lit-suggest-card,
+html.dark .lit-quiet-row select,
+html.dark .comment-popup-form textarea{
+  background:#211C1E!important;
+  border-color:var(--line)!important;
+  color:var(--ink)!important;
+}
+html.dark .icon-btn:hover,
+html.dark .profile-btn:hover,
+html.dark .secondary:hover,
+html.dark .social-btn:hover,
+html.dark .danger-btn:hover,
+html.dark .post-actions .post-action:hover,
+html.dark .reaction-choice:hover,
+html.dark .comment-action-btn:hover,
+html.dark .comment-reaction-trigger:hover,
+html.dark .comment-reaction-choice:hover,
+html.dark .edit-back-btn:hover,
+html.dark .reader-back-btn:hover,
+html.dark .reader-tools button:hover,
+html.dark .filter:hover,
+html.dark .activity-filter:hover,
+html.dark .following-refresh:hover,
+html.dark .lit-reader-toolbar button:hover,
+html.dark .lit-collection-btn:hover,
+html.dark .lit-settings-row button:hover{
+  background:#2A2426!important;
+  color:#F4EAE5!important;
+}
+html.dark .nav-btn{color:#C5B9B3}
+html.dark .nav-btn:hover{background:#2A2426;color:#F2E5DE}
+html.dark .nav-btn.active{background:#312629;color:#F2E5DE}
+html.dark .sidebar-bottom{border-color:var(--line)}
+html.dark .profile-mini strong{color:var(--wine)!important}
+html.dark .profile-mini span{color:var(--muted)!important}
+
+/* Primary/danger buttons keep a deep wine surface for contrast. */
+html.dark .brand-mark,
+html.dark .primary,
+html.dark .social-btn.on,
+html.dark .mini.active,
+html.dark .follow.on,
+html.dark .search button,
+html.dark .activity-primary,
+html.dark .activity-filter.active,
+html.dark .feed-tab-badge,
+html.dark .lit-resume-banner button,
+html.dark .lit-collection-btn.active,
+html.dark .lit-profile-tab.active,
+html.dark .upgrade-notif-toggle input:checked+span{
+  background:#6E2F34!important;
+  border-color:#824047!important;
+  color:#fff!important;
+}
+html.dark .toast{background:#6E2F34;color:#fff}
+html.dark .danger-btn.danger,
+html.dark .comment-action-btn.danger:hover{color:#F0AAB0}
+
+/* Cards, panels, profiles, feeds, activity, notifications, connections. */
+html.dark .card,
+html.dark .panel,
+html.dark .author-card,
+html.dark .profile-hero,
+html.dark .profile-privacy-note,
+html.dark .identity-panel,
+html.dark .following-control,
+html.dark .following-insight .insight-card,
+html.dark .activity-summary-card,
+html.dark .activity-item,
+html.dark .notification,
+html.dark .search-result,
+html.dark .connection-item,
+html.dark .activity-empty,
+html.dark .comment-modal-item,
+html.dark .comment-reply-state,
+html.dark .lit-toc,
+html.dark .lit-continue-card,
+html.dark .lit-new-since,
+html.dark .lit-notif-digest,
+html.dark .lit-follow-suggest,
+html.dark .lit-suggest-card,
+html.dark .lit-profile-activity-item,
+html.dark .upgrade-notif-pref-row{
+  background:#201B1D!important;
+  border-color:var(--line)!important;
+}
+html.dark .card:hover,
+html.dark .connection-item:hover,
+html.dark .activity-item:hover,
+html.dark .notification:hover,
+html.dark .search-result:hover{
+  background:#282224!important;
+}
+html.dark .activity-item.unread,
+html.dark .notification.unread{background:#292122!important;border-color:#514042!important}
+html.dark .activity-item-arrow,
+html.dark .notification-arrow{background:#211C1E!important;color:#BEB3AE!important}
+html.dark .activity-type-pill,
+html.dark .feed-tab-badge,
+html.dark .tag,
+html.dark .identity-badge,
+html.dark .lit-mutual-note,
+html.dark .lit-pin-work.on{
+  background:#322A2B!important;
+  color:#E0CFC7!important;
+}
+html.dark .identity-badge.reader{background:#292526!important;color:#C7BCB6!important}
+html.dark .profile-menu button:hover{background:#2A2426!important}
+
+/* Forms and search fields. */
+html.dark .field label{color:#C2B6B0!important}
+html.dark .field input,
+html.dark .field textarea,
+html.dark .field select,
+html.dark .comment-popup-form textarea,
+html.dark .connections-search input,
+html.dark .search input,
+html.dark .lit-quiet-row select{
+  background:#161416!important;
+  color:#F2EAE6!important;
+  border-color:#403739!important;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder{color:#81756F!important;opacity:1}
+html.dark .field select option{background:#161416;color:#F2EAE6}
+
+/* Modal surfaces and overlays. */
+html.dark .modal{background:rgba(5,4,5,.72)!important}
+html.dark .modal-box{background:#1B181A!important;border-color:#3E3537!important;box-shadow:0 30px 90px rgba(0,0,0,.5)}
+html.dark .search-result,
+html.dark .notification,
+html.dark .connection-item{box-shadow:none}
+html.dark .search-result:hover,
+html.dark .notification:hover,
+html.dark .connection-item:hover{box-shadow:0 10px 24px rgba(0,0,0,.18)}
+
+/* Reader / reading experience. */
+html.dark .reader-topbar{background:linear-gradient(180deg,rgba(16,16,18,.98) 68%,rgba(16,16,18,0))!important}
+html.dark .reader-back-btn{background:rgba(33,28,30,.96)!important}
+html.dark .reader-body,
+html.dark .lit-preview-body .lit-preview-content{color:#E1D6D1!important}
+html.dark .lit-preview-head{background:linear-gradient(180deg,#1B181A 75%,rgba(27,24,26,0))!important}
+html.dark .lit-toc-list button,
+html.dark .lit-toc-head button{color:#B9AEA8!important}
+html.dark .lit-toc-list button:hover{background:#2A2426!important;color:#F0E7E2!important}
+html.dark .lit-reader-bookmark.on{background:#4A3934!important;border-color:#7A5D4D!important;color:#F1DED0!important}
+html.dark .lit-resume-banner{background:#2D2320!important;border-color:#55433A!important}
+html.dark .lit-tip{background:#2A231F!important;border-color:#57473B!important;color:#B8A99E!important}
+html.dark .lit-text-settings{background:rgba(27,24,26,.97)!important;border-color:#403638!important;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+html.dark .lit-continue-track{background:#3B3334!important}
+
+/* Image/art areas stay intentionally colorful; soften surrounding shadows. */
+html.dark .book{filter:drop-shadow(0 27px 30px rgba(0,0,0,.42))}
+html.dark .card-art{filter:saturate(.92) brightness(.88)}
+html.dark .activity-art{background:radial-gradient(circle at 50% 45%,#242022 0%,#1B1719 62%,#171416 100%)!important;border-color:#3A3234!important;box-shadow:0 20px 50px rgba(0,0,0,.34)}
+
+/* Inline white/light surfaces authored by generated UI fragments. */
+html.dark [style*="background:#fff"],
+html.dark [style*="background:#FFF"],
+html.dark [style*="background:#fffdf"],
+html.dark [style*="background:#FFFE"]{
+  background:#211C1E!important;
+  color:var(--ink)!important;
+}
+html.dark [style*="background:white"],
+html.dark [style*="background: white"]{background:#211C1E!important;color:var(--ink)!important}
+
+/* Extra light pills/surfaces from later enhancement blocks. */
+html.dark .lit-collection-btn,
+html.dark .lit-profile-tab,
+html.dark .lit-settings-row button,
+html.dark .feed-tab-icon,
+html.dark .following-range,
+html.dark .range-btn.active,
+html.dark .activity-switcher,
+html.dark .activity-tab.active{
+  background:#241F21!important;
+}
+html.dark .feed-tab.active .feed-tab-icon{background:#3B2C2F!important;color:#E5B7BC!important}
+html.dark .activity-empty-icon{background:#31292B!important;color:var(--wine)!important}
+html.dark .activity-summary-card:after{border-color:#4A3B35}
+html.dark .notification-modal-icon{background:linear-gradient(145deg,#332A2C,#292224)!important;color:var(--wine)!important}
+html.dark .activity-art-glow{background:rgba(199,166,109,.1)}
+
+/* Make SVGs that use currentColor inherit the readable dark-mode foreground. */
+html.dark svg{color:inherit}
+html.dark .svg-flourish{color:var(--gold)!important}
+html.dark .seal{border-color:var(--gold2)!important}
+
+@media(max-width:760px){
+  html.dark .sidebar{box-shadow:none}
+  html.dark body.menu-open .sidebar{box-shadow:14px 0 38px rgba(0,0,0,.42)}
+  html.dark .mobile-overlay{background:rgba(5,4,5,.58)!important}
+}
+
+/* Respect reduced-motion settings. */
+@media(prefers-reduced-motion:reduce){
+  html.dark *,html.dark *::before,html.dark *::after{scroll-behavior:auto!important}
+}
+</style>
+
+
+<style id="dark-mode-readable-polish">
+/* ==========================================================
+   DARK MODE READABILITY POLISH
+   Higher-contrast text + clearer surface hierarchy while
+   preserving the original wine/gold visual identity.
+   ========================================================== */
+html.dark{
+  --paper:#171619;
+  --bg:#0F1012;
+  --ink:#F7F0EC;
+  --muted:#D1C5BF;
+  --line:#4A4245;
+  --sidebar:#151416;
+  --card:#1C1A1D;
+  --wine:#F0DDD7;
+  --burgundy:#E39AA3;
+  --gold:#D9B974;
+  --gold2:#E8D3A7;
+  --shadow:0 20px 55px rgba(0,0,0,.38);
+}
+
+html.dark body,
+html.dark .main{background:var(--bg);color:var(--ink)}
+html.dark .sidebar{background:var(--sidebar)!important;border-color:var(--line)!important}
+html.dark .topbar{background:rgba(15,16,18,.94)!important;border-color:var(--line)!important}
+html.dark .content{color:var(--ink)}
+
+/* Strong text hierarchy */
+html.dark h1,html.dark h2,html.dark h3,html.dark h4,html.dark h5,html.dark h6,
+html.dark strong,html.dark b,
+html.dark .page-title h1,
+html.dark .hero h2,
+html.dark .section-head h3,
+html.dark .card-body h4,
+html.dark .post-title,
+html.dark .reader h2,
+html.dark .reader-section-heading,
+html.dark .profile-copy h2,
+html.dark .profile-stat strong,
+html.dark .author-card h4,
+html.dark .modal-head h3,
+html.dark .modal-box h3,
+html.dark .activity-hero h2,
+html.dark .activity-summary-card strong,
+html.dark .activity-item-name,
+html.dark .notification-name,
+html.dark .search-result-copy strong,
+html.dark .connection-copy strong,
+html.dark .lit-toc-head strong,
+html.dark .lit-reader-nav strong,
+html.dark .lit-preview-body h2,
+html.dark .lit-preview-body h3,
+html.dark .lit-home-shelf-head h4,
+html.dark .lit-profile-activity-item strong,
+html.dark .lit-follow-suggest h4,
+html.dark .lit-text-settings h4{
+  color:var(--ink)!important;
+}
+html.dark .hero h2 span,
+html.dark .brand-name,
+html.dark .author-link,
+html.dark .profile-mini strong,
+html.dark .comment-modal-item-head strong,
+html.dark .comment-author-handle,
+html.dark .comment-modal-item p strong{
+  color:var(--burgundy)!important;
+}
+html.dark .kicker,
+html.dark .brand-sub,
+html.dark .nav-title,
+html.dark .page-title p,
+html.dark .meta,
+html.dark .metric span,
+html.dark .author span,
+html.dark .author-card p,
+html.dark .reader-meta,
+html.dark .reader-by,
+html.dark .profile-stat span,
+html.dark .profile-handle,
+html.dark .notification-username,
+html.dark .notification-meta,
+html.dark .notification-time-relative,
+html.dark .notification-date,
+html.dark .search-result-copy span,
+html.dark .search-group-head strong,
+html.dark .connection-copy span,
+html.dark .connections-empty,
+html.dark .following-mini-label,
+html.dark .following-control-copy,
+html.dark .insight-note,
+html.dark .following-post .engagement-line,
+html.dark .activity-item-handle,
+html.dark .activity-item-meta,
+html.dark .activity-item-text,
+html.dark .activity-empty p,
+html.dark .upgrade-notif-pref-box p,
+html.dark .upgrade-notif-pref-copy span,
+html.dark .lit-reading-extra,
+html.dark .lit-editor-meta,
+html.dark .lit-home-shelf-head span,
+html.dark .lit-continue-meta,
+html.dark .lit-new-since span,
+html.dark .lit-notif-digest span,
+html.dark .lit-profile-activity-item span,
+html.dark .notification-activity,
+html.dark .notification-text,
+html.dark .comment-author-handle,
+html.dark .comment-total-count,
+html.dark .feedback-identity,
+html.dark .cloud-account-note{
+  color:var(--muted)!important;
+}
+html.dark p{color:var(--muted)}
+html.dark a{color:var(--burgundy)}
+html.dark a:hover{color:var(--gold2)}
+
+/* Navigation, controls and states */
+html.dark .nav-btn{color:#DDD2CC!important}
+html.dark .nav-btn:hover{background:#2A2528!important;color:#FFF4EE!important}
+html.dark .nav-btn.active{background:#33292D!important;color:#FFF4EE!important;box-shadow:inset 3px 0 0 var(--gold)}
+html.dark .nav-icon{color:inherit}
+html.dark .icon-btn,html.dark .profile-btn,html.dark .profile-mini,
+html.dark .secondary,html.dark .social-btn,html.dark .danger-btn,
+html.dark .post-actions .post-action,
+html.dark .reader-back-btn,html.dark .reader-tools button,
+html.dark .activity-secondary,html.dark .activity-filter,
+html.dark .activity-switcher,html.dark .activity-tab,
+html.dark .following-range,html.dark .range-btn,
+html.dark .following-refresh,html.dark .feed-tab,
+html.dark .feed-tab-icon,html.dark .profile-menu button,
+html.dark .identity-option,
+html.dark .lit-reader-toolbar button,html.dark .lit-reader-nav button,
+html.dark .lit-collection-btn,html.dark .lit-profile-tab,
+html.dark .lit-settings-row button{
+  color:var(--ink)!important;
+}
+html.dark .icon-btn:hover,html.dark .profile-btn:hover,
+html.dark .secondary:hover,html.dark .social-btn:hover,html.dark .danger-btn:hover,
+html.dark .post-actions .post-action:hover,html.dark .reader-back-btn:hover,
+html.dark .reader-tools button:hover,html.dark .activity-filter:hover,
+html.dark .following-refresh:hover,html.dark .feed-tab:hover,
+html.dark .profile-menu button:hover,html.dark .identity-option:hover,
+html.dark .lit-reader-toolbar button:hover,html.dark .lit-collection-btn:hover,
+html.dark .lit-settings-row button:hover{
+  background:#2B2628!important;color:#FFF7F2!important;border-color:#5A4E52!important;
+}
+
+/* Tabs / segmented controls: selected state remains obvious. */
+html.dark .feed-tabs,
+html.dark .account-tabs,
+html.dark .activity-switcher,
+html.dark .lit-library-collections{
+  background:#171517!important;border-color:var(--line)!important;
+}
+html.dark .feed-tab.active,
+html.dark .activity-tab.active,
+html.dark .tab.active,
+html.dark .range-btn.active{
+  background:#2D2528!important;color:#FFF5F0!important;
+  box-shadow:0 5px 16px rgba(0,0,0,.22)!important;
+}
+html.dark .feed-tab-icon,
+html.dark .activity-tab.active .feed-tab-icon{
+  color:var(--gold2)!important;background:#3A2E31!important;
+}
+
+/* Surfaces */
+html.dark .card,html.dark .panel,html.dark .author-card,
+html.dark .profile-hero,html.dark .profile-privacy-note,
+html.dark .identity-panel,html.dark .following-control,
+html.dark .following-insight .insight-card,
+html.dark .activity-summary-card,html.dark .activity-item,
+html.dark .notification,html.dark .search-result,
+html.dark .connection-item,html.dark .activity-empty,
+html.dark .comment-modal-item,html.dark .comment-reply-state,
+html.dark .lit-toc,html.dark .lit-continue-card,
+html.dark .lit-new-since,html.dark .lit-notif-digest,
+html.dark .lit-follow-suggest,html.dark .lit-suggest-card,
+html.dark .lit-profile-activity-item,html.dark .upgrade-notif-pref-row{
+  background:#1C1A1D!important;
+  border-color:var(--line)!important;
+  color:var(--ink)!important;
+}
+html.dark .card:hover,html.dark .activity-item:hover,
+html.dark .notification:hover,html.dark .search-result:hover,
+html.dark .connection-item:hover{background:#252124!important}
+html.dark .activity-item.unread,html.dark .notification.unread{
+  background:#34272A!important;border-color:#5D474C!important;
+}
+html.dark .activity-item.unread .activity-item-text,
+html.dark .notification.unread .notification-text{color:#EFE3DE!important}
+
+/* Pills / tags / counts */
+html.dark .activity-type-pill,html.dark .tag,html.dark .identity-badge,
+html.dark .lit-mutual-note,html.dark .lit-pin-work.on{
+  background:#332B2E!important;color:#F0E1DB!important;border-color:#4C4145!important;
+}
+html.dark .identity-badge.reader{background:#2B282A!important;color:#D8CFCA!important}
+html.dark .feed-tab-badge{color:#fff!important}
+
+/* Inputs and editable areas */
+html.dark .field label{color:#DAD0CA!important}
+html.dark .field input,html.dark .field textarea,html.dark .field select,
+html.dark .comment-popup-form textarea,
+html.dark .connections-search input,html.dark .search input,
+html.dark .lit-quiet-row select{
+  background:#121315!important;color:#F7F0EC!important;border-color:#51474B!important;
+}
+html.dark .field input:focus,html.dark .field textarea:focus,
+html.dark .field select:focus,html.dark .comment-popup-form textarea:focus,
+html.dark .connections-search:focus-within,html.dark .search:focus-within{
+  border-color:var(--gold)!important;box-shadow:0 0 0 3px rgba(217,185,116,.14)!important;
+}
+html.dark input::placeholder,html.dark textarea::placeholder{color:#9A8E88!important;opacity:1}
+html.dark .field select option{background:#121315;color:#F7F0EC}
+html.dark input:disabled,html.dark textarea:disabled,html.dark select:disabled{color:#8F8580!important;background:#181719!important}
+
+/* Modals, popovers, menus and reaction pickers */
+html.dark .modal{background:rgba(3,3,4,.76)!important}
+html.dark .modal-box,
+html.dark .reaction-picker,
+html.dark .comment-reaction-picker,
+html.dark .profile-menu{
+  background:#1A181A!important;color:var(--ink)!important;border-color:#4B4246!important;
+  box-shadow:0 28px 90px rgba(0,0,0,.58)!important;
+}
+html.dark .reaction-choice,
+html.dark .comment-action-btn,
+html.dark .comment-reaction-trigger,
+html.dark .comment-reaction-choice{background:#211F21!important;color:var(--ink)!important}
+html.dark .reaction-choice:hover,
+html.dark .comment-action-btn:hover,
+html.dark .comment-reaction-trigger:hover,
+html.dark .comment-reaction-choice:hover{background:#2E282B!important;color:#FFF7F2!important}
+html.dark .reaction-choice.on,
+html.dark .comment-reaction-choice.on,
+html.dark .comment-reaction-trigger.on{background:#3B2E31!important;border-color:#665257!important;color:#FFF2EC!important}
+html.dark .comment-modal-item p{color:#D1C5BF!important}
+
+/* Primary actions: keep clear contrast against dark surfaces. */
+html.dark .brand-mark,html.dark .primary,html.dark .social-btn.on,
+html.dark .mini.active,html.dark .follow.on,html.dark .search button,
+html.dark .activity-primary,html.dark .activity-filter.active,
+html.dark .lit-resume-banner button,
+html.dark .lit-collection-btn.active,html.dark .lit-profile-tab.active{
+  background:#6E2F34!important;color:#FFF!important;border-color:#8B4B52!important;
+}
+html.dark .primary:hover,html.dark .activity-primary:hover,
+html.dark .search button:hover{background:#824047!important}
+
+/* Reader content: paper should be soft, not white, with comfortable text. */
+html.dark .reader-topbar{background:linear-gradient(180deg,rgba(15,16,18,.99) 68%,rgba(15,16,18,0))!important}
+html.dark .reader-body,
+html.dark .lit-preview-body .lit-preview-content{color:#EDE2DD!important}
+html.dark .reader-body p,
+html.dark .lit-preview-body .lit-preview-content p{color:#EDE2DD!important}
+html.dark .lit-preview-head{background:linear-gradient(180deg,#1A181A 75%,rgba(26,24,26,0))!important}
+html.dark .lit-toc-list button,html.dark .lit-toc-head button{color:#C9BDB7!important}
+html.dark .lit-toc-list button:hover{background:#2B2628!important;color:#FFF2EC!important}
+
+/* Mobile overlay + focus visibility */
+html.dark .mobile-overlay{background:rgba(3,3,4,.64)!important}
+html.dark :focus-visible{outline:2px solid var(--gold)!important;outline-offset:2px}
+html.dark ::selection{background:#6E2F34;color:#FFF}
+
+/* Extra hard-coded pale backgrounds used by enhancement fragments. */
+html.dark .cloud-account-note,
+html.dark .feedback-identity,
+html.dark .profile-privacy-note,
+html.dark .following-control,
+html.dark .activity-empty,
+html.dark .activity-switcher,
+html.dark .lit-tip,
+html.dark .lit-resume-banner,
+html.dark .lit-new-since,
+html.dark .lit-notif-digest{
+  background:#211D1F!important;border-color:#51464A!important;color:var(--muted)!important;
+}
+html.dark .lit-tip{color:#C3B6AF!important}
+html.dark .lit-resume-banner strong,
+html.dark .lit-quiet-row label{color:var(--gold2)!important}
+
+/* Smoothly fade the visual palette only; layout/transform animations remain independent. */
+html.theme-changing body,
+html.theme-changing .app,
+html.theme-changing .main,
+html.theme-changing .sidebar,
+html.theme-changing .topbar,
+html.theme-changing .content,
+html.theme-changing .page,
+html.theme-changing .card,
+html.theme-changing .panel,
+html.theme-changing .feed-post,
+html.theme-changing .profile-hero,
+html.theme-changing .profile-menu,
+html.theme-changing .modal-box,
+html.theme-changing .reaction-picker,
+html.theme-changing .comment-reaction-picker,
+html.theme-changing .notification,
+html.theme-changing .activity-item,
+html.theme-changing .search-result,
+html.theme-changing .connection-item,
+html.theme-changing input,
+html.theme-changing textarea,
+html.theme-changing select,
+html.theme-changing button,
+html.theme-changing a{
+  transition-property:background-color,color,border-color,box-shadow,fill,stroke!important;
+  transition-duration:.48s!important;
+  transition-timing-function:cubic-bezier(.22,.72,.2,1)!important;
+}
+@media(prefers-reduced-motion:reduce){
+  html.theme-changing body,html.theme-changing .app,html.theme-changing .main,
+  html.theme-changing .sidebar,html.theme-changing .topbar,html.theme-changing .content,
+  html.theme-changing .page,html.theme-changing .card,html.theme-changing .panel,
+  html.theme-changing .feed-post,html.theme-changing .profile-hero,html.theme-changing .profile-menu,
+  html.theme-changing .modal-box,html.theme-changing .reaction-picker,html.theme-changing .comment-reaction-picker,
+  html.theme-changing .notification,html.theme-changing .activity-item,html.theme-changing .search-result,
+  html.theme-changing .connection-item,html.theme-changing input,html.theme-changing textarea,
+  html.theme-changing select,html.theme-changing button,html.theme-changing a{
+    transition-duration:.01ms!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -787,6 +1665,10 @@ button,input,textarea,select{max-width:100%}
         <button class="icon-btn search-trigger" onclick="openGlobalSearch()" aria-label="Search works and student profiles">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.7"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
           <span>Search</span>
+        </button>
+        <button class="icon-btn theme-toggle" id="themeToggle" type="button" onclick="toggleDarkMode()" aria-label="Enable dark mode" aria-pressed="false" title="Enable dark mode">
+          <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4a8.7 8.7 0 1 0 11.2 11.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v2M12 19.5v2M4.85 4.85l1.4 1.4M17.75 17.75l1.4 1.4M2.5 12h2M19.5 12h2M4.85 19.15l1.4-1.4M17.75 6.25l1.4-1.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         </button>
         <button class="icon-btn" onclick="openNotifications()" aria-label="Notifications" style="position:relative">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -1413,7 +2295,10 @@ function persistSessionData(){
   localStorage.setItem('shkNotifications',JSON.stringify(notifications));
   localStorage.setItem('shkHistory',JSON.stringify(history));
   localStorage.setItem('shkActivityLog',JSON.stringify(activityLog));
+  // Keep the legacy key for compatibility, but use the new preference key
+  // so older saved dark-mode state does not force a first load into dark mode.
   localStorage.setItem('shkDarkMode',JSON.stringify(darkMode));
+  localStorage.setItem('shkThemePreference',darkMode?'dark':'light');
 }
 
 const PIN_STORAGE_KEY='shkPinHashes';
@@ -1468,7 +2353,9 @@ let works = readJSON('shkWorks',[]).filter(w=>w&&!LEGACY_DEMO_IDS.has(w.id)&&!LE
 let currentUser = normalizeUser(readJSON('shkUser',null));
 let notifications = readJSON('shkNotifications',[]).filter(n=>n&&n.to);
 let history = readJSON('shkHistory',{});
-let darkMode = !!readJSON('shkDarkMode',false);
+let darkMode = localStorage.getItem('shkThemePreference') === 'dark';
+// Theme preference is written only after the user changes the theme; the V3
+// migration above ensures existing builds open in light mode once.
 let activityLog = readJSON('shkActivityLog',{});
 let activityView = 'forYou';
 let activityFilter = 'all';
@@ -2261,11 +3148,13 @@ function confirmDeleteWork(){
 function openReader(id){
  const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
  if(!canReadWork(w)){showToast('This work is not currently visible to your account.');return;}
- readerWork=w;w.views=(w.views||0)+1;rememberRead(w);saveState();
- const workAuthor=findUser(w.ownerUid||w.email)||{};document.getElementById('readerGenre').textContent=w.genre.toUpperCase();document.getElementById('readerIdentity').textContent=identityLabelOf(workAuthor).toUpperCase();document.getElementById('readerIdentity').classList.toggle('reader',normalizeIdentity(workAuthor.identity)==='reader');document.getElementById('readerTitle').textContent=w.title;document.getElementById('readerBy').textContent='by '+(w.author||publicNameOf(workAuthor))+' · '+new Date(w.createdAt||Date.now()).getFullYear();
- document.getElementById('readerSubmeta').textContent=`${w.views||0} views · ${totalReactionCount(w)} reactions · ${w.comments.length} comments · ${w.privacy==='followers'?'Followers only':w.privacy==='private'?'Private':'Public'}`;
- document.getElementById('readerBody').innerHTML=w.content.split(/\\n+/).map(p=>'<p>'+escapeHTML(p)+'</p>').join('');
- renderReaderSocial();renderComments();showPage('reader'); loadCloudWorkSocial(id).then(()=>startCloudWorkSocialListener(id)); loadCloudWorkSocial(id).then(()=>startCloudWorkSocialListener(id));
+ // Opening a work does NOT increment the local view counter. The cloud view
+ // tracker below records at most one view per Firebase account per work.
+ readerWork=normalizeWork(w);rememberRead(readerWork);saveState();
+ const workAuthor=findUser(readerWork.ownerUid||readerWork.email)||{};document.getElementById('readerGenre').textContent=readerWork.genre.toUpperCase();document.getElementById('readerIdentity').textContent=identityLabelOf(workAuthor).toUpperCase();document.getElementById('readerIdentity').classList.toggle('reader',normalizeIdentity(workAuthor.identity)==='reader');document.getElementById('readerTitle').textContent=readerWork.title;document.getElementById('readerBy').textContent='by '+(readerWork.author||publicNameOf(workAuthor))+' · '+new Date(readerWork.createdAt||Date.now()).getFullYear();
+ document.getElementById('readerSubmeta').textContent=`${readerWork.views||0} views · ${totalReactionCount(readerWork)} reactions · ${readerWork.comments.length} comments · ${readerWork.privacy==='followers'?'Followers only':readerWork.privacy==='private'?'Private':'Public'}`;
+ document.getElementById('readerBody').innerHTML=readerWork.content.split(/\\n+/).map(p=>'<p>'+escapeHTML(p)+'</p>').join('');
+ renderReaderSocial();renderComments();showPage('reader'); loadCloudWorkSocial(id).then(()=>startCloudWorkSocialListener(id));
 }
 function renderReaderSocial(){
  if(!readerWork)return;
@@ -2952,8 +3841,53 @@ function renderActivity(){const root=document.getElementById('activityFeed');if(
  if(!filtered.length){root.innerHTML=`<div class="activity-empty"><div class="activity-empty-icon">${activityView==='mine'?'✍️':'🔔'}</div><h4>${activityView==='mine'?'Nothing logged here yet.':'You are all caught up.'}</h4><p>${activityView==='mine'?'Your follow, reaction, comment, save, share, and writing actions will appear here as you use the archive.':'New follows, reactions, comments, replies, mentions, saves, and new works from your circle will appear here.'}</p></div>`;return}
  root.innerHTML=filtered.map(record=>{const isNotification=activityView==='forYou';const type=activityTypeOf(record);const actor=isNotification?notificationActorOf(record):currentUser;const name=publicNameOf(actor);const username=usernameOf(actor);const photo=actor?.photoURL||actor?.photo||'';const avatar=photo?`<img src="${escapeAttr(photo)}" alt="${escapeAttr(name)} profile picture">`:`<span>${escapeHTML(initialsOf(name))}</span>`;let body='';if(isNotification){const act=notificationActivityOf(record.text);const title=record.workTitle?` on <b>${escapeHTML(record.workTitle)}</b>`:'';body=`${escapeHTML(act)}${title}`}else body=escapeHTML(record.text||'Activity recorded.');return `<article class="activity-item ${record.read?'':'unread'}" role="button" tabindex="0" onclick="openActivityItem('${activityView}','${escapeAttr(record.id||'')}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openActivityItem('${activityView}','${escapeAttr(record.id||'')}')}"><div class="activity-item-avatar">${avatar}</div><div class="activity-item-main"><div class="activity-item-head"><strong class="activity-item-name">${escapeHTML(name)}</strong><span class="activity-item-handle">@${escapeHTML(username)}</span></div><div class="activity-item-text">${body}</div><div class="activity-item-meta"><span class="activity-type-pill">${activityIconOf(type)} ${escapeHTML(activityLabelOf(type))}</span><span>${escapeHTML(relativeTimeFrom(record.at))}</span><span>·</span><span>${escapeHTML(notificationDateTime(record.at))}</span></div></div><div class="activity-item-arrow" aria-hidden="true">›</div></article>`}).join('')}
 
-function applyDarkMode(){document.documentElement.classList.toggle('dark',darkMode)}
-function toggleDarkMode(){darkMode=!darkMode;persistSessionData();applyDarkMode();showToast(darkMode?'Dark mode enabled.':'Light mode enabled.')}
+function applyDarkMode(options={}){
+ const root=document.documentElement;
+ const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+ const animate=options.animate!==false && !reduced;
+ const update=()=>{
+  root.classList.toggle('dark',!!darkMode);
+  root.style.colorScheme=darkMode?'dark':'light';
+  const meta=document.querySelector('meta[name=theme-color]');
+  if(meta)meta.setAttribute('content',darkMode?'#101012':'#32191B');
+  const btn=document.getElementById('themeToggle');
+  if(btn){
+   btn.setAttribute('aria-pressed',darkMode?'true':'false');
+   btn.setAttribute('aria-label',darkMode?'Switch to light mode':'Switch to dark mode');
+   btn.title=darkMode?'Switch to light mode':'Switch to dark mode';
+   btn.classList.toggle('is-dark',!!darkMode);
+  }
+ };
+ const finish=()=>{
+  clearTimeout(window.__themeChangeTimer);
+  root.classList.remove('theme-changing');
+ };
+ if(animate && typeof document.startViewTransition==='function'){
+  root.classList.remove('theme-changing');
+  const vt=document.startViewTransition(()=>{
+   root.classList.add('theme-changing');
+   update();
+  });
+  vt.finished.finally(finish);
+  return vt;
+ }
+ if(animate){
+  root.classList.add('theme-changing');
+  void root.offsetWidth;
+  update();
+  clearTimeout(window.__themeChangeTimer);
+  window.__themeChangeTimer=setTimeout(finish,560);
+ }else{
+  finish();
+  update();
+ }
+}
+function toggleDarkMode(){
+ darkMode=!darkMode;
+ persistSessionData();
+ applyDarkMode({animate:true});
+ showToast(darkMode?'Dark mode enabled.':'Light mode enabled.');
+}
 function openEditProfile(){if(!currentUser){openAccount();return}document.getElementById('editPenName').value=currentUser.penName||publicNameOf(currentUser);document.getElementById('editUsername').value='@'+usernameOf(currentUser);document.getElementById('editBio').value=currentUser.bio||'';document.getElementById('editProfileModal').classList.add('open')}
 async function saveProfile(e){
  e.preventDefault();if(!currentUser)return;const email=currentUser.email;const penName=document.getElementById('editPenName').value.trim();const username=document.getElementById('editUsername').value.trim().replace(/^@/,'');const bio=document.getElementById('editBio').value.trim();if(!penName||!username){showToast('Pen name and username are required.');return}
@@ -3364,7 +4298,8 @@ function cloudWorkPayload(work){
     content:String(normalized.content||''),
     cover:String(normalized.cover||''),
     privacy:String(normalized.privacy||'public'),
-    views:Number(normalized.views||0),
+    baseViews:Number(normalized.baseViews ?? normalized.views ?? 0),
+    views:Number(normalized.baseViews ?? normalized.views ?? 0),
     createdAt:Number(normalized.createdAt||Date.now()),
     updatedAt:Number(normalized.updatedAt||normalized.createdAt||Date.now()),
     syncedAt:window.firebaseServerTimestamp ? window.firebaseServerTimestamp() : null
@@ -4462,6 +5397,14 @@ body.reader-upgrade-focus .sidebar,body.reader-upgrade-focus .topbar{display:non
 .lit-text-settings{display:none;position:fixed;z-index:230;left:50%;transform:translateX(-50%);top:86px;width:min(360px,calc(100vw - 24px));padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,253,249,.97);box-shadow:0 20px 50px rgba(36,27,23,.16);backdrop-filter:blur(14px)}.lit-text-settings.open{display:block}.lit-text-settings h4{margin:0;color:var(--wine);font:600 1.5rem/1 'Cormorant Garamond',serif}.lit-text-settings p{font-size:.57rem;color:#8E827B}.lit-settings-row{display:flex;gap:7px;align-items:center;justify-content:space-between;margin-top:9px}.lit-settings-row button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 9px;color:var(--wine);font-weight:800;cursor:pointer}
 @media(max-width:800px){.lit-continue-grid,.lit-suggest-grid{grid-template-columns:1fr 1fr}.lit-reader-nav{grid-template-columns:1fr}.lit-reader-nav .next{text-align:left}}
 @media(max-width:560px){.reader-topbar{margin-bottom:6px!important}.reader-by{margin-top:17px!important}.lit-reader-toolbar{gap:5px}.lit-reader-toolbar button{padding:7px 9px;font-size:.61rem}.lit-continue-grid,.lit-suggest-grid{grid-template-columns:1fr}.lit-resume-banner{align-items:flex-start;flex-direction:column}.lit-preview-modal-box{padding:14px!important}.lit-preview-head{top:-14px}.lit-editor-meta{font-size:.56rem}.lit-tip{font-size:.55rem}}
+
+html.dark #profilePage .profile-work-head h3,
+html.dark #profilePage .profile-work-head p,
+html.dark #profilePage .profile-copy p{color:var(--ink)!important}
+html.dark #profilePage .profile-work-head p{color:var(--muted)!important}
+html.dark #profilePage .profile-hero{box-shadow:0 16px 38px rgba(0,0,0,.28)!important}
+html.dark #profilePage .profile-stat-button:hover{background:#2A2426!important}
+html.dark .connections-modal-box{background:#1B181A!important}
 </style>
 
 <script>
@@ -4812,16 +5755,21 @@ body.reader-upgrade-focus .sidebar,body.reader-upgrade-focus .topbar{display:non
   }
 
   function baseViewCount(work){
-    return Number(work?.views||0);
+    // baseViews is the work's original/manual view count. The live unique-view
+    // records are stored separately under /views/{uid}. This keeps repeat opens
+    // from inflating the counter. Older work documents without baseViews fall
+    // back to their existing views value.
+    return Number(work?.baseViews ?? work?.views ?? 0);
   }
   function applyViewsSnapshot(workId,snap){
     const idx=works.findIndex(w=>String(w.id)===String(workId));if(idx<0)return;
     const local=normalizeWork(works[idx]);
-    let extras=0;
-    (snap.docs||[]).forEach(ds=>{const n=Number(ds.data()?.count||0);if(Number.isFinite(n)&&n>0)extras+=n;});
-    const total=baseViewCount(local)+extras;
-    if(local.views!==total){
-      works[idx]=normalizeWork({...local,views:total});
+    // One Firestore view document = one unique Firebase account that has viewed
+    // this work. Legacy `count` fields are intentionally ignored.
+    const uniqueViewers=new Set((snap.docs||[]).map(ds=>String(ds.id)).filter(Boolean));
+    const total=baseViewCount(local)+uniqueViewers.size;
+    if(local.views!==total || Number(local.baseViews||0)!==baseViewCount(local)){
+      works[idx]=normalizeWork({...local,baseViews:baseViewCount(local),views:total});
       if(readerWork?.id===workId)readerWork=works[idx];
       localStorage.setItem('shkWorks',JSON.stringify(works));
       renderAll();renderReaderSocial();
@@ -4838,8 +5786,19 @@ body.reader-upgrade-focus .sidebar,body.reader-upgrade-focus .topbar{display:non
         if(window.firebaseReady)await window.firebaseReady;
         const ref=window.firebaseDoc(window.firebaseDB,'works',key,'views',uid);
         const snap=await window.firebaseGetDoc(ref);
-        const current=Number(snap.exists()?snap.data()?.count||0:0);
-        await window.firebaseSetDoc(ref,{userUid:uid,count:current+1,lastViewedAt:Date.now(),updatedAt:window.firebaseServerTimestamp()},{merge:false});
+        if(snap.exists()){
+          // This account already viewed this work. Reopening it must not add
+          // another view. We deliberately do not increment any counter here.
+          return false;
+        }
+        // The UID itself is the unique key. Creating this document once makes
+        // the view count naturally one-per-account, even across devices/tabs.
+        await window.firebaseSetDoc(ref,{
+          userUid:uid,
+          viewed:true,
+          firstViewedAt:window.firebaseServerTimestamp(),
+          lastViewedAt:window.firebaseServerTimestamp()
+        },{merge:false});
         return true;
       }catch(err){console.warn('View sync failed:',err);return false}
       finally{socialState.pendingViewWrites.delete(key)}
@@ -5050,6 +6009,302 @@ body.reader-upgrade-focus .sidebar,body.reader-upgrade-focus .topbar{display:non
   // Start listeners after the page and Firebase auth have settled.
   setTimeout(ensureGlobalWorkSubscriptions,1800);
   setTimeout(()=>works.filter(w=>w?.id&&w.privacy==='public').forEach(w=>refreshOneWorkReactions(w.id)),2600);
+})();
+</script>
+
+
+<style id="dark-mode-contrast-final">
+/* Final dark-mode contrast pass: keep decorative quote/promo surfaces dark
+   even though --wine is intentionally brightened for readable text. */
+html.dark .quote{
+  background:linear-gradient(145deg,#2A1F22 0%,#21191C 100%)!important;
+  color:#F7EFEA!important;
+  border:1px solid #4A3A3F!important;
+  box-shadow:0 18px 48px rgba(0,0,0,.28)!important;
+}
+html.dark .quote-mark{color:#E8D3A7!important}
+html.dark .quote h3{color:#FFF5F0!important}
+html.dark .quote p{color:#D7C9C3!important}
+html.dark .quote .secondary{
+  background:#F1E7E2!important;
+  color:#2A1F22!important;
+  border-color:#F1E7E2!important;
+}
+html.dark .quote .secondary:hover{
+  background:#FFF8F4!important;
+  color:#21191C!important;
+  border-color:#FFF8F4!important;
+}
+
+/* Other components that use --wine as a background in light mode. */
+html.dark .delete-modal-actions .delete-confirm{
+  background:#6E2F34!important;
+  color:#FFF!important;
+  border-color:#8B4B52!important;
+}
+html.dark .delete-modal-actions .delete-confirm:hover{background:#824047!important}
+
+/* Keep any accidental wine-background surface from becoming a pale block. */
+html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
+</style>
+
+
+<style data-rich-editor-upgrade="v3">
+/* Rich writing editor: bold, highlight, indent, strike-through */
+.rich-editor-wrap{grid-column:1/-1;min-width:0}
+.rich-editor-toolbar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:7px;border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;background:var(--card);overflow-x:auto;scrollbar-width:thin}
+.rich-editor-toolbar .rte-tool{flex:0 0 auto;min-width:34px;height:34px;padding:0 9px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--wine);font-size:.72rem;font-weight:850;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:background .18s var(--ease),color .18s var(--ease),border-color .18s var(--ease),transform .18s var(--ease);white-space:nowrap}
+.rich-editor-toolbar .rte-tool:hover{background:var(--surface-2);border-color:var(--gold2);transform:translateY(-1px)}
+.rich-editor-toolbar .rte-tool.active{background:var(--wine);color:#fff;border-color:var(--wine)}
+.rich-editor-toolbar .rte-tool.rte-highlight{background:linear-gradient(180deg,#F7DFA1,#EECF79);color:#2A211C;border-color:#E2C06A}
+.rich-editor-toolbar .rte-tool.rte-danger{font-size:.66rem}
+.rich-editor-toolbar .rte-sep{width:1px;height:22px;background:var(--line);margin:0 2px;flex:none}
+.rich-editor-toolbar .rte-help{margin-left:auto;color:var(--muted);font-size:.56rem;white-space:nowrap;padding:0 4px}
+.rich-editor{width:100%;min-height:290px;padding:14px 15px;border:1px solid var(--line);border-radius:0 0 12px 12px;background:var(--card);color:var(--ink);font:400 1rem/1.85 "Cormorant Garamond",Georgia,serif;outline:none;overflow:auto;word-break:break-word;transition:border-color .18s var(--ease),box-shadow .18s var(--ease),background-color .45s ease,color .45s ease}
+.rich-editor:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(179,138,82,.12)}
+.rich-editor:empty::before{content:attr(data-placeholder);color:var(--muted);opacity:.72;pointer-events:none}
+.rich-editor p{margin:0 0 15px}.rich-editor h1,.rich-editor h2,.rich-editor h3{font-family:"Cormorant Garamond",Georgia,serif;color:var(--wine);line-height:1.08;margin:20px 0 10px}.rich-editor h3{font-size:1.65rem}.rich-editor strong,.rich-editor b{font-weight:800}.rich-editor s,.rich-editor strike{text-decoration-thickness:1.5px}.rich-editor mark{background:#F3D987;color:#241B17;padding:0 .12em;border-radius:.15em}.rich-editor blockquote{margin:13px 0;padding:10px 14px;border-left:3px solid var(--gold);background:var(--surface-2);border-radius:0 10px 10px 0;color:var(--ink)}
+.rich-editor .rte-indent{margin-left:2.4em}
+.rich-editor-status{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:7px;color:var(--muted);font-size:.56rem}
+.rich-editor-status strong{color:var(--wine)}
+.rich-editor-hidden-source{display:none!important}
+/* Rich reader rendering */
+.reader-body .rte-indent{margin-left:2.4em}.reader-body blockquote{margin:14px 0;padding:10px 16px;border-left:3px solid var(--gold);background:var(--surface-2);border-radius:0 10px 10px 0}.reader-body mark{background:#F3D987;color:#241B17;border-radius:.15em;padding:0 .12em}.reader-body s,.reader-body strike{text-decoration-thickness:1.5px}.reader-body strong,.reader-body b{font-weight:800}
+.lit-preview-content .rte-indent{margin-left:2.4em}.lit-preview-content blockquote{margin:14px 0;padding:10px 16px;border-left:3px solid var(--gold);background:var(--surface-2);border-radius:0 10px 10px 0}.lit-preview-content mark{background:#F3D987;color:#241B17;border-radius:.15em;padding:0 .12em}.lit-preview-content s,.lit-preview-content strike{text-decoration-thickness:1.5px}.lit-preview-content strong,.lit-preview-content b{font-weight:800}
+@media(max-width:760px){
+  .rich-editor-toolbar{flex-wrap:nowrap;overflow-x:auto;padding:6px}
+  .rich-editor-toolbar .rte-help{display:none}
+  .rich-editor-toolbar .rte-tool{min-width:33px;height:33px;padding:0 8px}
+  .rich-editor{min-height:240px;padding:12px;font-size:1rem}
+}
+@media(max-width:420px){.rich-editor-toolbar .rte-tool{min-width:31px;padding:0 7px}.rich-editor-wrap{width:100%}}
+.dark .rich-editor-toolbar{background:var(--card)}
+.dark .rich-editor-toolbar .rte-tool{background:var(--card);color:var(--ink);border-color:var(--line)}
+.dark .rich-editor-toolbar .rte-tool:hover{background:var(--surface-2);border-color:var(--gold)}
+.dark .rich-editor-toolbar .rte-tool.active{background:var(--wine);color:#fff;border-color:var(--wine)}
+.dark .rich-editor-toolbar .rte-tool.rte-highlight{background:linear-gradient(180deg,#E7C45F,#B28A2E);color:#1D1714;border-color:#C4A243}
+</style>
+
+<script data-rich-editor-upgrade="v3">
+(function(){
+  'use strict';
+  if(window.__richEditorUpgradeV3)return;
+  window.__richEditorUpgradeV3=true;
+
+  const ALLOWED_TAGS=new Set(['P','BR','STRONG','B','EM','I','U','S','STRIKE','MARK','SPAN','DIV','H1','H2','H3','BLOCKQUOTE']);
+  const DROP_TAGS=new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','LINK','META','FORM','INPUT','TEXTAREA','BUTTON']);
+
+  function escapeHtmlText(v){
+    return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function sanitizeStyle(style){
+    const s=String(style||'');
+    const out=[];
+    const bg=s.match(/background-color\s*:\s*(#[0-9a-f]{3,8}|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*(?:0|0?\.\d+|1)\s*\))/i);
+    const ml=s.match(/margin-left\s*:\s*(\d+(?:\.\d+)?)(px|em|rem)/i);
+    if(bg)out.push('background-color:'+bg[1]);
+    if(ml)out.push('margin-left:'+ml[1]+ml[2]);
+    return out.join(';');
+  }
+  function sanitizeRichHTML(html){
+    const box=document.createElement('div');
+    box.innerHTML=String(html||'');
+    const walk=(root)=>{
+      [...root.children].forEach(el=>{
+        if(DROP_TAGS.has(el.tagName)){el.remove();return;}
+        if(!ALLOWED_TAGS.has(el.tagName)){
+          const parent=el.parentNode;
+          while(el.firstChild)parent.insertBefore(el.firstChild,el);
+          el.remove();
+          return;
+        }
+        [...el.attributes].forEach(a=>{
+          if(a.name.toLowerCase()==='style'){
+            const safe=sanitizeStyle(a.value);
+            if(safe)el.setAttribute('style',safe);else el.removeAttribute(a.name);
+          }else{
+            el.removeAttribute(a.name);
+          }
+        });
+        walk(el);
+      });
+    };
+    walk(box);
+    return box.innerHTML.replace(/\s+$/,'');
+  }
+  function plainTextToRichHTML(text){
+    const raw=String(text||'').replace(/\r\n?/g,'\n');
+    if(!raw.trim())return '';
+    const blocks=raw.split(/\n\s*\n/);
+    return blocks.map(block=>{
+      const lines=block.split('\n');
+      if(lines.length && /^#{1,3}\s+/.test(lines[0].trim())){
+        const head=lines.shift().trim().replace(/^#{1,3}\s+/,'');
+        const rest=lines.join('\n').trim();
+        return '<h3>'+escapeHtmlText(head)+'</h3>'+(rest?'<p>'+escapeHtmlText(rest).replace(/\n/g,'<br>')+'</p>':'');
+      }
+      return '<p>'+escapeHtmlText(block.trimEnd()).replace(/\n/g,'<br>')+'</p>';
+    }).join('');
+  }
+  function editor(){return document.getElementById('postContentEditor')}
+  function source(){return document.getElementById('postContent')}
+  function editorText(){const e=editor();return e?String(e.innerText||e.textContent||'').replace(/\u00a0/g,' ').trim():String(source()?.value||'').replace(/\u00a0/g,' ').trim()}
+  function editorHTML(){const e=editor();return e?sanitizeRichHTML(e.innerHTML):String(source()?.value||'')}
+  function syncSource(){const e=editor(),s=source();if(!e||!s)return;const html=sanitizeRichHTML(e.innerHTML);s.value=html;return html}
+  function placeCaretEnd(el){el.focus();const r=document.createRange();r.selectNodeContents(el);r.collapse(false);const sel=getSelection();sel.removeAllRanges();sel.addRange(r)}
+  function exec(command,value){
+    const e=editor();if(!e)return;
+    e.focus();
+    try{document.execCommand(command,false,value)}catch(_){ }
+    syncSource();updateMeta();updateButtons();
+  }
+  function clearFormatting(){exec('removeFormat');}
+  function indent(){exec('indent')}
+  function outdent(){exec('outdent')}
+  function highlight(){
+    const e=editor();if(!e)return;e.focus();
+    try{if(!document.execCommand('hiliteColor',false,'#F3D987'))document.execCommand('backColor',false,'#F3D987')}catch(_){try{document.execCommand('backColor',false,'#F3D987')}catch(__){}}
+    syncSource();updateMeta();
+  }
+  function strike(){exec('strikeThrough')}
+  function updateMeta(){
+    const e=editor(),out=document.getElementById('richWordCount');
+    if(!out||!e)return;
+    const txt=editorText();const n=txt?txt.split(/\s+/).filter(Boolean).length:0;const mins=Math.max(1,Math.ceil(n/220));out.textContent=`${n.toLocaleString()} words · ~${mins} min read`;
+  }
+  function updateButtons(){
+    const e=editor();if(!e)return;
+    document.querySelectorAll('.rich-editor-toolbar .rte-tool[data-cmd]').forEach(b=>{
+      let on=false;try{on=document.queryCommandState(b.dataset.cmd)}catch(_){ }
+      b.classList.toggle('active',!!on);
+    });
+  }
+  function setEditorHTML(html){
+    const e=editor(),s=source();if(!e||!s)return;
+    const clean=sanitizeRichHTML(html);
+    e.innerHTML=clean||'';s.value=clean;updateMeta();updateButtons();
+  }
+  function setEditorFromSource(){
+    const s=source();if(!s)return;
+    const value=String(s.value||'');
+    const looksRich=/<(?:p|div|h[1-3]|strong|b|em|i|u|s|strike|mark|blockquote|br)(?:\s|>)/i.test(value);
+    setEditorHTML(looksRich?value:plainTextToRichHTML(value));
+  }
+  function toolbarButton(label,cmd,cls){
+    const b=document.createElement('button');b.type='button';b.className='rte-tool'+(cls?' '+cls:'');b.dataset.cmd=cmd;b.textContent=label;b.title=label;b.setAttribute('aria-label',label);
+    b.addEventListener('mousedown',ev=>{ev.preventDefault();if(cmd==='hiliteColor'){highlight();return}if(cmd==='clear'){clearFormatting();return}if(cmd==='indent'){indent();return}if(cmd==='outdent'){outdent();return}if(cmd==='strikeThrough'){strike();return}exec(cmd)});
+    return b;
+  }
+  function initRichEditor(){
+    const form=document.getElementById('createForm'),s=source();
+    if(!form||!s||document.getElementById('postContentEditor'))return;
+    s.classList.add('rich-editor-hidden-source');s.removeAttribute('required');s.setAttribute('aria-hidden','true');
+    const wrap=document.createElement('div');wrap.className='rich-editor-wrap';wrap.id='richEditorWrap';
+    const toolbar=document.createElement('div');toolbar.className='rich-editor-toolbar';toolbar.setAttribute('role','toolbar');toolbar.setAttribute('aria-label','Literature formatting tools');
+    toolbar.appendChild(toolbarButton('B','bold'));
+    toolbar.appendChild(toolbarButton('I','italic'));
+    toolbar.appendChild(toolbarButton('U','underline'));
+    toolbar.appendChild(toolbarButton('S̶','strikeThrough','rte-danger'));
+    toolbar.appendChild(toolbarButton('Highlight','hiliteColor','rte-highlight'));
+    const sep=document.createElement('span');sep.className='rte-sep';toolbar.appendChild(sep);
+    toolbar.appendChild(toolbarButton('⇤ Indent','outdent'));
+    toolbar.appendChild(toolbarButton('Indent ⇥','indent'));
+    toolbar.appendChild(toolbarButton('Clear','clear','rte-danger'));
+    const help=document.createElement('span');help.className='rte-help';help.textContent='Tab = indent · Shift+Tab = outdent';toolbar.appendChild(help);
+    const ed=document.createElement('div');ed.id='postContentEditor';ed.className='rich-editor';ed.contentEditable='true';ed.spellcheck=true;ed.dataset.placeholder='Write your complete work here...';ed.setAttribute('role','textbox');ed.setAttribute('aria-multiline','true');
+    const status=document.createElement('div');status.className='rich-editor-status';status.innerHTML='<span>Formatting is saved with your literature.</span><strong id="richWordCount">0 words · ~1 min read</strong>';
+    wrap.append(toolbar,ed,status);s.insertAdjacentElement('beforebegin',wrap);
+    setEditorFromSource();
+
+    ed.addEventListener('input',()=>{syncSource();updateMeta();updateButtons();});
+    ed.addEventListener('keyup',updateButtons);ed.addEventListener('mouseup',updateButtons);ed.addEventListener('focus',updateButtons);
+    ed.addEventListener('keydown',ev=>{
+      if(ev.key==='Tab'){ev.preventDefault();ev.shiftKey?outdent():indent();return}
+      if((ev.ctrlKey||ev.metaKey)&&ev.shiftKey&&ev.key.toLowerCase()==='x'){ev.preventDefault();strike();return}
+      if((ev.ctrlKey||ev.metaKey)&&ev.shiftKey&&ev.key.toLowerCase()==='h'){ev.preventDefault();highlight();return}
+    });
+    ed.addEventListener('paste',ev=>{
+      const cd=ev.clipboardData;if(!cd)return;
+      const text=cd.getData('text/plain');
+      if(text!==undefined){ev.preventDefault();document.execCommand('insertText',false,text);syncSource();updateMeta();}
+    });
+
+    const oldLoadDraft=window.loadDraft;
+    if(oldLoadDraft&&!oldLoadDraft.__rteWrapped){
+      const fn=function(){const r=oldLoadDraft.apply(this,arguments);setTimeout(setEditorFromSource,0);return r};fn.__rteWrapped=true;window.loadDraft=fn;
+    }
+    const oldEditWork=window.editWork;
+    if(oldEditWork&&!oldEditWork.__rteWrapped){
+      const fn=function(){const r=oldEditWork.apply(this,arguments);setTimeout(setEditorFromSource,0);return r};fn.__rteWrapped=true;window.editWork=fn;
+    }
+    const oldReset=window.resetCreateForm;
+    if(oldReset&&!oldReset.__rteWrapped){
+      const fn=function(){const r=oldReset.apply(this,arguments);setTimeout(setEditorFromSource,0);return r};fn.__rteWrapped=true;window.resetCreateForm=fn;
+    }
+    form.addEventListener('submit',()=>{const txt=editorText();syncSource();if(!txt){ed.focus();setTimeout(()=>showToast('Please write your literary work before publishing.'),0)}},true);
+
+    const preview=document.getElementById('litPreviewBtn');
+    if(preview){preview.onclick=openRichPreview;}
+  }
+  function richPreviewHTML(raw){
+    const str=String(raw||'');
+    const looksRich=/<(?:p|div|h[1-3]|strong|b|em|i|u|s|strike|mark|blockquote|br)(?:\s|>)/i.test(str);
+    if(looksRich){return sanitizeRichHTML(str)||'<p>No text yet.</p>';}
+    if(typeof window.__legacyPreviewContentHTML==='function')return window.__legacyPreviewContentHTML(str);
+    return plainTextToRichHTML(str)||'<p>No text yet.</p>';
+  }
+  function openRichPreview(){
+    const title=document.getElementById('postTitle')?.value.trim()||'Untitled Work';
+    const genre=document.getElementById('postGenre')?.value||'Literature';
+    const text=editorText();
+    const author=typeof publicNameOf==='function'?publicNameOf(currentUser||{})||'Student Author':'Student Author';
+    let modal=document.getElementById('litPreviewModal');
+    if(!modal){
+      modal=document.createElement('div');modal.className='modal';modal.id='litPreviewModal';modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')};
+      modal.innerHTML='<div class="modal-box lit-preview-modal-box"><div class="lit-preview-head"><div><div class="kicker">Reader preview</div><h3 style="font:600 2rem/1 \'Cormorant Garamond\',serif;color:var(--wine);margin:0">Preview as Reader</h3></div><button class="close" type="button">×</button></div><div class="lit-preview-body"><div class="reader-meta" id="litPreviewGenre"></div><h2 id="litPreviewTitle"></h2><div class="lit-preview-by" id="litPreviewBy"></div><div class="lit-preview-content" id="litPreviewContent"></div></div></div>';
+      modal.querySelector('.close').onclick=()=>modal.classList.remove('open');document.body.appendChild(modal);
+    }
+    document.getElementById('litPreviewGenre').textContent=genre.toUpperCase();document.getElementById('litPreviewTitle').textContent=title;document.getElementById('litPreviewBy').textContent=`by ${author} · ${editorText().split(/\s+/).filter(Boolean).length.toLocaleString()} words · ~${Math.max(1,Math.ceil(editorText().split(/\s+/).filter(Boolean).length/220))} min read`;document.getElementById('litPreviewContent').innerHTML=richPreviewHTML(editorHTML());modal.classList.add('open');
+  }
+
+  // Keep the legacy preview function available by a safe alias before any wrapper needs it.
+  if(typeof window.openPreview==='function'&&!window.__legacyPreviewOpen)window.__legacyPreviewOpen=window.openPreview;
+  if(typeof window.openPreview==='function'&&!window.__legacyPreviewContentHTML){
+    window.__legacyPreviewContentHTML=function(raw){
+      const lines=String(raw||'').split(/\r?\n/);let html='',para=[];const flush=()=>{if(para.length){const t=para.join(' ').trim();if(t)html+='<p>'+escapeHtmlText(t)+'</p>';para=[]}};lines.forEach(line=>{const s=String(line||'').trim();if(/^#{1,3}\s+/.test(s)){flush();html+='<h3>'+escapeHtmlText(s.replace(/^#{1,3}\s+/,''))+'</h3>'}else if(!s)flush();else para.push(s)});flush();return html||'<p>No text yet.</p>';
+    };
+  }
+
+  function richRenderReader(){
+    const w=readerWork,body=document.getElementById('readerBody');if(!w||!body)return false;
+    const raw=String(w.content||'');
+    if(!/<(?:p|div|h[1-3]|strong|b|em|i|u|s|strike|mark|blockquote|br)(?:\s|>)/i.test(raw))return false;
+    body.innerHTML=sanitizeRichHTML(raw)||'<p></p>';
+    body.querySelectorAll('h1,h2,h3').forEach((h,i)=>{if(!h.id)h.id='reader-section-rich-'+i});
+    const headings=[...body.querySelectorAll('h1,h2,h3')].map((h,idx)=>({title:h.textContent.trim(),idx})).filter(x=>x.title);
+    if(typeof window.__richInjectTOC==='function')window.__richInjectTOC(headings); else document.getElementById('litReaderToc')?.remove();
+    body.querySelectorAll('a').forEach(a=>a.setAttribute('target','_blank'));
+    return true;
+  }
+
+  // Reuse the existing rich reader TOC helper once it has been created by the other upgrade.
+  const oldOpenReader=window.openReader;
+  if(oldOpenReader&&!oldOpenReader.__rteWrapped){
+    const fn=function(id){const r=oldOpenReader.apply(this,arguments);setTimeout(()=>{richRenderReader();try{if(typeof updateReaderExtras==='function')updateReaderExtras()}catch(_){}},35);return r};
+    fn.__rteWrapped=true;window.openReader=fn;
+  }
+
+  // Capture the reader TOC injection shape used by the existing enhancement when possible.
+  window.__richInjectTOC=function(headings){
+    document.getElementById('litReaderToc')?.remove();
+    if(!headings.length)return;
+    const host=document.createElement('div');host.id='litReaderToc';host.className='lit-toc';host.innerHTML='<div class="lit-toc-head"><strong>Contents</strong><button type="button">Hide</button></div><div class="lit-toc-list"></div>';
+    const list=host.querySelector('.lit-toc-list');headings.forEach((h,idx)=>{const b=document.createElement('button');b.type='button';b.textContent=h.title;b.onclick=()=>document.getElementById('reader-section-rich-'+h.idx)?.scrollIntoView({behavior:'smooth',block:'start'});list.appendChild(b)});host.querySelector('.lit-toc-head button').onclick=()=>list.classList.toggle('hidden');
+    const progress=document.getElementById('readerUpgradeProgress');if(progress)progress.insertAdjacentElement('beforebegin',host);else document.getElementById('readerSubmeta')?.insertAdjacentElement('afterend',host);
+  };
+
+  const boot=()=>{initRichEditor();};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else setTimeout(boot,0);
 })();
 </script>
 
