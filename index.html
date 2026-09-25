@@ -6172,6 +6172,7 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
     {name:'Lavender',value:'#DDD0F3'}
   ];
   let savedRange=null;
+  let highlightEnabled=false;
   const DROP_TAGS=new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','LINK','META','FORM','INPUT','TEXTAREA','BUTTON']);
 
   function escapeHtmlText(v){
@@ -6262,11 +6263,6 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
   }
   function selectionIsHighlighted(){
     const e=editor();if(!e)return false;
-    try{if(document.queryCommandState('hiliteColor'))return true}catch(_){}
-    try{
-      const value=String(document.queryCommandValue('hiliteColor')||'').toLowerCase();
-      if(value&&value!=='transparent'&&value!=='rgba(0, 0, 0, 0)'&&value!=='rgb(255, 255, 255)'&&value!=='#ffffff')return true;
-    }catch(_){}
     const sel=getSelection();
     if(!sel||!sel.rangeCount||!e.contains(sel.anchorNode))return nodeHasHighlight(sel?.anchorNode);
     if(sel.isCollapsed)return nodeHasHighlight(sel.anchorNode);
@@ -6278,6 +6274,10 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
       try{if(range.intersectsNode(n)&&nodeHasHighlight(n))return true}catch(_){}
     }
     return false;
+  }
+  function selectionIsCollapsed(){
+    const e=editor(),sel=getSelection();
+    return !!(e&&sel&&sel.rangeCount&&e.contains(sel.anchorNode)&&sel.isCollapsed);
   }
   function exec(command,value){
     const e=editor();if(!e)return;
@@ -6295,6 +6295,7 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
     try{
       if(!document.execCommand('hiliteColor',false,hex))document.execCommand('backColor',false,hex);
     }catch(_){try{document.execCommand('backColor',false,hex)}catch(__){}}
+    highlightEnabled=true;
     saveSelection();syncSource();updateMeta();updateButtons();
   }
   function removeHighlight(){
@@ -6310,9 +6311,17 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
     e.querySelectorAll('mark').forEach(mark=>{
       if(!mark.getAttribute('style')){const frag=document.createDocumentFragment();while(mark.firstChild)frag.appendChild(mark.firstChild);mark.replaceWith(frag);}
     });
+    highlightEnabled=false;
     saveSelection();syncSource();updateMeta();updateButtons();
   }
   function toggleHighlight(){
+    // Use our own on/off state for collapsed selections. Browser queryCommandState
+    // can report stale hiliteColor state and was causing the button to refuse to turn off.
+    if(selectionIsCollapsed()){
+      if(highlightEnabled)removeHighlight();
+      else applyHighlightColor(localStorage.getItem('shkHighlightColor')||'#F3D987');
+      return;
+    }
     if(selectionIsHighlighted())removeHighlight();
     else applyHighlightColor(localStorage.getItem('shkHighlightColor')||'#F3D987');
   }
@@ -6350,9 +6359,10 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
     document.querySelectorAll('.rich-editor-toolbar .rte-tool[data-cmd]').forEach(b=>{
       let on=false;
       if(b.dataset.cmd==='hiliteColor'){
-        on=selectionIsHighlighted();
-        b.title=on?'Highlight (On) — click to remove':'Highlight (Off) — click to apply';
-        b.setAttribute('aria-label',on?'Highlight on — click to remove highlight':'Highlight off — click to apply highlight');
+        on=selectionIsCollapsed()?highlightEnabled:selectionIsHighlighted();
+        highlightEnabled=selectionIsCollapsed()?highlightEnabled:on;
+        b.title=on?'Highlight (On) — click to turn off':'Highlight (Off) — click to turn on';
+        b.setAttribute('aria-label',on?'Highlight on — click to turn off':'Highlight off — click to turn on');
       }else{
         try{on=!!document.queryCommandState(b.dataset.cmd)}catch(_){}
       }
