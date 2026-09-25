@@ -304,6 +304,7 @@ a{text-decoration:none;color:inherit}
 @keyframes pinShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}50%{transform:translateX(7px)}75%{transform:translateX(-4px)}}.modal-head{display:flex;justify-content:space-between;align-items:center}.modal-head h3{margin:0;font:600 2.25rem "Cormorant Garamond",serif;color:var(--wine)}.close{border:0;background:transparent;color:var(--wine);font-size:1.5rem}
 .account-tabs{display:flex;gap:4px;background:#F4F0EC;padding:4px;border-radius:10px;margin:14px 0}.tab{flex:1;border:0;background:transparent;padding:9px;border-radius:8px;color:#7C6F67;font-weight:750}.tab.active{background:#fff;color:var(--wine);box-shadow:0 3px 10px rgba(36,27,23,.06)}
 .google{width:100%;border:1px solid var(--line);background:#fff;padding:11px;border-radius:10px;color:var(--wine);font-weight:750;display:flex;justify-content:center;align-items:center;gap:9px}.divider{display:flex;align-items:center;gap:10px;color:#A0968E;font-size:.68rem;margin:14px 0}.divider:before,.divider:after{content:"";height:1px;background:var(--line);flex:1}
+.cloud-account-note{margin:10px 0 0;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#FBF8F5;color:#82766E;font-size:.68rem;line-height:1.5}
 .toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--wine);color:#fff;padding:11px 15px;border-radius:10px;font-size:.75rem;font-weight:700;z-index:250;transition:.25s}.toast.show{opacity:1;transform:translate(-50%,0)}
 .search-trigger{width:auto;min-width:40px;padding:0 12px;display:flex;gap:8px;align-items:center;justify-content:center;font-size:.75rem;font-weight:800}
 .search-trigger svg{width:16px;height:16px;flex:none}
@@ -944,6 +945,7 @@ button,input,textarea,select{max-width:100%}
       <p style="font-size:.67rem;color:#9A9089;line-height:1.5;margin-top:13px">Your email and private account name are used for account access only. Your public profile uses your pen name, username, and bio.</p>
     </div>
     <div id="loggedInArea" class="hidden">
+      <div class="cloud-account-note">Your public profile is saved to the shared archive so other devices can find you.</div>
       <div class="author" style="margin:10px 0 20px"><div class="avatar" id="modalAvatar" style="width:54px;height:54px"><span>12</span></div><div><strong id="modalName">Reader</strong><span id="modalHandle">@reader</span></div></div>
       <div class="profile-menu"><button onclick="openOwnProfile();closeModal('accountModal')">View Profile</button><button onclick="closeModal('accountModal');openEditProfile()">Edit Profile</button><button onclick="logout()">Log Out</button></div>
     </div>
@@ -1053,7 +1055,7 @@ button,input,textarea,select{max-width:100%}
   window.firebaseReady = (async () => {
     try {
       const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js");
-      const { getAuth, GoogleAuthProvider, signInWithPopup, signOut, getAdditionalUserInfo, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
+      const { getAuth, GoogleAuthProvider, signInWithPopup, signOut, getAdditionalUserInfo, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, setPersistence, browserLocalPersistence } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
       const { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, onSnapshot, deleteDoc } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js");
       const firebaseConfig = {
         apiKey: "AIzaSyDlfOgtbipWy83ItjN7rVVp-guAYEVkIy0",
@@ -1066,6 +1068,7 @@ button,input,textarea,select{max-width:100%}
       };
       const firebaseApp = initializeApp(firebaseConfig);
       const firebaseAuth = getAuth(firebaseApp);
+      await setPersistence(firebaseAuth,browserLocalPersistence);
       const firebaseDB = getFirestore(firebaseApp);
       const firebaseGoogleProvider = new GoogleAuthProvider();
       window.firebaseApp = firebaseApp;
@@ -1087,6 +1090,7 @@ button,input,textarea,select{max-width:100%}
       window.firebaseCreateUserWithEmailAndPassword = createUserWithEmailAndPassword;
       window.firebaseSignInWithEmailAndPassword = signInWithEmailAndPassword;
       window.firebaseOnAuthStateChanged = onAuthStateChanged;
+      window.firebaseSetPersistence = setPersistence;
 
       // Wait for Firebase to restore its persisted auth session before deciding
       // whether a guest needs an anonymous Firestore session. This prevents an
@@ -2324,9 +2328,17 @@ async function submitAuth(e){
    try{
      cred=await window.firebaseSignInWithEmailAndPassword(window.firebaseAuth,email,password);
    }catch(err){
-     // Seamless migration for an older local-only account: create its Firebase identity using the same credentials.
-     if(localExisting && (err?.code==='auth/user-not-found'||err?.code==='auth/invalid-credential')){
-       try{cred=await window.firebaseCreateUserWithEmailAndPassword(window.firebaseAuth,email,password)}catch(createErr){throw err}
+     // Older app accounts may not have a Firebase Auth record yet.
+     // On first login from another device, create the Firebase account with
+     // the same credentials. If it already exists, creation returns
+     // email-already-in-use and the original login error is preserved.
+     if(err?.code==='auth/user-not-found'||err?.code==='auth/invalid-credential'){
+       try{
+         cred=await window.firebaseCreateUserWithEmailAndPassword(window.firebaseAuth,email,password);
+       }catch(createErr){
+         if(createErr?.code==='auth/email-already-in-use') throw err;
+         throw createErr;
+       }
      }else throw err;
    }
    const g=cred.user;
