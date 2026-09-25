@@ -1023,7 +1023,7 @@ button,input,textarea,select{max-width:100%}
   window.firebaseReady = (async () => {
     try {
       const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js");
-      const { getAuth, GoogleAuthProvider, signInWithPopup, signOut, getAdditionalUserInfo, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
+      const { getAuth, GoogleAuthProvider, signInWithPopup, signOut, getAdditionalUserInfo, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
       const { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, onSnapshot, deleteDoc } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js");
       const firebaseConfig = {
         apiKey: "AIzaSyDlfOgtbipWy83ItjN7rVVp-guAYEVkIy0",
@@ -1054,6 +1054,8 @@ button,input,textarea,select{max-width:100%}
       window.firebaseSignOut = signOut;
       window.firebaseGetAdditionalUserInfo = getAdditionalUserInfo;
       window.firebaseSignInAnonymously = signInAnonymously;
+      window.firebaseCreateUserWithEmailAndPassword = createUserWithEmailAndPassword;
+      window.firebaseSignInWithEmailAndPassword = signInWithEmailAndPassword;
 
       // Give non-Google/local accounts an authenticated Firestore session too.
       // This lets public works sync across devices when Firestore rules require
@@ -1143,9 +1145,9 @@ function findComment(work,id){
   return findCommentInList(work.comments||[],id);
 }
 function commentReactionOf(comment){
-  const email=canonicalEmail(currentUser?.email);if(!email)return '';
+  const ids=[String(currentUser?.uid||'').trim(),canonicalEmail(currentUser?.email)].filter(Boolean);if(!ids.length)return '';
   const r=normalizeReactions(comment?.reactions);
-  return Object.keys(REACTION_TYPES).find(k=>r[k].includes(email))||'';
+  return Object.keys(REACTION_TYPES).find(k=>r[k].some(x=>ids.includes(String(x))))||'';
 }
 function commentReactionTotal(comment){
   return Object.values(normalizeReactions(comment?.reactions)).reduce((n,arr)=>n+arr.length,0);
@@ -1171,9 +1173,9 @@ function normalizeWork(work){
 }
 function totalReactionCount(w){return Object.values(normalizeReactions(w?.reactions)).reduce((n,arr)=>n+arr.length,0)}
 function userReactionOf(w){
-  const email=canonicalEmail(currentUser?.email);if(!email)return '';
+  const ids=[String(currentUser?.uid||'').trim(),canonicalEmail(currentUser?.email)].filter(Boolean);if(!ids.length)return '';
   const r=normalizeReactions(w?.reactions);
-  return Object.keys(REACTION_TYPES).find(k=>r[k].includes(email))||'';
+  return Object.keys(REACTION_TYPES).find(k=>r[k].some(x=>ids.includes(String(x))))||'';
 }
 function reactionButtonHTML(w){
   const selected=userReactionOf(w);
@@ -1236,7 +1238,7 @@ function migratePinRecords(){
   return map;
 }
 
-let users = readJSON('shkUsers',[]).filter(u=>u&&u.email&&!LEGACY_DEMO_EMAILS.has(canonicalEmail(u.email))).map(normalizeUser);
+let users = readJSON('shkUsers',[]).filter(u=>u&&((u.email)||u.uid)&&!LEGACY_DEMO_EMAILS.has(canonicalEmail(u.email))).map(normalizeUser);
 let works = readJSON('shkWorks',[]).filter(w=>w&&!LEGACY_DEMO_IDS.has(w.id)&&!LEGACY_DEMO_EMAILS.has(canonicalEmail(w.email))).map(normalizeWork);
 let currentUser = normalizeUser(readJSON('shkUser',null));
 let notifications = readJSON('shkNotifications',[]).filter(n=>n&&n.to);
@@ -1316,8 +1318,22 @@ function contentUser(){
   return currentUser;
 }
 function initialsOf(name){return String(name||'Student').trim().slice(0,2).toUpperCase()}
-function findUser(email){return users.find(u=>u.email===email)||null}
-function getUserWorks(email){return works.filter(w=>w.email===email)}
+function userIdOf(user){return String(user?.uid||canonicalEmail(user?.email)||'').trim()}
+function userMatchesWork(user,work){
+  if(!user||!work)return false;
+  if(user.uid&&work.ownerUid&&String(work.ownerUid)===String(user.uid))return true;
+  return !!user.email&&canonicalEmail(work.email)===canonicalEmail(user.email);
+}
+function findUser(key){
+  const k=String(key||'').trim();
+  if(!k)return null;
+  return users.find(u=>(u.uid&&String(u.uid)===k)||(u.email&&canonicalEmail(u.email)===canonicalEmail(k)))||null;
+}
+function getUserWorks(key){
+  const user=findUser(key)||((typeof key==='object')?key:null);
+  if(!user)return works.filter(w=>canonicalEmail(w.email)===canonicalEmail(key));
+  return works.filter(w=>userMatchesWork(user,w));
+}
 function saveState(){
  localStorage.setItem('shkWorks',JSON.stringify(works));
  localStorage.setItem('shkUsers',JSON.stringify(users));
@@ -1368,16 +1384,16 @@ function renderHome(){
  document.getElementById('authorsCount').textContent=String(users.length);
 }
 function cardHTML(w){
- const owner=currentUser?.email===w.email;
+ const owner=!!currentUser&&userMatchesWork(currentUser,w);
  const likeOn=!!currentUser&&w.likes.includes(currentUser.email);
  const tags=(w.tags||[]).map(t=>`<button class="tag" onclick="searchTag('${escapeAttr(t)}')">#${escapeHTML(t)}</button>`).join('');
  const manage=owner?`<div class="work-management"><button class="secondary" onclick="editWork('${escapeAttr(w.id)}')">Edit</button><button class="danger-btn" onclick="deleteWork('${escapeAttr(w.id)}')">Delete</button></div>`:'';
- return `<article class="card"><div class="card-art">${w.cover?`<div style="position:absolute;inset:0;background:url(${escapeAttr(w.cover)}) center/cover;opacity:.9"></div>`:''}<div style="position:relative"><small>${escapeHTML(w.genre)}</small><strong>${escapeHTML(w.title)}</strong></div></div><div class="card-body"><div class="meta"><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button><span class="tag">${escapeHTML(w.genre)}</span></div><h4>${escapeHTML(w.title)}</h4><p>${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions">${reactionButtonHTML(w)}<button class="social-btn" type="button" onclick="openCommentModal('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" type="button" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button><button class="social-btn" type="button" onclick="shareWork('${escapeAttr(w.id)}')">Share</button></div><div class="card-foot"><button class="link-btn" onclick="openReader('${escapeAttr(w.id)}')">Read Work</button><span style="font-size:.63rem;color:#A09791">${w.views||0} views</span></div>${manage}</div></article>`;
+ return `<article class="card"><div class="card-art">${w.cover?`<div style="position:absolute;inset:0;background:url(${escapeAttr(w.cover)}) center/cover;opacity:.9"></div>`:''}<div style="position:relative"><small>${escapeHTML(w.genre)}</small><strong>${escapeHTML(w.title)}</strong></div></div><div class="card-body"><div class="meta"><button class="author-link" onclick="openProfile('${escapeAttr(w.ownerUid||w.email||'')}')">${escapeHTML(w.author)}</button><span class="tag">${escapeHTML(w.genre)}</span></div><h4>${escapeHTML(w.title)}</h4><p>${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions">${reactionButtonHTML(w)}<button class="social-btn" type="button" onclick="openCommentModal('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" type="button" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button><button class="social-btn" type="button" onclick="shareWork('${escapeAttr(w.id)}')">Share</button></div><div class="card-foot"><button class="link-btn" onclick="openReader('${escapeAttr(w.id)}')">Read Work</button><span style="font-size:.63rem;color:#A09791">${w.views||0} views</span></div>${manage}</div></article>`;
 }
 function feedHTML(w){
- const author=findUser(w.email); const likeOn=!!currentUser&&w.likes.includes(currentUser.email);
+ const author=findUser(w.ownerUid||w.email); const likeOn=!!currentUser&&!!userReactionOf(w);
  const tags=(w.tags||[]).slice(0,6).map(t=>`<button class="tag" onclick="searchTag('${escapeAttr(t)}')">#${escapeHTML(t)}</button>`).join('');
- return `<article class="feed-post"><div class="author"><div class="avatar">${author?.photo?`<img src="${escapeAttr(author.photo)}" alt="">`:escapeHTML(initialsOf(w.author))}</div><div><button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button><span>@${escapeHTML(usernameOf(author||{name:w.author,email:w.email||''}))} · ${escapeHTML(identityLabelOf(author||{}))} · ${escapeHTML(w.genre)}</span></div></div><div class="post-title">${escapeHTML(w.title)}</div><p class="post-text">${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions">${reactionButtonHTML(w)}<button class="social-btn" type="button" onclick="openCommentModal('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" type="button" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button><button class="social-btn" type="button" onclick="shareWork('${escapeAttr(w.id)}')">Share</button></div><div class="post-actions"><button class="post-action" onclick="openReader('${escapeAttr(w.id)}')">Read Full Work</button></div></article>`;
+ return `<article class="feed-post"><div class="author"><div class="avatar">${author?.photo?`<img src="${escapeAttr(author.photo)}" alt="">`:escapeHTML(initialsOf(w.author))}</div><div><button class="author-link" onclick="openProfile('${escapeAttr(w.ownerUid||w.email||'')}')">${escapeHTML(w.author)}</button><span>@${escapeHTML(usernameOf(author||{name:w.author,email:w.email||''}))} · ${escapeHTML(identityLabelOf(author||{}))} · ${escapeHTML(w.genre)}</span></div></div><div class="post-title">${escapeHTML(w.title)}</div><p class="post-text">${escapeHTML(w.excerpt)}</p>${tags?`<div class="post-tags">${tags}</div>`:''}<div class="social-actions">${reactionButtonHTML(w)}<button class="social-btn" type="button" onclick="openCommentModal('${escapeAttr(w.id)}')">💬 <span class="count">${w.comments.length}</span></button><button class="social-btn ${saved.includes(w.id)?'on':''}" type="button" onclick="toggleSaved('${escapeAttr(w.id)}',this)">${saved.includes(w.id)?'Saved':'Save'}</button><button class="social-btn" type="button" onclick="shareWork('${escapeAttr(w.id)}')">Share</button></div><div class="post-actions"><button class="post-action" onclick="openReader('${escapeAttr(w.id)}')">Read Full Work</button></div></article>`;
 }
 function renderFeed(){
  const q=(document.getElementById('feedSearch')?.value||'').toLowerCase().trim();
@@ -1395,8 +1411,10 @@ function renderSaved(){
 }
 function canReadWork(w){
  if(!w)return false;
- if(w.email===currentUser?.email || w.privacy==='public')return true;
- return w.privacy==='followers' && !!currentUser && currentUser.following.includes(w.email);
+ if(userMatchesWork(currentUser,w) || w.privacy==='public')return true;
+ const owner=findUser(w.ownerUid||w.email);
+ const ownerKey=userIdOf(owner)||String(w.ownerUid||w.email||'');
+ return w.privacy==='followers' && !!currentUser && currentUser.following.some(x=>String(x)===ownerKey || canonicalEmail(x)===canonicalEmail(w.email||''));
 }
 function ageDays(w){return Math.max(0,(Date.now()-(w.createdAt||Date.now()))/86400000)}
 function workPopularity(w){
@@ -1418,8 +1436,8 @@ function followingModeLabel(){
    : 'Latest puts the newest posts from students you follow at the top.';
 }
 function followingFeedHTML(w,rank){
- const author=findUser(w.email);
- const likeOn=!!currentUser&&w.likes.includes(currentUser.email);
+ const author=findUser(w.ownerUid||w.email);
+ const likeOn=!!currentUser&&!!userReactionOf(w);
  const tags=(w.tags||[]).slice(0,6).map(t=>`<button class="tag" onclick="searchTag('${escapeAttr(t)}')">#${escapeHTML(t)}</button>`).join('');
  const fresh=ageDays(w)<2;
  const rankBadge=followingMode==='popular'?`<span class="post-rank">#${rank||1} · ${workPopularity(w)} trend</span>`:'';
@@ -1430,7 +1448,7 @@ function followingFeedHTML(w,rank){
    <div class="author">
      <div class="avatar">${author?.photo?`<img src="${escapeAttr(author.photo)}" alt="">`:escapeHTML(initialsOf(w.author))}</div>
      <div>
-       <button class="author-link" onclick="openProfile('${escapeAttr(w.email||'')}')">${escapeHTML(w.author)}</button>
+       <button class="author-link" onclick="openProfile('${escapeAttr(w.ownerUid||w.email||'')}')">${escapeHTML(w.author)}</button>
        <span>@${escapeHTML(usernameOf(author||{name:w.author,email:w.email||''}))} · ${escapeHTML(identityLabelOf(author||{}))} · ${escapeHTML(w.genre)} · ${followingTimeLabel(w)}</span>
      </div>
    </div>
@@ -1461,7 +1479,7 @@ function renderFollowing(){
    root.innerHTML='<div class="empty"><h4>Follow students to build your feed</h4><p>Open a student profile and follow their work.</p><button class="primary" onclick="openGlobalSearch()">Find Students</button></div>';
    return;
  }
- let arr=works.filter(w=>currentUser.following.includes(w.email)&&canReadWork(w));
+ let arr=works.filter(w=>currentUser.following.some(x=>String(x)===String(w.ownerUid||'') || canonicalEmail(x)===canonicalEmail(w.email||''))&&canReadWork(w));
  if(followingRangeDays>0) arr=arr.filter(w=>ageDays(w)<=followingRangeDays);
  const eligibleCount=arr.length;
  if(followingMode==='popular'){
@@ -1513,7 +1531,7 @@ function rememberRead(work){
 function clearHistory(){history[historyKey()]=[];persistSessionData();renderHistory();showToast('Reading history cleared.')}
 
 function renderMyWorks(){
- const mine=currentUser?works.filter(w=>w.email===currentUser.email):[];
+ const mine=currentUser?works.filter(w=>userMatchesWork(currentUser,w)):[];
  const mineDrafts=currentUser?drafts.filter(d=>d.email===currentUser.email):[];
  let html='';
  if(!currentUser){html='<div class="empty"><h4>Sign in to view My Works</h4><p>Your drafts and published literature will appear here.</p><button class="primary" onclick="openAccount()">Open Account</button></div>';document.getElementById('myWorksPanel').innerHTML=html;return}
@@ -1527,10 +1545,11 @@ function deleteDraft(id){drafts=drafts.filter(d=>d.id!==id);saveState();renderMy
 function renderAuthors(){
  if(!users.length){document.getElementById('authorGrid').innerHTML='<div class="empty"><h4>No student profiles yet</h4><p>Create an account to appear in the community.</p></div>';return}
  document.getElementById('authorGrid').innerHTML=users.slice(0,12).map(user=>{
-   const count=getUserWorks(user.email).length;
-   const following=!!currentUser&&currentUser.following.includes(user.email);
-   const self=currentUser&&currentUser.email===user.email;
-   return `<article class="author-card"><button class="result-link" onclick="openProfile('${escapeAttr(user.email)}')"><div class="author-big">${user.photo?`<img src="${escapeAttr(user.photo)}" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:escapeHTML(initialsOf(publicNameOf(user)))}</div><h4>${escapeHTML(publicNameOf(user))}</h4><p>@${escapeHTML(usernameOf(user))} · ${escapeHTML(identityLabelOf(user))} · ${count} published work${count===1?'':'s'}</p></button><button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${self?'You':(following?'Following':'Follow')}</button></article>`;
+   const key=userIdOf(user);
+   const count=getUserWorks(user).length;
+   const following=!!currentUser&&currentUser.following.some(x=>String(x)===key || canonicalEmail(x)===canonicalEmail(user.email||''));
+   const self=!!currentUser&&userIdOf(currentUser)===key;
+   return `<article class="author-card"><button class="result-link" onclick="openProfile('${escapeAttr(key)}')"><div class="author-big">${user.photo?`<img src="${escapeAttr(user.photo)}" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:escapeHTML(initialsOf(publicNameOf(user)))}</div><h4>${escapeHTML(publicNameOf(user))}</h4><p>@${escapeHTML(usernameOf(user))} · ${escapeHTML(identityLabelOf(user))} · ${count} published work${count===1?'':'s'}</p></button><button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(key)}',this)">${self?'You':(following?'Following':'Follow')}</button></article>`;
  }).join('');
 }
 function openIdentitySetup(){
@@ -1586,14 +1605,14 @@ async function saveIdentitySetup(){
 function renderProfile(){
  const root=document.getElementById('profilePage'); if(!root)return;
  if(!profileEmail){
-   if(currentUser){profileEmail=currentUser.email;}
+   if(currentUser){profileEmail=userIdOf(currentUser);}
    else {root.innerHTML='<div class="empty"><h4>Sign in to view your profile</h4><p>Your works, followers, following, saved reading, and profile details will appear here.</p><button class="primary" onclick="openAccount()">Open Account</button></div>';return;}
  }
  const user=findUser(profileEmail);
  if(!user){root.innerHTML='<div class="empty"><h4>Profile not found</h4><p>This student profile is no longer available.</p></div>';return;}
- const allUserWorks=getUserWorks(user.email);
- const following=!!currentUser&&currentUser.following.includes(user.email);
- const self=!!currentUser&&currentUser.email===user.email;
+ const allUserWorks=getUserWorks(user);
+ const following=!!currentUser&&currentUser.following.some(x=>String(x)===userIdOf(user) || canonicalEmail(x)===canonicalEmail(user.email||''));
+ const self=!!currentUser&&userIdOf(currentUser)===userIdOf(user);
  const canSeeWorks=self||following||allUserWorks.every(w=>w.privacy==='public');
  const userWorks=canSeeWorks?allUserWorks.filter(w=>canReadWork(w)):[];
  const identity=identityLabelOf(user);
@@ -1602,37 +1621,38 @@ function renderProfile(){
  const identityAction=self&&normalizeIdentity(user.identity)==='reader'?'<button class="primary" onclick="openIdentitySetup()">Set Up Identity</button>':'';
  const editAction=self?'<button class="secondary" onclick="openEditProfile()">Edit Profile</button>':'';
  const publishNote=normalizeIdentity(user.identity)==='reader'?'This account is a Reader. Verify an identity to publish literature.':'This profile can publish literature as a verified 12-SHAKESPEARE identity.';
- root.innerHTML=`<div class="profile-hero"><div class="profile-big-avatar">${user.photoURL||user.photo?`<img src="${escapeAttr(user.photoURL||user.photo)}" alt="Profile picture">`:escapeHTML(initialsOf(publicNameOf(user)))}</div><div class="profile-copy"><div class="kicker">Profile identity</div><div class="identity-badge ${identityClass}">${escapeHTML(identity)}</div><h2>${escapeHTML(publicNameOf(user))}</h2><p class="profile-handle">@${escapeHTML(usernameOf(user))}</p><p>${escapeHTML(user.bio||'A reader in 12-SHAKESPEARE.')}</p><div class="profile-stats"><div class="profile-stat"><strong>${userWorks.length}</strong><span>Works</span></div><div class="profile-stat"><strong>${user.followers.length}</strong><span>Followers</span></div><div class="profile-stat"><strong>${user.following.length}</strong><span>Following</span></div></div></div><div class="profile-actions">${identityAction}${editAction}<button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(user.email)}',this)">${followLabel}</button><button class="secondary" onclick="openGlobalSearch()">Search</button></div></div><div class="section"><div class="profile-work-head"><div><div class="kicker">Published shelf</div><h3 style="font:600 3rem 'Cormorant Garamond',serif;color:var(--wine);margin:7px 0">${escapeHTML(publicNameOf(user))}'s Works</h3></div><p style="color:var(--muted);margin:0">${escapeHTML(publishNote)}</p></div><div class="grid3" style="margin-top:20px">${userWorks.length?userWorks.map(cardHTML).join(''):'<div class="empty"><h4>No published works yet</h4><p>This student has not published a work.</p></div>'}</div></div>`;
+ root.innerHTML=`<div class="profile-hero"><div class="profile-big-avatar">${user.photoURL||user.photo?`<img src="${escapeAttr(user.photoURL||user.photo)}" alt="Profile picture">`:escapeHTML(initialsOf(publicNameOf(user)))}</div><div class="profile-copy"><div class="kicker">Profile identity</div><div class="identity-badge ${identityClass}">${escapeHTML(identity)}</div><h2>${escapeHTML(publicNameOf(user))}</h2><p class="profile-handle">@${escapeHTML(usernameOf(user))}</p><p>${escapeHTML(user.bio||'A reader in 12-SHAKESPEARE.')}</p><div class="profile-stats"><div class="profile-stat"><strong>${userWorks.length}</strong><span>Works</span></div><div class="profile-stat"><strong>${user.followers.length}</strong><span>Followers</span></div><div class="profile-stat"><strong>${user.following.length}</strong><span>Following</span></div></div></div><div class="profile-actions">${identityAction}${editAction}<button class="follow ${following?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(userIdOf(user))}',this)">${followLabel}</button><button class="secondary" onclick="openGlobalSearch()">Search</button></div></div><div class="section"><div class="profile-work-head"><div><div class="kicker">Published shelf</div><h3 style="font:600 3rem 'Cormorant Garamond',serif;color:var(--wine);margin:7px 0">${escapeHTML(publicNameOf(user))}'s Works</h3></div><p style="color:var(--muted);margin:0">${escapeHTML(publishNote)}</p></div><div class="grid3" style="margin-top:20px">${userWorks.length?userWorks.map(cardHTML).join(''):'<div class="empty"><h4>No published works yet</h4><p>This student has not published a work.</p></div>'}</div></div>`;
 }
-function openProfile(email){
- const user=findUser(email); if(!user){showToast('Student profile not found.');return;}
- profileEmail=user.email; showPage('profile');
+function openProfile(key){
+ const user=findUser(key); if(!user){showToast('Student profile not found.');return;}
+ profileEmail=userIdOf(user); showPage('profile');
 }
 function openOwnProfile(){
  if(!currentUser){showToast('Sign in to view your profile.');openAccount();return;}
- profileEmail=currentUser.email; showPage('profile');
+ profileEmail=userIdOf(currentUser); showPage('profile');
 }
-function toggleFollow(email,btn){
+async function toggleFollow(key,btn){
  if(!currentUser){showToast('Sign in to follow a student.');openAccount();return;}
- if(currentUser.email===email){showToast('You cannot follow your own profile.');return;}
- const targetIndex=users.findIndex(u=>u.email===email);
- const meIndex=users.findIndex(u=>u.email===currentUser.email);
- if(targetIndex<0||meIndex<0)return;
- users[targetIndex]=normalizeUser(users[targetIndex]); users[meIndex]=normalizeUser(users[meIndex]);
- const isFollowing=currentUser.following.includes(email);
+ const target=findUser(key); if(!target){showToast('Student profile not found.');return;}
+ const meKey=userIdOf(currentUser), targetKey=userIdOf(target);
+ if(meKey&&meKey===targetKey){showToast('You cannot follow your own profile.');return;}
+ const meIndex=users.findIndex(u=>userIdOf(u)===meKey);
+ if(meIndex<0)return;
+ users[meIndex]=normalizeUser(users[meIndex]);
+ const isFollowing=currentUser.following.some(x=>String(x)===targetKey || canonicalEmail(x)===canonicalEmail(target.email||''));
  if(isFollowing){
-   currentUser.following=currentUser.following.filter(x=>x!==email);
+   currentUser.following=currentUser.following.filter(x=>String(x)!==targetKey && canonicalEmail(x)!==canonicalEmail(target.email||''));
    users[meIndex].following=currentUser.following.slice();
-   users[targetIndex].followers=users[targetIndex].followers.filter(x=>x!==currentUser.email);
    if(btn){btn.classList.remove('on');btn.textContent='Follow';}
-   showToast('Unfollowed @'+usernameOf(users[targetIndex])+'.');
+   if(currentUser.uid&&target.uid)await syncFollowCloud(target,false);
+   showToast('Unfollowed @'+usernameOf(target)+'.');
  }else{
-   currentUser.following=[...new Set([...currentUser.following,email])];
+   currentUser.following=[...new Set([...currentUser.following,targetKey])];
    users[meIndex].following=currentUser.following.slice();
-   users[targetIndex].followers=[...new Set([...users[targetIndex].followers,currentUser.email])];
-   addNotification(users[targetIndex].email,`${publicNameOf(currentUser)} followed you`,'');
    if(btn){btn.classList.add('on');btn.textContent='Following';}
-   showToast('Following @'+usernameOf(users[targetIndex])+'.');
+   if(currentUser.uid&&target.uid)await syncFollowCloud(target,true);
+   if(target.email)addNotification(target.email,`${publicNameOf(currentUser)} followed you`,'');
+   showToast('Following @'+usernameOf(target)+'.');
  }
  currentUser=normalizeUser({...users[meIndex]}); saveState(); renderAuthors(); renderProfile(); renderGlobalSearch(); updateProfileUI();
 }
@@ -1718,7 +1738,7 @@ function saveEditedWorkAndBack(){
  if(!currentUser){closeModal('saveEditModal');openAccount();return;}
  const now=Date.now();
  if(editingWorkId){
-  const idx=works.findIndex(w=>w.id===editingWorkId&&w.email===currentUser.email);
+  const idx=works.findIndex(w=>w.id===editingWorkId&&userMatchesWork(currentUser,w));
   if(idx<0){closeModal('saveEditModal');showToast('Work not found.');return;}
   const old=works[idx];
   const payload={title:document.getElementById('postTitle').value.trim()||'Untitled',author:publicNameOf(currentUser),email:currentUser.email,genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
@@ -1765,15 +1785,15 @@ document.getElementById('createForm').addEventListener('submit',function(e){
  e.preventDefault();contentUser();if(!currentUser){openAccount();return}
  if(!canPublish(currentUser)){openIdentitySetup();return}
  const now=Date.now();
- const payload={title:document.getElementById('postTitle').value.trim(),author:publicNameOf(currentUser),email:currentUser.email,genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
+ const payload={title:document.getElementById('postTitle').value.trim(),author:publicNameOf(currentUser),email:currentUser.email,ownerUid:cloudAuthUid()||currentUser.uid||'',genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
  if(editingWorkId){
-  const idx=works.findIndex(w=>w.id===editingWorkId&&w.email===currentUser.email);
+  const idx=works.findIndex(w=>w.id===editingWorkId&&userMatchesWork(currentUser,w));
   if(idx<0){showToast('Work not found.');return}
   works[idx]=normalizeWork({...works[idx],...payload,updatedAt:now});
   queueCloudWorkSync(works[idx]);
   showToast('Your work was updated.');
  }else if(editingDraftId){
-  const draftIdx=drafts.findIndex(d=>d.id===editingDraftId&&d.email===currentUser.email);
+  const draftIdx=drafts.findIndex(d=>d.id===editingDraftId&&canonicalEmail(d.email)===canonicalEmail(currentUser.email));
   if(draftIdx<0){showToast('Draft not found.');return}
   const draft=drafts[draftIdx];
   const existingWorkIdx=works.findIndex(w=>w.id===draft.id);
@@ -1792,7 +1812,7 @@ document.getElementById('createForm').addEventListener('submit',function(e){
   drafts=drafts.filter(d=>d.id!==editingDraftId);
   showToast('Your draft was published as the same work.');
  }else{
-  const newWork=normalizeWork({id:'work-'+now,...payload,likes:[],comments:[],views:0,createdAt:now,updatedAt:now,ownerUid:cloudAuthUid()});
+  const newWork=normalizeWork({id:'work-'+now,...payload,likes:[],reactions:emptyReactions(),comments:[],views:0,createdAt:now,updatedAt:now,ownerUid:cloudAuthUid()});
   works.unshift(newWork);
   queueCloudWorkSync(newWork);
   showToast('Your literature has been published.');
@@ -1800,7 +1820,7 @@ document.getElementById('createForm').addEventListener('submit',function(e){
  saveState();resetCreateForm();renderAll();showPage('feed');
 });
 function editWork(id){
- const w=works.find(x=>x.id===id&&x.email===currentUser?.email);
+ const w=works.find(x=>x.id===id&&userMatchesWork(currentUser,x));
  if(!w){showToast('You can only edit your own work.');return;}
  editingWorkId=w.id;editingDraftId=null;
  document.getElementById('postTitle').value=w.title;
@@ -1814,14 +1834,14 @@ function editWork(id){
 }
 function deleteWork(id){
  const w=works.find(x=>x.id===id);
- if(!w||w.email!==currentUser?.email){showToast('You can only delete your own work.');return;}
+ if(!w||!userMatchesWork(currentUser,w)){showToast('You can only delete your own work.');return;}
  pendingDeleteWorkId=id;
  document.getElementById('deleteWorkModal')?.classList.add('open');
 }
 function confirmDeleteWork(){
  const id=pendingDeleteWorkId;
  const w=works.find(x=>x.id===id);
- if(!w||w.email!==currentUser?.email){pendingDeleteWorkId=null;closeModal('deleteWorkModal');showToast('You can only delete your own work.');return;}
+ if(!w||!userMatchesWork(currentUser,w)){pendingDeleteWorkId=null;closeModal('deleteWorkModal');showToast('You can only delete your own work.');return;}
  works=works.filter(x=>x.id!==id);
  saved=saved.filter(x=>x!==id);
  deleteCloudWork(id);
@@ -1835,10 +1855,10 @@ function openReader(id){
  const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
  if(!canReadWork(w)){showToast('This work is not currently visible to your account.');return;}
  readerWork=w;w.views=(w.views||0)+1;rememberRead(w);saveState();
- const workAuthor=findUser(w.email)||{};document.getElementById('readerGenre').textContent=w.genre.toUpperCase();document.getElementById('readerIdentity').textContent=identityLabelOf(workAuthor).toUpperCase();document.getElementById('readerIdentity').classList.toggle('reader',normalizeIdentity(workAuthor.identity)==='reader');document.getElementById('readerTitle').textContent=w.title;document.getElementById('readerBy').textContent='by '+(w.author||publicNameOf(workAuthor))+' · '+new Date(w.createdAt||Date.now()).getFullYear();
+ const workAuthor=findUser(w.ownerUid||w.email)||{};document.getElementById('readerGenre').textContent=w.genre.toUpperCase();document.getElementById('readerIdentity').textContent=identityLabelOf(workAuthor).toUpperCase();document.getElementById('readerIdentity').classList.toggle('reader',normalizeIdentity(workAuthor.identity)==='reader');document.getElementById('readerTitle').textContent=w.title;document.getElementById('readerBy').textContent='by '+(w.author||publicNameOf(workAuthor))+' · '+new Date(w.createdAt||Date.now()).getFullYear();
  document.getElementById('readerSubmeta').textContent=`${w.views||0} views · ${totalReactionCount(w)} reactions · ${w.comments.length} comments · ${w.privacy==='followers'?'Followers only':w.privacy==='private'?'Private':'Public'}`;
  document.getElementById('readerBody').innerHTML=w.content.split(/\\n+/).map(p=>'<p>'+escapeHTML(p)+'</p>').join('');
- renderReaderSocial();renderComments();showPage('reader');
+ renderReaderSocial();renderComments();showPage('reader'); loadCloudWorkSocial(id).then(()=>startCloudWorkSocialListener(id)); loadCloudWorkSocial(id).then(()=>startCloudWorkSocialListener(id));
 }
 function renderReaderSocial(){
  if(!readerWork)return;
@@ -1896,11 +1916,12 @@ function chooseReaction(e,id,type){
  contentUser();
  if(!currentUser){showToast('Sign in to react to a work.');openAccount();return;}
  let w=works.find(x=>x.id===id);if(!w)return;w=normalizeWork(w);
- const email=canonicalEmail(currentUser.email);const before=userReactionOf(w);const r=normalizeReactions(w.reactions);
- Object.keys(r).forEach(k=>{r[k]=r[k].filter(x=>canonicalEmail(x)!==email)});
- if(before!==type)r[type].push(email);
+ const ids=[String(currentUser.uid||'').trim(),canonicalEmail(currentUser.email)].filter(Boolean);const before=userReactionOf(w);const r=normalizeReactions(w.reactions);
+ Object.keys(r).forEach(k=>{r[k]=r[k].filter(x=>!ids.includes(String(x))&&!ids.includes(canonicalEmail(x)))});
+ if(before!==type)r[type].push(String(currentUser.uid||currentUser.email));
  w.reactions=r;w.likes=r.heart.slice();
  const idx=works.findIndex(x=>x.id===id);works[idx]=w;
+ syncWorkReactionToCloud(id,before===type?'':type);
  if(readerWork?.id===id)readerWork=w;
  saveState();
  if(before!==type && w.email!==currentUser.email){addNotification(w.email,`${publicNameOf(currentUser)} reacted with ${REACTION_TYPES[type].label}`,w.title)}
@@ -1941,15 +1962,15 @@ function renderReplyItems(workId,parent){
  return `<div class="comment-replies">${replies.map(reply=>renderCommentItem(workId,reply,true)).join('')}</div>`;
 }
 function renderCommentItem(workId,c,isReply=false){
- const mine=canonicalEmail(c.email)===canonicalEmail(currentUser?.email);
- const author=findUser(c.email);
+ const mine=(c.userUid&&String(c.userUid)===String(currentCloudUid())) || canonicalEmail(c.email)===canonicalEmail(currentUser?.email);
+ const author=findUser(c.userUid||c.email);
  const safeName=publicNameOf(author||{penName:c.name||'Anonymous Reader'});
  const username=author?usernameOf(author):'';
  const photo=author?.photoURL||author?.photo||'';
  const avatar=photo
    ? `<img src="${escapeAttr(photo)}" alt="">`
    : escapeHTML(initialsOf(safeName));
- const profileAction=c.email?` onclick="openProfile('${escapeAttr(c.email)}')" title="View profile"`:' aria-hidden="true"';
+ const profileKey=userIdOf(author)||c.userUid||c.email||''; const profileAction=profileKey?` onclick="openProfile('${escapeAttr(profileKey)}')" title="View profile"`:' aria-hidden="true"';
  const actions=[renderCommentReactionBar(workId,c,isReply)];
  // Replies can themselves be replied to, so every comment level gets a Reply action.
  actions.push(commentActionButton('Reply',`startCommentReply('${escapeAttr(c.id)}')`));
@@ -1963,7 +1984,7 @@ function renderComments(){
  const list=comments.length?comments.map(c=>renderCommentItem(readerWork.id,c,false)).join(''):'<div class="empty" style="padding:20px 0"><h4>No comments yet</h4><p>Be the first to leave a comment.</p></div>';
  root.innerHTML=list;
 }
-function submitComment(e){e.preventDefault();contentUser();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now(),reactions:emptyReactions(),replies:[]};works[idx].comments=[...(works[idx].comments||[]),comment];works[idx]=normalizeWork(works[idx]);readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title);saveState();queueCloudWorkSync(readerWork);renderComments();renderReaderSocial();showToast('Comment posted.')}
+function submitComment(e){e.preventDefault();contentUser();if(!currentUser||!readerWork)return;const input=document.getElementById('commentInput');const text=input.value.trim();if(!text)return;const idx=works.findIndex(w=>w.id===readerWork.id);if(idx<0)return;const comment={id:'comment-'+Date.now(),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now(),reactions:emptyReactions(),replies:[]};works[idx].comments=[...(works[idx].comments||[]),comment];works[idx]=normalizeWork(works[idx]);readerWork=works[idx];if(readerWork.email!==currentUser.email)addNotification(readerWork.email,`${publicNameOf(currentUser)} commented on your work`,readerWork.title);saveState();syncCommentToCloud(readerWork.id,comment,null);renderComments();renderReaderSocial();showToast('Comment posted.')}
 function openCommentModal(id){
  contentUser();
  const w=works.find(x=>x.id===id);if(!w){showToast('Work not found.');return;}
@@ -1972,7 +1993,7 @@ function openCommentModal(id){
  const title=document.getElementById('commentModalTitle');
  const meta=document.getElementById('commentModalMeta');
  if(title)title.textContent=`Comments · ${w.title}`;
- if(meta)meta.textContent=`by ${w.author||publicNameOf(findUser(w.email)||{})}`;
+ if(meta)meta.textContent=`by ${w.author||publicNameOf(findUser(w.ownerUid||w.email)||{})}`;
  const modal=document.getElementById('commentModal');
  updateCommentPopupForm();
  renderCommentModal();
@@ -1996,7 +2017,7 @@ function renderCommentModal(){
 function startCommentReply(commentId){
  if(!commentModalWork)return;
  const found=findComment(commentModalWork,commentId);if(!found?.comment)return;
- commentReplyTarget={id:found.comment.id,name:publicNameOf(findUser(found.comment.email)||{penName:found.comment.name})};
+ commentReplyTarget={id:found.comment.id,name:publicNameOf(findUser(found.comment.userUid||found.comment.email)||{penName:found.comment.name})};
  updateCommentPopupForm();
  const input=document.getElementById('commentPopupInput');
  input?.focus();
@@ -2015,11 +2036,11 @@ function toggleCommentReaction(e,workId,commentId,type,isReply=false){
  if(!currentUser){showToast('Sign in to react to comments.');openAccount();return;}
  const idx=works.findIndex(x=>x.id===workId);if(idx<0)return;
  const w=normalizeWork(works[idx]);const found=findComment(w,commentId);if(!found?.comment)return;
- const email=canonicalEmail(currentUser.email);const r=normalizeReactions(found.comment.reactions);const before=commentReactionOf(found.comment);
- Object.keys(r).forEach(k=>{r[k]=r[k].filter(x=>canonicalEmail(x)!==email)});
- if(before!==type)r[type].push(email);
+ const ids=[String(currentUser.uid||'').trim(),canonicalEmail(currentUser.email)].filter(Boolean);const r=normalizeReactions(found.comment.reactions);const before=commentReactionOf(found.comment);
+ Object.keys(r).forEach(k=>{r[k]=r[k].filter(x=>!ids.includes(String(x))&&!ids.includes(canonicalEmail(x)))});
+ if(before!==type)r[type].push(String(currentUser.uid||currentUser.email));
  found.comment.reactions=r;works[idx]=normalizeWork(w);readerWork=readerWork?.id===workId?works[idx]:readerWork;commentModalWork=commentModalWork?.id===workId?works[idx]:commentModalWork;
- saveState();queueCloudWorkSync(works[idx]);renderCommentModal();renderComments();renderReaderSocial();
+ saveState();deleteCommentFromCloud(workId,commentId);renderCommentModal();renderComments();renderReaderSocial();
  document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'));
  showToast(before===type?'Comment reaction removed':`${REACTION_TYPES[type].label} reaction added to comment.`);
 }
@@ -2035,13 +2056,13 @@ function deleteComment(workId,commentId,isReply=false){
  if(!currentUser){showToast('Sign in to delete your comment.');openAccount();return;}
  const idx=works.findIndex(x=>x.id===workId);if(idx<0)return;
  const w=normalizeWork(works[idx]);const found=findComment(w,commentId);if(!found?.comment)return;
- if(canonicalEmail(found.comment.email)!==canonicalEmail(currentUser.email)){showToast('You can only delete your own comment.');return;}
+ const ownComment=(found.comment.userUid&&String(found.comment.userUid)===String(currentCloudUid())) || canonicalEmail(found.comment.email)===canonicalEmail(currentUser.email); if(!ownComment){showToast('You can only delete your own comment.');return;}
  const targetList=found.parent?(found.parent.replies||[]):w.comments||[];
  const removeIndex=targetList.findIndex(c=>c.id===commentId);if(removeIndex<0)return;
  targetList.splice(removeIndex,1);
  works[idx]=normalizeWork(w);if(readerWork?.id===workId)readerWork=works[idx];if(commentModalWork?.id===workId)commentModalWork=works[idx];
  if(commentReplyTarget?.id===commentId)commentReplyTarget=null;
- saveState();queueCloudWorkSync(works[idx]);renderCommentModal();renderComments();renderReaderSocial();updateCommentPopupForm();showToast('Comment deleted.');
+ saveState();deleteCommentFromCloud(workId,commentId);renderCommentModal();renderComments();renderReaderSocial();updateCommentPopupForm();showToast('Comment deleted.');
 }
 function submitPopupComment(e){
  e.preventDefault();
@@ -2051,11 +2072,12 @@ function submitPopupComment(e){
  const input=document.getElementById('commentPopupInput');const text=String(input?.value||'').trim();if(!text)return;
  const idx=works.findIndex(w=>w.id===commentModalWork.id);if(idx<0)return;
  const targetId=commentReplyTarget?.id||null;
- const comment={id:'comment-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),email:currentUser.email,name:publicNameOf(currentUser),text,at:Date.now(),reactions:emptyReactions(),replies:[]};
+ const comment={id:'comment-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),email:currentUser.email,userUid:currentCloudUid(),name:publicNameOf(currentUser),text,at:Date.now(),reactions:emptyReactions(),replies:[]};
  const w=normalizeWork(works[idx]);
  if(targetId){const found=findComment(w,targetId);if(!found?.comment){showToast('That comment is no longer available.');commentReplyTarget=null;updateCommentPopupForm();return;}found.comment.replies=[...(found.comment.replies||[]),comment];}
  else w.comments=[...(w.comments||[]),comment];
  works[idx]=normalizeWork(w);commentModalWork=works[idx];if(readerWork?.id===commentModalWork.id)readerWork=works[idx];
+ syncCommentToCloud(commentModalWork.id,comment,targetId);
  if(commentModalWork.email!==currentUser.email)addNotification(commentModalWork.email,`${publicNameOf(currentUser)} ${targetId?'replied to a comment on':'commented on'} your work`,commentModalWork.title);
  saveState();queueCloudWorkSync(works[idx]);renderAll();renderCommentModal();renderComments();renderReaderSocial();
  if(input)input.value='';commentReplyTarget=null;updateCommentPopupForm();
@@ -2087,6 +2109,20 @@ async function shareWork(id){
  const copied=await copyShareLink(shareUrl);
  showToast(copied?'Share link copied to clipboard.':'Could not copy automatically. Please copy the link from the address bar.');
 }
+function changeReaderSize(delta){
+ const body=document.getElementById('readerBody');if(!body)return;
+ const current=parseFloat(getComputedStyle(body).fontSize)||20;
+ const next=Math.max(16,Math.min(30,current+(Number(delta||0)*2)));
+ body.style.fontSize=next+'px';
+ localStorage.setItem('shkReaderFontSize',String(next));
+ showToast(`Reading size: ${Math.round(next)}px`);
+}
+function restoreReaderFontSize(){
+ const body=document.getElementById('readerBody');if(!body)return;
+ const savedSize=Number(localStorage.getItem('shkReaderFontSize')||0);
+ if(savedSize>=16&&savedSize<=30)body.style.fontSize=savedSize+'px';
+}
+
 function saveCurrentReader(){if(readerWork)toggleSaved(readerWork.id)}
 function searchTag(tag){openGlobalSearch();setTimeout(()=>{const input=document.getElementById('globalSearchInput');input.value=tag;renderGlobalSearch()},60)}
 
@@ -2106,11 +2142,11 @@ function renderGlobalSearch(){
  let html='';
  if(foundUsers.length){
    html+='<div class="search-group"><div class="search-group-head"><strong>Student profiles</strong><span>'+foundUsers.length+' result'+(foundUsers.length===1?'':'s')+'</span></div>';
-   html+=foundUsers.map(u=>{const followed=currentUser?.following.includes(u.email);const self=currentUser?.email===u.email;return `<div class="search-result"><button class="result-link" onclick="openProfile('${escapeAttr(u.email)}');closeModal('globalSearchModal')"><div class="search-result-main"><div class="avatar">${u.photo?`<img src="${escapeAttr(u.photo)}" alt="">`:escapeHTML(initialsOf(publicNameOf(u)))}</div><div class="search-result-copy"><div class="result-kind">Student profile</div><strong>${escapeHTML(publicNameOf(u))}</strong><span>@${escapeHTML(usernameOf(u))} · ${escapeHTML(identityLabelOf(u))} · ${getUserWorks(u.email).length} work${getUserWorks(u.email).length===1?'':'s'}</span></div></div></button><button class="follow ${followed?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(u.email)}',this)">${self?'You':(followed?'Following':'Follow')}</button></div>`}).join('')+'</div>';
+   html+=foundUsers.map(u=>{const uKey=userIdOf(u);const followed=currentUser?.following?.some(x=>String(x)===uKey || canonicalEmail(x)===canonicalEmail(u.email||''));const self=!!currentUser&&userIdOf(currentUser)===uKey;return `<div class="search-result"><button class="result-link" onclick="openProfile('${escapeAttr(uKey)}');closeModal('globalSearchModal')"><div class="search-result-main"><div class="avatar">${u.photo?`<img src="${escapeAttr(u.photo)}" alt="">`:escapeHTML(initialsOf(publicNameOf(u)))}</div><div class="search-result-copy"><div class="result-kind">Student profile</div><strong>${escapeHTML(publicNameOf(u))}</strong><span>@${escapeHTML(usernameOf(u))} · ${escapeHTML(identityLabelOf(u))} · ${getUserWorks(u).length} work${getUserWorks(u).length===1?'':'s'}</span></div></div></button><button class="follow ${followed?'on':''}" ${self?'disabled':''} onclick="toggleFollow('${escapeAttr(uKey)}',this)">${self?'You':(followed?'Following':'Follow')}</button></div>`}).join('')+'</div>';
  }
  if(foundWorks.length){
    html+='<div class="search-group"><div class="search-group-head"><strong>Works & posts</strong><span>'+foundWorks.length+' result'+(foundWorks.length===1?'':'s')+'</span></div>';
-   html+=foundWorks.map(w=>`<div class="search-result"><button class="result-link" onclick="closeModal('globalSearchModal');openReader('${escapeAttr(w.id)}')"><div class="search-result-copy"><div class="result-kind">${escapeHTML(w.genre)}</div><strong>${escapeHTML(w.title)}</strong><span>by ${escapeHTML(w.author)} · ${escapeHTML(w.excerpt)}</span></div></button><button class="secondary" style="padding:8px 10px;font-size:.7rem" onclick="openProfile('${escapeAttr(w.email||'')}');closeModal('globalSearchModal')">Profile</button></div>`).join('')+'</div>';
+   html+=foundWorks.map(w=>`<div class="search-result"><button class="result-link" onclick="closeModal('globalSearchModal');openReader('${escapeAttr(w.id)}')"><div class="search-result-copy"><div class="result-kind">${escapeHTML(w.genre)}</div><strong>${escapeHTML(w.title)}</strong><span>by ${escapeHTML(w.author)} · ${escapeHTML(w.excerpt)}</span></div></button><button class="secondary" style="padding:8px 10px;font-size:.7rem" onclick="openProfile('${escapeAttr(w.ownerUid||w.email||'')}');closeModal('globalSearchModal')">Profile</button></div>`).join('')+'</div>';
  }
  root.innerHTML=html||'<div class="empty"><h4>No matches found</h4><p>Try a different title, keyword, student name, or @username.</p></div>';
 }
@@ -2125,7 +2161,16 @@ function markNotificationsRead(){if(!currentUser)return;notifications=notificati
 function applyDarkMode(){document.documentElement.classList.toggle('dark',darkMode)}
 function toggleDarkMode(){darkMode=!darkMode;persistSessionData();applyDarkMode();showToast(darkMode?'Dark mode enabled.':'Light mode enabled.')}
 function openEditProfile(){if(!currentUser){openAccount();return}document.getElementById('editPenName').value=currentUser.penName||publicNameOf(currentUser);document.getElementById('editUsername').value='@'+usernameOf(currentUser);document.getElementById('editBio').value=currentUser.bio||'';document.getElementById('editProfileModal').classList.add('open')}
-async function saveProfile(e){e.preventDefault();if(!currentUser)return;const email=currentUser.email;const penName=document.getElementById('editPenName').value.trim();const username=document.getElementById('editUsername').value.trim().replace(/^@/,'');const bio=document.getElementById('editBio').value.trim();if(!penName||!username){showToast('Pen name and username are required.');return}const clash=users.find(u=>u.email!==email&&usernameOf(u).toLowerCase()===username.toLowerCase());if(clash){showToast('That username is already in use.');return}const idx=users.findIndex(u=>u.email===email);if(idx<0)return;users[idx]=normalizeUser({...users[idx],penName,username,bio,photo:currentUser.photoURL||currentUser.photo||''});currentUser=normalizeUser({...users[idx]});works=works.map(w=>w.email===email?{...w,author:publicNameOf(currentUser)}:w);saveState();closeModal('editProfileModal');renderAll();showToast('Profile updated.')}
+async function saveProfile(e){
+ e.preventDefault();if(!currentUser)return;const email=currentUser.email;const penName=document.getElementById('editPenName').value.trim();const username=document.getElementById('editUsername').value.trim().replace(/^@/,'');const bio=document.getElementById('editBio').value.trim();if(!penName||!username){showToast('Pen name and username are required.');return}
+ const clash=users.find(u=>userIdOf(u)!==userIdOf(currentUser)&&usernameOf(u).toLowerCase()===username.toLowerCase());if(clash){showToast('That username is already in use.');return}
+ const idx=users.findIndex(u=>userIdOf(u)===userIdOf(currentUser)||canonicalEmail(u.email)===canonicalEmail(email));if(idx<0)return;
+ users[idx]=normalizeUser({...users[idx],penName,username,bio});currentUser=normalizeUser({...currentUser,...users[idx],email});
+ works=works.map(w=>userMatchesWork(currentUser,w)?normalizeWork({...w,author:publicNameOf(currentUser),ownerUid:currentUser.uid||w.ownerUid}):w);
+ saveState();
+ try{if(currentUser.uid)await saveCloudUserProfile(currentUser);for(const w of works.filter(x=>x.privacy==='public'&&userMatchesWork(currentUser,x))){await pushWorkToCloud(w)}}catch(err){console.warn('Public profile/work sync failed:',err)}
+ closeModal('editProfileModal');renderAll();showToast('Profile updated.')
+}
 
 function openAccount(){if(!sessionUnlocked&&currentUser){openPinGate('enter',currentUser);return}document.getElementById('accountModal').classList.add('open');updateProfileUI()}
 function closeModal(id){document.getElementById(id)?.classList.remove('open');if(id==='commentModal'){commentModalWork=null;commentReplyTarget=null;updateCommentPopupForm();document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'))}if(id==='deleteWorkModal'){pendingDeleteWorkId=null}}
@@ -2138,21 +2183,65 @@ function emailAccountUser(){const email=document.getElementById('authEmail').val
 async function submitAuth(e){
  e.preventDefault();
  const {email,password}=emailAccountUser();
- if(authMode==='signup'){
-   if(users.some(u=>canonicalEmail(u.email)===email)){showToast('An account with this email already exists.');return}
-   if(password.length<6){showToast('Use a password with at least 6 characters.');return}
-   const username=document.getElementById('authUsername').value.trim().replace(/^@/,'');
-   if(!username){showToast('Please choose a username.');return}
-   if(users.some(u=>usernameOf(u).toLowerCase()===username.toLowerCase())){showToast('That username is already in use.');return}
-   pendingAuthUser=normalizeUser({name:document.getElementById('authName').value.trim()||'Student Account',penName:'Anonymous Author',username,email,password,bio:'Student writer in 12-SHAKESPEARE.',followers:[],following:[],photo:'',photoURL:'',provider:'password'});
-   closeModal('accountModal'); openPinGate('setup',pendingAuthUser); return;
+ try{
+   if(window.firebaseReady)await window.firebaseReady;
+   if(!window.firebaseAuth||!window.firebaseCreateUserWithEmailAndPassword||!window.firebaseSignInWithEmailAndPassword){throw Object.assign(new Error('Firebase Email/Password authentication is not initialized.'),{code:'firebase/auth-email-disabled'})}
+   const localExisting=users.find(u=>canonicalEmail(u.email)===email)||null;
+   if(authMode==='signup'){
+     if(users.some(u=>canonicalEmail(u.email)===email)){showToast('An account with this email already exists. Please log in.');return}
+     if(password.length<6){showToast('Use a password with at least 6 characters.');return}
+     const username=document.getElementById('authUsername').value.trim().replace(/^@/,'');
+     if(!username){showToast('Please choose a username.');return}
+     if(users.some(u=>usernameOf(u).toLowerCase()===username.toLowerCase())){showToast('That username is already in use.');return}
+     const cred=await window.firebaseCreateUserWithEmailAndPassword(window.firebaseAuth,email,password);
+     pendingAuthUser=normalizeUser({
+       name:document.getElementById('authName').value.trim()||'Student Account',
+       penName:'Anonymous Author',username,email,password,bio:'Student writer in 12-SHAKESPEARE.',followers:[],following:[],photo:'',photoURL:'',provider:'password',uid:cred.user.uid,identity:'reader',pinHash:''
+     });
+     closeModal('accountModal');openPinGate('setup',pendingAuthUser);return;
+   }
+   let cred;
+   try{
+     cred=await window.firebaseSignInWithEmailAndPassword(window.firebaseAuth,email,password);
+   }catch(err){
+     // Seamless migration for an older local-only account: create its Firebase identity using the same credentials.
+     if(localExisting && (err?.code==='auth/user-not-found'||err?.code==='auth/invalid-credential')){
+       try{cred=await window.firebaseCreateUserWithEmailAndPassword(window.firebaseAuth,email,password)}catch(createErr){throw err}
+     }else throw err;
+   }
+   const g=cred.user;
+   const cloudProfile=await readCloudUserProfile(g.uid);
+   const cloudData=cloudProfile.data||{};
+   pendingAuthUser=normalizeUser({
+     ...localExisting,
+     ...cloudData,
+     name:cloudData.displayName||localExisting?.name||'Student Account',
+     penName:cloudData.penName||localExisting?.penName||'Anonymous Author',
+     username:cloudData.username||localExisting?.username||((email.split('@')[0]||'reader').replace(/[^a-z0-9_]+/gi,'').slice(0,18)||'reader'),
+     email,password,
+     provider:'password',uid:g.uid,
+     photoURL:cloudData.photoURL||localExisting?.photoURL||'',photo:cloudData.photoURL||localExisting?.photo||'',
+     bio:cloudData.bio||localExisting?.bio||'Student writer in 12-SHAKESPEARE.',
+     followers:localExisting?.followers||[],following:localExisting?.following||[],identity:cloudData.identity||localExisting?.identity||'reader'
+   });
+   const savedHash=storedPinHash(pendingAuthUser);if(savedHash)pendingAuthUser.pinHash=savedHash;
+   closeModal('accountModal');openPinGate(savedHash?'enter':'setup',pendingAuthUser);
+ }catch(err){
+   console.error('Email/Password auth error:',err);
+   const friendly={
+     'auth/invalid-credential':'Email or password is incorrect.',
+     'auth/wrong-password':'Email or password is incorrect.',
+     'auth/user-not-found':'No account was found with that email.',
+     'auth/email-already-in-use':'That email is already registered. Please log in.',
+     'auth/weak-password':'Use a password with at least 6 characters.',
+     'auth/operation-not-allowed':'Enable Email/Password sign-in in Firebase Authentication.',
+     'auth/admin-restricted-operation':'Enable Email/Password sign-in in Firebase Authentication.',
+     'firebase/auth-email-disabled':'Firebase Email/Password authentication is not available in this build.'
+   };
+   showToast(friendly[err?.code]||('Authentication failed'+(err?.message?': '+err.message:'')));
  }
- const user=users.find(u=>canonicalEmail(u.email)===email&&u.password===password);
- if(!user){showToast('Email or password is incorrect.');return}
- pendingAuthUser=normalizeUser(user); const savedHash=storedPinHash(pendingAuthUser); if(savedHash) pendingAuthUser.pinHash=savedHash;
- closeModal('accountModal');
- openPinGate(savedHash?'enter':'setup',pendingAuthUser);
 }
+
 async function googleLogin(){
   closeModal('accountModal');
   try{
@@ -2340,13 +2429,19 @@ function cloudWorksCollection(){
   if(!window.firebaseDB||!window.firebaseCollection)return null;
   return window.firebaseCollection(window.firebaseDB,'works');
 }
-function cloudAuthUid(){return String(window.firebaseAuth?.currentUser?.uid||currentUser?.uid||'').trim()}
+function cloudAuthUid(){
+  const authUser=window.firebaseAuth?.currentUser;
+  return String(authUser?.uid||'').trim();
+}
+function hasStableCloudIdentity(){
+  const authUser=window.firebaseAuth?.currentUser;
+  return !!authUser && !authUser.isAnonymous && !!currentUser?.uid && String(authUser.uid)===String(currentUser.uid);
+}
 function cloudWorkPayload(work){
   const normalized=normalizeWork(work);
   return {
     id:normalized.id,
     ownerUid:String(normalized.ownerUid||cloudAuthUid()||''),
-    ownerEmail:String(normalized.email||''),
     author:String(normalized.author||'Anonymous Author'),
     title:String(normalized.title||'Untitled'),
     genre:String(normalized.genre||'Poetry'),
@@ -2355,9 +2450,6 @@ function cloudWorkPayload(work){
     content:String(normalized.content||''),
     cover:String(normalized.cover||''),
     privacy:String(normalized.privacy||'public'),
-    likes:Array.isArray(normalized.likes)?normalized.likes.slice():[],
-    reactions:normalizeReactions(normalized.reactions),
-    comments:normalizeComments(normalized.comments),
     views:Number(normalized.views||0),
     createdAt:Number(normalized.createdAt||Date.now()),
     updatedAt:Number(normalized.updatedAt||normalized.createdAt||Date.now()),
@@ -2371,9 +2463,11 @@ async function pushWorkToCloud(work){
     if(!window.firebaseDB||!window.firebaseDoc||!window.firebaseSetDoc||!cloudWorksCollection())return false;
     if(window.firebaseReady)await window.firebaseReady;
     const authUid=cloudAuthUid();
-    if(!authUid)return false;
-    const payload=cloudWorkPayload({...work,ownerUid:work.ownerUid||authUid});
-    await window.firebaseSetDoc(window.firebaseDoc(window.firebaseDB,'works',String(work.id)),payload,{merge:true});
+    if(!authUid||!hasStableCloudIdentity())return false;
+    const ownerUid=String(work.ownerUid||authUid||'');
+    if(!ownerUid || ownerUid!==authUid)return false;
+    const payload=cloudWorkPayload({...work,ownerUid});
+    await window.firebaseSetDoc(window.firebaseDoc(window.firebaseDB,'works',String(work.id)),payload);
     return true;
   }catch(err){
     console.warn('Cloud work sync failed:',err);
@@ -2424,16 +2518,24 @@ async function hydrateCloudWorks(){
       localStorage.setItem('shkWorks',JSON.stringify(works));
       renderAll();
     }
-    // Migrate this device's existing public works into the shared archive.
-    // Only works owned by the currently logged-in app user are pushed.
-    const email=canonicalEmail(currentUser?.email);
-    const ownPublic=works.filter(w=>w.privacy==='public'&&email&&canonicalEmail(w.email)===email);
-    await Promise.all(ownPublic.map(w=>pushWorkToCloud(w)));
+    await syncOwnedPublicWorksToCloud();
   }catch(err){
     console.warn('Cloud work hydration failed:',err);
   }finally{
     cloudWorksBusy=false;
   }
+}
+
+async function syncOwnedPublicWorksToCloud(){
+  if(!hasStableCloudIdentity())return;
+  const authUid=cloudAuthUid();
+  const email=canonicalEmail(currentUser?.email);
+  if(!authUid||!email)return;
+  const ownPublic=works.filter(w=>w.privacy==='public'&&canonicalEmail(w.email)===email).map(w=>normalizeWork({...w,ownerUid:authUid}));
+  let changed=false;
+  ownPublic.forEach(w=>{const i=works.findIndex(x=>x.id===w.id);if(i>=0){works[i]=w;changed=true}});
+  if(changed)localStorage.setItem('shkWorks',JSON.stringify(works));
+  if(ownPublic.length)await Promise.all(ownPublic.map(w=>pushWorkToCloud(w)));
 }
 
 function startCloudWorkSync(){
@@ -2458,6 +2560,196 @@ function startCloudWorkSync(){
       }
     },err=>console.warn('Cloud work listener failed:',err));
   }).catch(err=>console.warn('Cloud work sync unavailable:',err));
+}
+
+
+// ---------------------------------------------------------------------------
+// Shared public users + work social data
+// ---------------------------------------------------------------------------
+let cloudUsersUnsubscribe=null;
+let cloudUsersStarted=false;
+let cloudWorkSocialUnsubscribe=null;
+let cloudWorkSocialId='';
+
+function cloudUsersCollection(){
+  if(!window.firebaseDB||!window.firebaseCollection)return null;
+  return window.firebaseCollection(window.firebaseDB,'users');
+}
+function mergeCloudUserIntoLocal(raw){
+  const uid=String(raw?.uid||'').trim();
+  if(!uid)return false;
+  const existing=users.find(u=>String(u.uid||'')===uid)||null;
+  const merged=normalizeUser({...existing,...raw,uid,email:existing?.email||''});
+  const idx=existing?users.indexOf(existing):-1;
+  if(idx>=0){users[idx]=merged;return true;}
+  users.push(merged);return true;
+}
+async function hydrateCloudUsers(){
+  if(!window.firebaseDB||!window.firebaseGetDocs||!cloudUsersCollection())return;
+  try{
+    if(window.firebaseReady)await window.firebaseReady;
+    const snap=await window.firebaseGetDocs(cloudUsersCollection());
+    let changed=false;
+    snap.forEach(ds=>{changed=mergeCloudUserIntoLocal({...ds.data(),uid:ds.id})||changed});
+    if(changed){localStorage.setItem('shkUsers',JSON.stringify(users));renderAll();}
+    if(currentUser?.uid)await saveCloudUserProfile(currentUser).catch(()=>{});
+  }catch(err){console.warn('Cloud user hydration failed:',err)}
+}
+function startCloudUserSync(){
+  if(cloudUsersStarted)return;
+  cloudUsersStarted=true;
+  Promise.resolve(window.firebaseReady).then(async()=>{
+    await hydrateCloudUsers();
+    if(!window.firebaseOnSnapshot||!cloudUsersCollection())return;
+    cloudUsersUnsubscribe=window.firebaseOnSnapshot(cloudUsersCollection(),snap=>{
+      let changed=false;
+      snap.docChanges().forEach(change=>{
+        if(change.type==='removed'){
+          const idx=users.findIndex(u=>String(u.uid||'')===String(change.doc.id));
+          if(idx>=0){users.splice(idx,1);changed=true}
+          return;
+        }
+        changed=mergeCloudUserIntoLocal({...change.doc.data(),uid:change.doc.id})||changed;
+      });
+      if(changed){localStorage.setItem('shkUsers',JSON.stringify(users));renderAll();}
+    },err=>console.warn('Cloud user listener failed:',err));
+  }).catch(err=>console.warn('Cloud user sync unavailable:',err));
+}
+
+function cloudWorkRef(workId){return window.firebaseDoc(window.firebaseDB,'works',String(workId))}
+function cloudWorkLikesCollection(workId){return window.firebaseCollection(window.firebaseDB,'works',String(workId),'likes')}
+function cloudWorkCommentsCollection(workId){return window.firebaseCollection(window.firebaseDB,'works',String(workId),'comments')}
+function cloudCommentReactionsCollection(workId,commentId){return window.firebaseCollection(window.firebaseDB,'works',String(workId),'comments',String(commentId),'reactions')}
+function currentCloudUid(){return cloudAuthUid()}
+function reactionValueForCloud(reactions,uid,email){
+  const ids=[String(uid||'').trim(),canonicalEmail(email)];
+  return Object.keys(REACTION_TYPES).find(k=>(reactions?.[k]||[]).some(x=>ids.includes(String(x))))||'';
+}
+function flattenCommentsForCloud(comments,parentId=null,out=[]){
+  (Array.isArray(comments)?comments:[]).forEach(c=>{
+    out.push({comment:c,parentId});
+    flattenCommentsForCloud(c.replies||[],c.id,out);
+  });
+  return out;
+}
+function buildNestedComments(flat){
+  const nodes=flat.map(x=>({...x,replies:[]}));
+  const map=new Map(nodes.map(x=>[String(x.id),x]));
+  const roots=[];
+  nodes.forEach(node=>{
+    const parent=String(node.parentId||'');
+    if(parent&&map.has(parent))map.get(parent).replies.push(node);
+    else roots.push(node);
+  });
+  return roots;
+}
+async function syncWorkReactionToCloud(workId,type){
+  const uid=currentCloudUid();
+  if(!uid||!window.firebaseSetDoc||!window.firebaseDeleteDoc)return;
+  try{
+    const ref=window.firebaseDoc(window.firebaseDB,'works',String(workId),'likes',uid);
+    if(type){
+      await window.firebaseSetDoc(ref,{type,updatedAt:window.firebaseServerTimestamp()});
+    }else await window.firebaseDeleteDoc(ref);
+  }catch(err){console.warn('Work reaction sync failed:',err)}
+}
+async function syncCommentToCloud(workId,comment,parentId=null){
+  const uid=currentCloudUid();
+  if(!uid||!comment?.id||!window.firebaseSetDoc)return false;
+  try{
+    const ref=window.firebaseDoc(window.firebaseDB,'works',String(workId),'comments',String(comment.id));
+    await window.firebaseSetDoc(ref,{
+      userUid:uid,
+      userName:publicNameOf(currentUser),
+      username:usernameOf(currentUser),
+      photoURL:currentUser?.photoURL||currentUser?.photo||'',
+      text:String(comment.text||''),
+      parentId:parentId?String(parentId):null,
+      createdAt:Number(comment.at||Date.now()),
+      updatedAt:window.firebaseServerTimestamp()
+    });
+    return true;
+  }catch(err){console.warn('Comment cloud sync failed:',err);return false}
+}
+async function deleteCommentFromCloud(workId,commentId){
+  const uid=currentCloudUid();
+  if(!uid||!window.firebaseDeleteDoc)return false;
+  try{
+    await window.firebaseDeleteDoc(window.firebaseDoc(window.firebaseDB,'works',String(workId),'comments',String(commentId)));
+    return true;
+  }catch(err){console.warn('Comment cloud delete failed:',err);return false}
+}
+async function syncCommentReactionToCloud(workId,commentId,type){
+  const uid=currentCloudUid();
+  if(!uid||!window.firebaseSetDoc||!window.firebaseDeleteDoc)return;
+  try{
+    const ref=window.firebaseDoc(window.firebaseDB,'works',String(workId),'comments',String(commentId),'reactions',uid);
+    if(type)await window.firebaseSetDoc(ref,{type,updatedAt:window.firebaseServerTimestamp()});
+    else await window.firebaseDeleteDoc(ref);
+  }catch(err){console.warn('Comment reaction sync failed:',err)}
+}
+async function loadCloudWorkSocial(workId){
+  if(!workId||!window.firebaseGetDocs||!window.firebaseDB)return;
+  try{
+    if(window.firebaseReady)await window.firebaseReady;
+    const [likesSnap,commentsSnap]=await Promise.all([window.firebaseGetDocs(cloudWorkLikesCollection(workId)),window.firebaseGetDocs(cloudWorkCommentsCollection(workId))]);
+    const likes=likesSnap.docs||[];
+    const reactions=emptyReactions();
+    likes.forEach(ds=>{
+      const data=ds.data()||{};const type=REACTION_TYPES[data.type]?data.type:'heart';
+      reactions[type].push(String(ds.id));
+    });
+    const flat=commentsSnap.docs.map(ds=>{
+      const d=ds.data()||{};
+      return {id:ds.id,email:'',userUid:String(d.userUid||''),name:String(d.userName||'Anonymous Reader'),text:String(d.text||''),at:Number(d.createdAt||Date.now()),reactions:emptyReactions(),replies:[],parentId:d.parentId||null,username:String(d.username||'')};
+    });
+    const currentMap=works.find(w=>w.id===workId)||null;
+    const currentFlat=flattenCommentsForCloud(currentMap?.comments||[]).map(x=>x.comment);
+    const flatMap=new Map(flat.map(c=>[c.id,c]));
+    // Preserve local comment reactions when cloud comment docs exist, then hydrate their reaction subcollections.
+    for(const c of flat){
+      const existing=currentFlat.find(x=>x.id===c.id);if(existing)c.reactions=normalizeReactions(existing.reactions);
+      try{
+        const rs=await window.firebaseGetDocs(cloudCommentReactionsCollection(workId,c.id));
+        const rr=emptyReactions();rs.docs.forEach(ds=>{const d=ds.data()||{};const type=REACTION_TYPES[d.type]?d.type:'heart';rr[type].push(String(ds.id));});
+        c.reactions=rr;
+      }catch(_e){}
+    }
+    const idx=works.findIndex(w=>w.id===workId);
+    if(idx>=0){
+      works[idx]=normalizeWork({...works[idx],reactions,likes:reactions.heart,comments:buildNestedComments(flat)});
+      if(readerWork?.id===workId)readerWork=works[idx];
+      if(commentModalWork?.id===workId)commentModalWork=works[idx];
+      localStorage.setItem('shkWorks',JSON.stringify(works));
+      renderReaderSocial();renderComments();renderCommentModal();
+    }
+  }catch(err){console.warn('Cloud work social hydration failed:',err)}
+}
+function startCloudWorkSocialListener(workId){
+  if(cloudWorkSocialUnsubscribe)try{cloudWorkSocialUnsubscribe()}catch(_e){}
+  cloudWorkSocialUnsubscribe=null;cloudWorkSocialId=String(workId||'');
+  if(!workId||!window.firebaseOnSnapshot)return;
+  try{
+    const a=window.firebaseOnSnapshot(cloudWorkCommentsCollection(workId),async()=>{await loadCloudWorkSocial(workId)},err=>console.warn('Cloud comment listener failed:',err));
+    const b=window.firebaseOnSnapshot(cloudWorkLikesCollection(workId),async()=>{await loadCloudWorkSocial(workId)},err=>console.warn('Cloud reaction listener failed:',err));
+    cloudWorkSocialUnsubscribe=()=>{try{a()}catch(_e){} try{b()}catch(_e){}};
+  }catch(err){console.warn('Cloud work social listener setup failed:',err)}
+}
+async function syncFollowCloud(target,following){
+  const me=currentCloudUid();const targetUid=String(target?.uid||'').trim();
+  if(!me||!targetUid||!window.firebaseSetDoc||!window.firebaseDeleteDoc)return;
+  try{
+    const followingRef=window.firebaseDoc(window.firebaseDB,'users',me,'following',targetUid);
+    const followersRef=window.firebaseDoc(window.firebaseDB,'users',targetUid,'followers',me);
+    if(following){
+      await Promise.all([
+        window.firebaseSetDoc(followingRef,{targetUid,createdAt:window.firebaseServerTimestamp()}),
+        window.firebaseSetDoc(followersRef,{followerUid:me,createdAt:window.firebaseServerTimestamp()})
+      ]);
+    }else{
+      await Promise.all([window.firebaseDeleteDoc(followingRef),window.firebaseDeleteDoc(followersRef)]);
+    }
+  }catch(err){console.warn('Follow sync failed:',err)}
 }
 
 async function hashPin(pin){const data=new TextEncoder().encode('12SHAKESPEARE::PIN::'+pin);const digest=await crypto.subtle.digest('SHA-256',data);return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('')}
@@ -2595,6 +2887,7 @@ async function finishPendingAuth(){
   if(u.uid){
     try{await saveCloudUserProfile(u)}catch(err){console.warn('Profile sync failed:',err)}
   }
+  try{await syncOwnedPublicWorksToCloud()}catch(err){console.warn('Owned work sync failed:',err)}
 
   if(finalHash)savePinHash(u,finalHash);
   const idx=users.findIndex(x=>canonicalEmail(x.email)===email);
@@ -2610,8 +2903,8 @@ async function finishPendingAuth(){
   showToast('Account ready. Welcome, '+getName()+'!');
 }
 
-function logoutFromPin(){pendingAuthUser=null;pinFirst='';pinBusy=false;sessionUnlocked=false;sessionStorage.removeItem('shkSessionUnlocked');if(window.firebaseAuth&&window.firebaseSignOut)window.firebaseSignOut(window.firebaseAuth).catch(()=>{});document.getElementById('pinModal').classList.remove('open');document.getElementById('accountModal').classList.add('open');switchAuth('login');}
-function logout(){currentUser=null;pendingAuthUser=null;sessionUnlocked=false;sessionStorage.removeItem('shkSessionUnlocked');if(window.firebaseAuth&&window.firebaseSignOut)window.firebaseSignOut(window.firebaseAuth).catch(()=>{});saveState();closeModal('accountModal');closeModal('pinModal');renderAll();showToast('You are signed out.')}
+function logoutFromPin(){pendingAuthUser=null;pinFirst='';pinBusy=false;sessionUnlocked=false;sessionStorage.removeItem('shkSessionUnlocked');if(window.firebaseAuth&&window.firebaseSignOut)window.firebaseSignOut(window.firebaseAuth).then(()=>{if(window.firebaseSignInAnonymously)window.firebaseSignInAnonymously(window.firebaseAuth).catch(()=>{})}).catch(()=>{});document.getElementById('pinModal').classList.remove('open');document.getElementById('accountModal').classList.add('open');switchAuth('login');}
+function logout(){currentUser=null;pendingAuthUser=null;sessionUnlocked=false;sessionStorage.removeItem('shkSessionUnlocked');if(window.firebaseAuth&&window.firebaseSignOut)window.firebaseSignOut(window.firebaseAuth).then(()=>{if(window.firebaseSignInAnonymously)window.firebaseSignInAnonymously(window.firebaseAuth).catch(()=>{})}).catch(()=>{});saveState();closeModal('accountModal');closeModal('pinModal');renderAll();showToast('You are signed out.')}
 function submitFeedback(e){e.preventDefault();e.target.reset();showToast('Feedback submitted.')}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.remove('show'),2300)}
 function toggleSidebar(){document.body.classList.toggle('menu-open')}
@@ -2726,8 +3019,21 @@ function initShkNavigationSounds(){
 }
 
 function switchAuthDefault(){switchAuth('login')}
+async function reconcileFirebaseIdentity(){
+  try{
+    if(window.firebaseReady)await window.firebaseReady;
+    if(!currentUser)return;
+    const authUser=window.firebaseAuth?.currentUser;
+    if(authUser && !authUser.isAnonymous && currentUser.uid && String(authUser.uid)===String(currentUser.uid))return;
+    // A legacy local-only session cannot safely own cloud documents. Require a real Firebase sign-in
+    // so the same stable UID is used on every device.
+    currentUser=null;sessionUnlocked=false;profileEmail=null;sessionStorage.removeItem('shkSessionUnlocked');
+    localStorage.removeItem('shkUser');
+    renderAll();
+  }catch(err){console.warn('Firebase identity reconciliation failed:',err)}
+}
 document.addEventListener('click',(e)=>{if(!e.target.closest('.reaction-wrap'))document.querySelectorAll('.reaction-picker.open').forEach(closeReactionPicker);if(!e.target.closest('.comment-reaction-wrap'))document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'));});
-switchAuthDefault();applyDarkMode();renderAll();initShkNavigationSounds();startCloudWorkSync();
+switchAuthDefault();applyDarkMode();renderAll();initShkNavigationSounds();startCloudUserSync();startCloudWorkSync();reconcileFirebaseIdentity();
 </script>
 </body>
 </html>
