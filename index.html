@@ -2252,7 +2252,10 @@ function openReader(id){
  const workAuthor=findUser(w.ownerUid||w.email)||{};document.getElementById('readerGenre').textContent=w.genre.toUpperCase();document.getElementById('readerIdentity').textContent=identityLabelOf(workAuthor).toUpperCase();document.getElementById('readerIdentity').classList.toggle('reader',normalizeIdentity(workAuthor.identity)==='reader');document.getElementById('readerTitle').textContent=w.title;document.getElementById('readerBy').textContent='by '+(w.author||publicNameOf(workAuthor))+' · '+new Date(w.createdAt||Date.now()).getFullYear();
  document.getElementById('readerSubmeta').textContent=`${w.views||0} views · ${totalReactionCount(w)} reactions · ${w.comments.length} comments · ${w.privacy==='followers'?'Followers only':w.privacy==='private'?'Private':'Public'}`;
  document.getElementById('readerBody').innerHTML=w.content.split(/\\n+/).map(p=>'<p>'+escapeHTML(p)+'</p>').join('');
- renderReaderSocial();renderComments();showPage('reader'); loadCloudWorkSocial(id).then(()=>startCloudWorkSocialListener(id)); loadCloudWorkSocial(id).then(()=>startCloudWorkSocialListener(id));
+ renderReaderSocial();renderComments();showPage('reader');
+ loadCloudWorkSocial(id)
+   .then(()=>startCloudWorkSocialListener(id))
+   .catch(err=>console.warn('Initial work social hydration failed:',err));
 }
 function renderReaderSocial(){
  if(!readerWork)return;
@@ -2304,30 +2307,73 @@ function closeReactionPicker(picker){
  delete picker._reactionReturnNext;
  picker.style.position='';picker.style.left='';picker.style.right='';picker.style.top='';picker.style.bottom='';picker.style.maxWidth='';
 }
-function chooseReaction(e,id,type){
+async function chooseReaction(e,id,type){
  if(e)e.stopPropagation();
  if(!REACTION_TYPES[type])return;
  contentUser();
  if(!currentUser){showToast('Sign in to react to a work.');openAccount();return;}
- let w=works.find(x=>x.id===id);if(!w)return;w=normalizeWork(w);
- const ids=[String(currentUser.uid||'').trim(),canonicalEmail(currentUser.email)].filter(Boolean);const before=userReactionOf(w);const r=normalizeReactions(w.reactions);
- Object.keys(r).forEach(k=>{r[k]=r[k].filter(x=>!ids.includes(String(x))&&!ids.includes(canonicalEmail(x)))});
+
+ let w=works.find(x=>x.id===id);
+ if(!w)return;
+ w=normalizeWork(w);
+
+ const ids=[String(currentUser.uid||'').trim(),canonicalEmail(currentUser.email)].filter(Boolean);
+ const before=userReactionOf(w);
+ const r=normalizeReactions(w.reactions);
+
+ Object.keys(r).forEach(k=>{
+   r[k]=r[k].filter(x=>!ids.includes(String(x))&&!ids.includes(canonicalEmail(x)))
+ });
  if(before!==type)r[type].push(String(currentUser.uid||currentUser.email));
- w.reactions=r;w.likes=r.heart.slice();
- const idx=works.findIndex(x=>x.id===id);works[idx]=w;
- syncWorkReactionToCloud(id,before===type?'':type);
+
+ w.reactions=r;
+ w.likes=r.heart.slice();
+
+ const idx=works.findIndex(x=>x.id===id);
+ if(idx<0)return;
+
+ works[idx]=w;
  if(readerWork?.id===id)readerWork=w;
+
+ // Instant visual update.
  saveState();
- if(before!==type){
-   addMyActivity('reaction',`You reacted ${REACTION_TYPES[type].icon} to “${w.title}”.`,{workId:w.id,workTitle:w.title});
-   if(w.email!==currentUser.email)addNotification(w.ownerUid||w.email,`${publicNameOf(currentUser)} reacted with ${REACTION_TYPES[type].label} to your work`,w.title,{type:'reaction',workId:w.id,actorUid:currentUser.uid||'',actorEmail:currentUser.email||'',actorName:publicNameOf(currentUser),actorUsername:usernameOf(currentUser),actorPhoto:currentUser.photoURL||currentUser.photo||''});
- }
  renderAll();
  renderReaderSocial();
  renderComments();
  document.querySelectorAll('.reaction-picker.open').forEach(closeReactionPicker);
- const label=before===type?'Reaction removed':REACTION_TYPES[type].label+' reaction added';
- showToast(label+'.');
+
+ // Cloud first, then reconcile. This stops an older Firestore snapshot
+ // from replacing a fresh reaction with an old count or zero.
+ const desiredType=before===type?'':type;
+ const cloudResult=await syncWorkReactionToCloud(id,desiredType);
+
+ if(cloudResult?.ok){
+   await loadCloudWorkSocial(id);
+ }else if(cloudResult?.reason){
+   console.warn('Work reaction cloud sync did not finish:',cloudResult.reason);
+ }
+
+ if(before!==type){
+   addMyActivity('reaction',`You reacted ${REACTION_TYPES[type].icon} to “${w.title}”.`,{workId:w.id,workTitle:w.title});
+   if(w.email!==currentUser.email){
+     addNotification(
+       w.ownerUid||w.email,
+       `${publicNameOf(currentUser)} reacted with ${REACTION_TYPES[type].label} to your work`,
+       w.title,
+       {
+         type:'reaction',
+         workId:w.id,
+         actorUid:currentUser.uid||'',
+         actorEmail:currentUser.email||'',
+         actorName:publicNameOf(currentUser),
+         actorUsername:usernameOf(currentUser),
+         actorPhoto:currentUser.photoURL||currentUser.photo||''
+       }
+     );
+   }
+ }
+
+ showToast(before===type?'Reaction removed':REACTION_TYPES[type].label+' reaction added.');
 }
 function toggleLike(id,btn){
  // Backward-compatible helper: the legacy heart action now maps to Heart reaction.
@@ -2429,26 +2475,74 @@ function toggleCommentReactionPicker(e,workId,commentId,isReply=false){
  if(!picker)return;
  picker.classList.toggle('open');
 }
-function toggleCommentReaction(e,workId,commentId,type,isReply=false){
+async function toggleCommentReaction(e,workId,commentId,type,isReply=false){
  if(e)e.stopPropagation();
  contentUser();
  if(!currentUser){showToast('Sign in to react to comments.');openAccount();return;}
- const idx=works.findIndex(x=>x.id===workId);if(idx<0)return;
- const w=normalizeWork(works[idx]);const found=findComment(w,commentId);if(!found?.comment)return;
- const ids=[String(currentUser.uid||'').trim(),canonicalEmail(currentUser.email)].filter(Boolean);const r=normalizeReactions(found.comment.reactions);const before=commentReactionOf(found.comment);
- Object.keys(r).forEach(k=>{r[k]=r[k].filter(x=>!ids.includes(String(x))&&!ids.includes(canonicalEmail(x)))});
+
+ const idx=works.findIndex(x=>x.id===workId);
+ if(idx<0)return;
+
+ const w=normalizeWork(works[idx]);
+ const found=findComment(w,commentId);
+ if(!found?.comment)return;
+
+ const ids=[String(currentUser.uid||'').trim(),canonicalEmail(currentUser.email)].filter(Boolean);
+ const r=normalizeReactions(found.comment.reactions);
+ const before=commentReactionOf(found.comment);
+
+ Object.keys(r).forEach(k=>{
+   r[k]=r[k].filter(x=>!ids.includes(String(x))&&!ids.includes(canonicalEmail(x)))
+ });
  if(before!==type)r[type].push(String(currentUser.uid||currentUser.email));
- found.comment.reactions=r;works[idx]=normalizeWork(w);readerWork=readerWork?.id===workId?works[idx]:readerWork;commentModalWork=commentModalWork?.id===workId?works[idx]:commentModalWork;
- syncCommentReactionToCloud(workId,commentId,before===type?'':type);
- const commentAuthor=findUser(found.comment.userUid||found.comment.email);
- const commentAuthorKey=commentAuthor?userIdOf(commentAuthor):(found.comment.userUid||found.comment.email||'');
- if(before!==type){
-   addMyActivity('comment_reaction',`You reacted ${REACTION_TYPES[type].icon} to a comment on “${w.title}”.`,{workId:w.id,workTitle:w.title});
-   if(commentAuthorKey && commentAuthorKey!==userIdOf(currentUser))addNotification(commentAuthorKey,`${publicNameOf(currentUser)} reacted with ${REACTION_TYPES[type].label} to your comment`,w.title,{type:'comment_reaction',workId,commentId});
- }
- saveState();renderCommentModal();renderComments();renderReaderSocial();
+
+ found.comment.reactions=r;
+ works[idx]=normalizeWork(w);
+ if(readerWork?.id===workId)readerWork=works[idx];
+ if(commentModalWork?.id===workId)commentModalWork=works[idx];
+
+ saveState();
+ renderCommentModal();
+ renderComments();
+ renderReaderSocial();
  document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'));
- showToast(before===type?'Comment reaction removed':`${REACTION_TYPES[type].label} reaction added to comment.`);
+
+ const desiredType=before===type?'':type;
+ const cloudResult=await syncCommentReactionToCloud(workId,commentId,desiredType);
+
+ if(cloudResult?.ok){
+   await loadCloudWorkSocial(workId);
+ }else if(cloudResult?.reason){
+   console.warn('Comment reaction cloud sync did not finish:',cloudResult.reason);
+ }
+
+ const commentAuthor=findUser(found.comment.userUid||found.comment.email);
+ const commentAuthorKey=commentAuthor
+   ?userIdOf(commentAuthor)
+   :(found.comment.userUid||found.comment.email||'');
+
+ if(before!==type){
+   addMyActivity(
+     'comment_reaction',
+     `You reacted ${REACTION_TYPES[type].icon} to a comment on “${w.title}”.`,
+     {workId:w.id,workTitle:w.title}
+   );
+
+   if(commentAuthorKey && commentAuthorKey!==userIdOf(currentUser)){
+     addNotification(
+       commentAuthorKey,
+       `${publicNameOf(currentUser)} reacted with ${REACTION_TYPES[type].label} to your comment`,
+       w.title,
+       {type:'comment_reaction',workId,commentId}
+     );
+   }
+ }
+
+ showToast(
+   before===type
+     ?'Comment reaction removed'
+     :`${REACTION_TYPES[type].label} reaction added to comment.`
+ );
 }
 function reportComment(workId,commentId,isReply=false){
  contentUser();
@@ -2482,13 +2576,17 @@ async function deleteComment(workId,commentId,isReply=false){
  // Sync the actual comment document to Firestore when this session has a
  // stable Firebase UID. The local deletion remains valid even when cloud
  // services are temporarily unavailable.
- const cloudUid=currentCloudUid();
+ const cloudUid=await waitForStableCloudIdentity();
  if(cloudUid){
    const ok=await deleteCommentFromCloud(workId,commentId);
-   if(!ok)showToast('Comment deleted here, but cloud sync could not finish.');
+   if(ok){
+     await loadCloudWorkSocial(workId);
+   }else{
+     showToast('Comment deleted here, but cloud sync could not finish.');
+   }
  }
 }
-function submitPopupComment(e){
+async function submitPopupComment(e){
  e.preventDefault();
  contentUser();
  if(!currentUser){showToast('Sign in to comment.');openAccount();return;}
@@ -2501,7 +2599,10 @@ function submitPopupComment(e){
  if(targetId){const found=findComment(w,targetId);if(!found?.comment){showToast('That comment is no longer available.');commentReplyTarget=null;updateCommentPopupForm();return;}found.comment.replies=[...(found.comment.replies||[]),comment];}
  else w.comments=[...(w.comments||[]),comment];
  works[idx]=normalizeWork(w);commentModalWork=works[idx];if(readerWork?.id===commentModalWork.id)readerWork=works[idx];
- syncCommentToCloud(commentModalWork.id,comment,targetId);
+ const cloudCommentOk=await syncCommentToCloud(commentModalWork.id,comment,targetId);
+ if(cloudCommentOk){
+   await loadCloudWorkSocial(commentModalWork.id);
+ }
  addMyActivity(targetId?'reply':'comment',targetId?`You replied to a comment on “${commentModalWork.title}”.`:`You commented on “${commentModalWork.title}”.`,{workId:commentModalWork.id,workTitle:commentModalWork.title});
  notifyMentionedUsers(text,commentModalWork,{workId:commentModalWork.id,commentId:comment.id});
  if(targetId){
@@ -3635,98 +3736,267 @@ function buildNestedComments(flat){
   });
   return roots;
 }
+const cloudReactionWriteQueues=new Map();
+
 async function syncWorkReactionToCloud(workId,type){
-  const uid=currentCloudUid();
-  if(!uid||!window.firebaseSetDoc||!window.firebaseDeleteDoc)return;
-  try{
-    const ref=window.firebaseDoc(window.firebaseDB,'works',String(workId),'likes',uid);
-    if(type){
-      await window.firebaseSetDoc(ref,{type,updatedAt:window.firebaseServerTimestamp()});
-    }else await window.firebaseDeleteDoc(ref);
-  }catch(err){console.warn('Work reaction sync failed:',err)}
+ const key=String(workId||'');
+ const previous=cloudReactionWriteQueues.get(key)||Promise.resolve();
+
+ const next=previous.catch(()=>{}).then(async()=>{
+   try{
+     if(window.firebaseReady)await window.firebaseReady;
+     if(window.firebaseAuthReady)await window.firebaseAuthReady;
+
+     const uid=await waitForStableCloudIdentity();
+     if(!uid||!window.firebaseDB||!window.firebaseDoc||!window.firebaseSetDoc||!window.firebaseDeleteDoc){
+       return {ok:false,reason:'auth-or-cloud-unavailable'};
+     }
+
+     const ref=window.firebaseDoc(window.firebaseDB,'works',key,'likes',uid);
+
+     if(type){
+       await window.firebaseSetDoc(ref,{
+         type,
+         updatedAt:window.firebaseServerTimestamp()
+       },{merge:true});
+     }else{
+       await window.firebaseDeleteDoc(ref);
+     }
+
+     return {ok:true,type};
+   }catch(err){
+     console.warn('Work reaction sync failed:',err);
+     return {ok:false,reason:err?.message||String(err)};
+   }
+ });
+
+ cloudReactionWriteQueues.set(key,next);
+ next.finally(()=>{
+   if(cloudReactionWriteQueues.get(key)===next){
+     cloudReactionWriteQueues.delete(key);
+   }
+ }).catch(()=>{});
+
+ return next;
 }
 async function syncCommentToCloud(workId,comment,parentId=null){
-  const uid=currentCloudUid();
-  if(!uid||!comment?.id||!window.firebaseSetDoc)return false;
-  try{
-    const ref=window.firebaseDoc(window.firebaseDB,'works',String(workId),'comments',String(comment.id));
-    await window.firebaseSetDoc(ref,{
-      userUid:uid,
-      userName:publicNameOf(currentUser),
-      username:usernameOf(currentUser),
-      photoURL:currentUser?.photoURL||currentUser?.photo||'',
-      text:String(comment.text||''),
-      parentId:parentId?String(parentId):null,
-      createdAt:Number(comment.at||Date.now()),
-      updatedAt:window.firebaseServerTimestamp()
-    });
-    return true;
-  }catch(err){console.warn('Comment cloud sync failed:',err);return false}
+ if(!comment?.id||!window.firebaseSetDoc)return false;
+ try{
+   const uid=await waitForStableCloudIdentity();
+   if(!uid)return false;
+
+   const ref=window.firebaseDoc(
+     window.firebaseDB,'works',String(workId),'comments',String(comment.id)
+   );
+
+   await window.firebaseSetDoc(ref,{
+     userUid:uid,
+     userName:publicNameOf(currentUser),
+     username:usernameOf(currentUser),
+     photoURL:currentUser?.photoURL||currentUser?.photo||'',
+     text:String(comment.text||''),
+     parentId:parentId?String(parentId):null,
+     createdAt:Number(comment.at||Date.now()),
+     updatedAt:window.firebaseServerTimestamp()
+   });
+
+   return true;
+ }catch(err){
+   console.warn('Comment cloud sync failed:',err);
+   return false;
+ }
 }
+
 async function deleteCommentFromCloud(workId,commentId){
-  const uid=currentCloudUid();
-  if(!uid||!window.firebaseDeleteDoc)return false;
-  try{
-    await window.firebaseDeleteDoc(window.firebaseDoc(window.firebaseDB,'works',String(workId),'comments',String(commentId)));
-    return true;
-  }catch(err){console.warn('Comment cloud delete failed:',err);return false}
+ try{
+   const uid=await waitForStableCloudIdentity();
+   if(!uid||!window.firebaseDeleteDoc)return false;
+
+   await window.firebaseDeleteDoc(
+     window.firebaseDoc(
+       window.firebaseDB,'works',String(workId),'comments',String(commentId)
+     )
+   );
+   return true;
+ }catch(err){
+   console.warn('Cloud comment delete failed:',err);
+   return false;
+ }
 }
+
+const cloudCommentReactionWriteQueues=new Map();
+
 async function syncCommentReactionToCloud(workId,commentId,type){
-  const uid=currentCloudUid();
-  if(!uid||!window.firebaseSetDoc||!window.firebaseDeleteDoc)return;
-  try{
-    const ref=window.firebaseDoc(window.firebaseDB,'works',String(workId),'comments',String(commentId),'reactions',uid);
-    if(type)await window.firebaseSetDoc(ref,{type,updatedAt:window.firebaseServerTimestamp()});
-    else await window.firebaseDeleteDoc(ref);
-  }catch(err){console.warn('Comment reaction sync failed:',err)}
+ const key=`${String(workId||'')}::${String(commentId||'')}`;
+ const previous=cloudCommentReactionWriteQueues.get(key)||Promise.resolve();
+
+ const next=previous.catch(()=>{}).then(async()=>{
+   try{
+     const uid=await waitForStableCloudIdentity();
+     if(!uid||!window.firebaseDB||!window.firebaseDoc||!window.firebaseSetDoc||!window.firebaseDeleteDoc){
+       return {ok:false,reason:'auth-or-cloud-unavailable'};
+     }
+
+     const ref=window.firebaseDoc(
+       window.firebaseDB,
+       'works',String(workId),
+       'comments',String(commentId),
+       'reactions',uid
+     );
+
+     if(type){
+       await window.firebaseSetDoc(ref,{
+         type,
+         updatedAt:window.firebaseServerTimestamp()
+       },{merge:true});
+     }else{
+       await window.firebaseDeleteDoc(ref);
+     }
+
+     return {ok:true,type};
+   }catch(err){
+     console.warn('Comment reaction sync failed:',err);
+     return {ok:false,reason:err?.message||String(err)};
+   }
+ });
+
+ cloudCommentReactionWriteQueues.set(key,next);
+ next.finally(()=>{
+   if(cloudCommentReactionWriteQueues.get(key)===next){
+     cloudCommentReactionWriteQueues.delete(key);
+   }
+ }).catch(()=>{});
+
+ return next;
 }
+const cloudSocialLoadState={seq:0};
+
 async function loadCloudWorkSocial(workId){
-  if(!workId||!window.firebaseGetDocs||!window.firebaseDB)return;
-  try{
-    if(window.firebaseReady)await window.firebaseReady;
-    const [likesSnap,commentsSnap]=await Promise.all([window.firebaseGetDocs(cloudWorkLikesCollection(workId)),window.firebaseGetDocs(cloudWorkCommentsCollection(workId))]);
-    const likes=likesSnap.docs||[];
-    const reactions=emptyReactions();
-    likes.forEach(ds=>{
-      const data=ds.data()||{};const type=REACTION_TYPES[data.type]?data.type:'heart';
-      reactions[type].push(String(ds.id));
-    });
-    const flat=commentsSnap.docs.map(ds=>{
-      const d=ds.data()||{};
-      return {id:ds.id,email:'',userUid:String(d.userUid||''),name:String(d.userName||'Anonymous Reader'),text:String(d.text||''),at:Number(d.createdAt||Date.now()),reactions:emptyReactions(),replies:[],parentId:d.parentId||null,username:String(d.username||'')};
-    });
-    const currentMap=works.find(w=>w.id===workId)||null;
-    const currentFlat=flattenCommentsForCloud(currentMap?.comments||[]).map(x=>x.comment);
-    const flatMap=new Map(flat.map(c=>[c.id,c]));
-    // Preserve local comment reactions when cloud comment docs exist, then hydrate their reaction subcollections.
-    for(const c of flat){
-      const existing=currentFlat.find(x=>x.id===c.id);if(existing)c.reactions=normalizeReactions(existing.reactions);
-      try{
-        const rs=await window.firebaseGetDocs(cloudCommentReactionsCollection(workId,c.id));
-        const rr=emptyReactions();rs.docs.forEach(ds=>{const d=ds.data()||{};const type=REACTION_TYPES[d.type]?d.type:'heart';rr[type].push(String(ds.id));});
-        c.reactions=rr;
-      }catch(_e){}
-    }
-    const idx=works.findIndex(w=>w.id===workId);
-    if(idx>=0){
-      works[idx]=normalizeWork({...works[idx],reactions,likes:reactions.heart,comments:buildNestedComments(flat)});
-      if(readerWork?.id===workId)readerWork=works[idx];
-      if(commentModalWork?.id===workId)commentModalWork=works[idx];
-      localStorage.setItem('shkWorks',JSON.stringify(works));
-      renderReaderSocial();renderComments();renderCommentModal();
-    }
-  }catch(err){console.warn('Cloud work social hydration failed:',err)}
+ const requestedId=String(workId||'');
+ if(!requestedId||!window.firebaseGetDocs||!window.firebaseDB)return;
+
+ const seq=++cloudSocialLoadState.seq;
+
+ try{
+   if(window.firebaseReady)await window.firebaseReady;
+   if(window.firebaseAuthReady)await window.firebaseAuthReady;
+
+   const [likesSnap,commentsSnap]=await Promise.all([
+     window.firebaseGetDocs(cloudWorkLikesCollection(requestedId)),
+     window.firebaseGetDocs(cloudWorkCommentsCollection(requestedId))
+   ]);
+
+   if(seq!==cloudSocialLoadState.seq || cloudWorkSocialId!==requestedId)return;
+
+   const reactions=emptyReactions();
+   (likesSnap.docs||[]).forEach(ds=>{
+     const data=ds.data()||{};
+     const type=REACTION_TYPES[data.type]?data.type:'heart';
+     reactions[type].push(String(ds.id));
+   });
+
+   const flat=(commentsSnap.docs||[]).map(ds=>{
+     const d=ds.data()||{};
+     return {
+       id:ds.id,
+       email:'',
+       userUid:String(d.userUid||''),
+       name:String(d.userName||'Anonymous Reader'),
+       text:String(d.text||''),
+       at:Number(d.createdAt||Date.now()),
+       reactions:emptyReactions(),
+       replies:[],
+       parentId:d.parentId||null,
+       username:String(d.username||'')
+     };
+   });
+
+   const currentMap=works.find(w=>w.id===requestedId)||null;
+   const currentFlat=flattenCommentsForCloud(currentMap?.comments||[]).map(x=>x.comment);
+
+   for(const c of flat){
+     if(seq!==cloudSocialLoadState.seq || cloudWorkSocialId!==requestedId)return;
+
+     const existing=currentFlat.find(x=>x.id===c.id);
+     if(existing)c.reactions=normalizeReactions(existing.reactions);
+
+     try{
+       const rs=await window.firebaseGetDocs(
+         cloudCommentReactionsCollection(requestedId,c.id)
+       );
+       if(seq!==cloudSocialLoadState.seq || cloudWorkSocialId!==requestedId)return;
+
+       const rr=emptyReactions();
+       (rs.docs||[]).forEach(ds=>{
+         const d=ds.data()||{};
+         const type=REACTION_TYPES[d.type]?d.type:'heart';
+         rr[type].push(String(ds.id));
+       });
+       c.reactions=rr;
+     }catch(_e){}
+   }
+
+   if(seq!==cloudSocialLoadState.seq || cloudWorkSocialId!==requestedId)return;
+
+   const idx=works.findIndex(w=>w.id===requestedId);
+   if(idx<0)return;
+
+   works[idx]=normalizeWork({
+     ...works[idx],
+     reactions,
+     likes:reactions.heart,
+     comments:buildNestedComments(flat)
+   });
+
+   if(readerWork?.id===requestedId)readerWork=works[idx];
+   if(commentModalWork?.id===requestedId)commentModalWork=works[idx];
+
+   localStorage.setItem('shkWorks',JSON.stringify(works));
+   renderReaderSocial();
+   renderComments();
+   renderCommentModal();
+ }catch(err){
+   console.warn('Cloud work social hydration failed:',err);
+ }
 }
+
+let cloudWorkSocialRefreshTimer=0;
+
 function startCloudWorkSocialListener(workId){
-  if(cloudWorkSocialUnsubscribe)try{cloudWorkSocialUnsubscribe()}catch(_e){}
-  cloudWorkSocialUnsubscribe=null;cloudWorkSocialId=String(workId||'');
-  if(!workId||!window.firebaseOnSnapshot)return;
-  try{
-    const a=window.firebaseOnSnapshot(cloudWorkCommentsCollection(workId),async()=>{await loadCloudWorkSocial(workId)},err=>console.warn('Cloud comment listener failed:',err));
-    const b=window.firebaseOnSnapshot(cloudWorkLikesCollection(workId),async()=>{await loadCloudWorkSocial(workId)},err=>console.warn('Cloud reaction listener failed:',err));
-    cloudWorkSocialUnsubscribe=()=>{try{a()}catch(_e){} try{b()}catch(_e){}};
-  }catch(err){console.warn('Cloud work social listener setup failed:',err)}
+ if(cloudWorkSocialUnsubscribe)try{cloudWorkSocialUnsubscribe()}catch(_e){}
+ cloudWorkSocialUnsubscribe=null;
+ cloudWorkSocialId=String(workId||'');
+ if(!workId||!window.firebaseOnSnapshot)return;
+
+ const scheduleRefresh=()=>{
+   clearTimeout(cloudWorkSocialRefreshTimer);
+   cloudWorkSocialRefreshTimer=setTimeout(()=>{
+     loadCloudWorkSocial(workId).catch(err=>console.warn('Live social refresh failed:',err));
+   },35);
+ };
+
+ try{
+   const a=window.firebaseOnSnapshot(
+     cloudWorkCommentsCollection(workId),
+     ()=>scheduleRefresh(),
+     err=>console.warn('Cloud comment listener failed:',err)
+   );
+   const b=window.firebaseOnSnapshot(
+     cloudWorkLikesCollection(workId),
+     ()=>scheduleRefresh(),
+     err=>console.warn('Cloud reaction listener failed:',err)
+   );
+
+   cloudWorkSocialUnsubscribe=()=>{
+     clearTimeout(cloudWorkSocialRefreshTimer);
+     try{a()}catch(_e){}
+     try{b()}catch(_e){}
+   };
+ }catch(err){
+   console.warn('Cloud work social listener setup failed:',err);
+ }
 }
+
 async function syncFollowCloud(target,following){
   const me=currentCloudUid();const targetUid=String(target?.uid||'').trim();
   if(!me||!targetUid||!window.firebaseSetDoc||!window.firebaseDeleteDoc)return;
