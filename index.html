@@ -40,7 +40,10 @@
 (function(){try{
   // Fresh installation / migration starts in LIGHT mode.
   // After the user manually chooses a theme, that choice can persist.
-  var themeReady='shkThemePreferenceReadyV3';
+  var themeReady='shkThemePreferenceReadyV4';
+  // Light mode is always the default on this build. If an older build left
+  // a dark-mode preference behind, reset it once; after that, the user's
+  // manual theme-toggle choice can persist normally.
   if(localStorage.getItem(themeReady)!=='1'){
     localStorage.setItem('shkThemePreference','light');
     localStorage.setItem(themeReady,'1');
@@ -2356,7 +2359,7 @@ let currentUser = normalizeUser(readJSON('shkUser',null));
 let notifications = readJSON('shkNotifications',[]).filter(n=>n&&n.to);
 let history = readJSON('shkHistory',{});
 let darkMode = localStorage.getItem('shkThemePreference') === 'dark';
-// Theme preference is written only after the user changes the theme; the V3
+// Theme preference is written only after the user changes the theme; the V4
 // migration above ensures existing builds open in light mode once.
 let activityLog = readJSON('shkActivityLog',{});
 let activityView = 'forYou';
@@ -6100,11 +6103,38 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
 .rte-color-button{display:inline-flex;align-items:center;gap:6px;height:35px;padding:0 10px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--wine);font-size:.68rem;font-weight:850}
 .rte-color-button:hover{background:var(--surface-2);border-color:var(--gold2);transform:translateY(-1px)}
 .rte-color-chip{width:13px;height:13px;border-radius:4px;background:#F3D987;border:1px solid rgba(36,27,23,.25);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)}
-.rte-color-palette{position:absolute;left:0;top:calc(100% + 7px);z-index:80;display:none;grid-template-columns:repeat(3,28px);gap:6px;padding:8px;border:1px solid var(--line);border-radius:11px;background:var(--card);box-shadow:0 16px 34px rgba(36,27,23,.18);min-width:112px}
-.rte-color-wrap.open .rte-color-palette{display:grid}
-.rte-color-swatch{width:28px;height:28px;padding:0;border:2px solid transparent;border-radius:8px;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(36,27,23,.14);transition:transform .16s var(--ease),border-color .16s var(--ease)}
+.rte-color-dialog-backdrop{position:fixed;inset:0;z-index:1000;display:none;place-items:center;padding:18px;background:rgba(30,18,18,.42);backdrop-filter:blur(5px)}
+.rte-color-dialog-backdrop.open{display:grid}
+.rte-color-dialog{width:min(390px,100%);max-height:min(690px,calc(100dvh - 36px));overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 28px 90px rgba(0,0,0,.24);padding:18px}
+.rte-color-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.rte-color-dialog-head strong{display:block;color:var(--wine);font-size:.9rem}
+.rte-color-dialog-head span{display:block;color:var(--muted);font-size:.62rem;margin-top:3px;line-height:1.45}
+.rte-color-dialog-close{width:31px;height:31px;border:1px solid var(--line);background:var(--card);color:var(--wine);border-radius:9px;font-size:1.1rem;line-height:1}
+.rte-color-wheel-row{display:grid;place-items:center;padding:4px 0 10px}
+.rte-color-wheel{width:230px;height:230px;max-width:72vw;max-height:72vw;border-radius:50%;display:block;cursor:crosshair;touch-action:none;box-shadow:0 12px 28px rgba(36,27,23,.13);border:1px solid rgba(36,27,23,.14)}
+.rte-color-brightness{width:min(310px,100%);margin:4px auto 12px;accent-color:var(--burgundy)}
+.rte-color-preview{display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--line);border-radius:11px;background:var(--surface-2);margin-bottom:12px}
+.rte-color-preview-chip{width:28px;height:28px;border-radius:8px;border:1px solid rgba(36,27,23,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.45);flex:none}
+.rte-color-preview strong{display:block;color:var(--wine);font-size:.72rem}
+.rte-color-preview span{display:block;color:var(--muted);font-size:.6rem;margin-top:2px}
+.rte-color-presets-title{font-size:.61rem;font-weight:850;letter-spacing:.12em;text-transform:uppercase;color:#958B84;margin:0 0 7px}
+.rte-color-presets{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+.rte-color-swatch{width:100%;aspect-ratio:1;padding:0;border:2px solid transparent;border-radius:9px;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(36,27,23,.14);transition:transform .16s var(--ease),border-color .16s var(--ease)}
 .rte-color-swatch:hover{transform:translateY(-1px) scale(1.04);border-color:var(--gold2)}
-.rte-color-swatch.active{border-color:var(--wine);box-shadow:inset 0 0 0 2px rgba(255,255,255,.7),0 0 0 1px var(--gold)}
+.rte-color-swatch.active{border-color:var(--wine);box-shadow:inset 0 0 0 2px rgba(255,255,255,.72),0 0 0 1px var(--gold)}
+.rte-color-native-row{display:flex;align-items:center;gap:8px;margin-top:11px}
+.rte-color-native-row label{font-size:.63rem;color:var(--muted);font-weight:700}
+.rte-color-native{width:42px;height:31px;padding:2px;border:1px solid var(--line);border-radius:8px;background:var(--card);cursor:pointer}
+.rte-color-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.rte-color-dialog-actions button{min-height:34px;padding:8px 11px;border-radius:9px;font-size:.66rem;font-weight:850}
+.rte-color-cancel{border:1px solid var(--line);background:var(--card);color:var(--wine)}
+.rte-color-clear{border:1px solid #E6CACA;background:#FBF1F1;color:#8A3438}
+.rte-color-apply{border:1px solid var(--wine);background:var(--wine);color:#fff}
+.dark .rte-color-dialog{background:#1E1A1D;border-color:#4A3C40}
+.dark .rte-color-dialog-close,.dark .rte-color-native-row .rte-color-native{background:#252023;color:#F5EDE8;border-color:#4A3C40}
+.dark .rte-color-preview{background:#252023;border-color:#4A3C40}
+.dark .rte-color-swatch.active{border-color:#E3C79C;box-shadow:inset 0 0 0 2px rgba(255,255,255,.65),0 0 0 1px #E3C79C}
+@media(max-width:480px){.rte-color-dialog{padding:14px}.rte-color-wheel{width:210px;height:210px}}
 .dark .rich-editor-toolbar .rte-tool{background:#252023;color:#F5EDE8;border-color:#4A3C40}
 .dark .rich-editor-toolbar .rte-tool:hover{background:#30292D;border-color:#C8A56A;color:#FFF8F3}
 .dark .rich-editor-toolbar .rte-tool.active{background:#87434C;color:#FFF9F6;border-color:#B96A73}
@@ -6217,33 +6247,225 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
   function placeCaretEnd(el){el.focus();const r=document.createRange();r.selectNodeContents(el);r.collapse(false);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);saveSelection();}
   function saveSelection(){const e=editor(),sel=getSelection();if(!e||!sel||!sel.rangeCount||!e.contains(sel.anchorNode))return;savedRange=sel.getRangeAt(0).cloneRange();}
   function restoreSelection(){const e=editor();if(!e||!savedRange)return false;try{e.focus();const sel=getSelection();sel.removeAllRanges();sel.addRange(savedRange);return true}catch(_){return false}}
-  function selectionIsHighlighted(){const e=editor();if(!e)return false;try{if(document.queryCommandState('hiliteColor'))return true}catch(_){}try{const value=String(document.queryCommandValue('hiliteColor')||'').toLowerCase();if(value&&value!=='transparent'&&value!=='rgba(0, 0, 0, 0)'&&value!=='rgb(255, 255, 255)'&&value!=='#ffffff')return true}catch(_){}const sel=getSelection(),node=sel?.anchorNode,el=node?.nodeType===1?node:node?.parentElement;return !!el?.closest('mark,[style*="background-color"]');}
-  function exec(command,value){const e=editor();if(!e)return;restoreSelection();e.focus();try{document.execCommand(command,false,value)}catch(_){}saveSelection();syncSource();updateMeta();updateButtons();}
+  function nodeHasHighlight(node){
+    const el=node?.nodeType===1?node:node?.parentElement;
+    if(!el)return false;
+    const mark=el.closest('mark');
+    if(mark)return true;
+    let cur=el;
+    while(cur&&cur!==editor()){
+      const bg=(cur.style?.backgroundColor||'').toLowerCase();
+      if(bg&&bg!=='transparent'&&bg!=='rgba(0, 0, 0, 0)'&&bg!=='rgb(255, 255, 255)'&&bg!=='#ffffff')return true;
+      cur=cur.parentElement;
+    }
+    return false;
+  }
+  function selectionIsHighlighted(){
+    const e=editor();if(!e)return false;
+    try{if(document.queryCommandState('hiliteColor'))return true}catch(_){}
+    try{
+      const value=String(document.queryCommandValue('hiliteColor')||'').toLowerCase();
+      if(value&&value!=='transparent'&&value!=='rgba(0, 0, 0, 0)'&&value!=='rgb(255, 255, 255)'&&value!=='#ffffff')return true;
+    }catch(_){}
+    const sel=getSelection();
+    if(!sel||!sel.rangeCount||!e.contains(sel.anchorNode))return nodeHasHighlight(sel?.anchorNode);
+    if(sel.isCollapsed)return nodeHasHighlight(sel.anchorNode);
+    const range=sel.getRangeAt(0);
+    if(nodeHasHighlight(range.startContainer)||nodeHasHighlight(range.endContainer))return true;
+    const walker=document.createTreeWalker(e,NodeFilter.SHOW_TEXT);
+    let n;
+    while((n=walker.nextNode())){
+      try{if(range.intersectsNode(n)&&nodeHasHighlight(n))return true}catch(_){}
+    }
+    return false;
+  }
+  function exec(command,value){
+    const e=editor();if(!e)return;
+    restoreSelection();e.focus();
+    try{document.execCommand(command,false,value)}catch(_){}
+    saveSelection();syncSource();updateMeta();updateButtons();
+  }
   function clearFormatting(){exec('removeFormat');}
   function indent(){exec('indent')}
   function outdent(){exec('outdent')}
-  function applyHighlightColor(color){const e=editor();if(!e)return;restoreSelection();e.focus();try{if(!document.execCommand('hiliteColor',false,color))document.execCommand('backColor',false,color)}catch(_){try{document.execCommand('backColor',false,color)}catch(__){}}saveSelection();syncSource();updateMeta();updateButtons();}
-  function removeHighlight(){const e=editor();if(!e)return;restoreSelection();e.focus();try{if(!document.execCommand('hiliteColor',false,'transparent'))document.execCommand('backColor',false,'transparent')}catch(_){try{document.execCommand('backColor',false,'transparent')}catch(__){}}saveSelection();syncSource();updateMeta();updateButtons();}
-  function toggleHighlight(){if(selectionIsHighlighted())removeHighlight();else applyHighlightColor(localStorage.getItem('shkHighlightColor')||'#F3D987')}
+  function applyHighlightColor(color){
+    const e=editor();if(!e)return;
+    restoreSelection();e.focus();
+    const hex=String(color||'#F3D987');
+    try{
+      if(!document.execCommand('hiliteColor',false,hex))document.execCommand('backColor',false,hex);
+    }catch(_){try{document.execCommand('backColor',false,hex)}catch(__){}}
+    saveSelection();syncSource();updateMeta();updateButtons();
+  }
+  function removeHighlight(){
+    const e=editor();if(!e)return;
+    restoreSelection();e.focus();
+    try{
+      if(!document.execCommand('hiliteColor',false,'transparent'))document.execCommand('backColor',false,'transparent');
+    }catch(_){try{document.execCommand('backColor',false,'transparent')}catch(__){}}
+    e.querySelectorAll('[style*="background-color"]').forEach(el=>{
+      const bg=(el.style.backgroundColor||'').toLowerCase();
+      if(!bg||bg==='transparent'||bg==='rgba(0, 0, 0, 0)'){el.style.removeProperty('background-color');if(!el.getAttribute('style'))el.removeAttribute('style');}
+    });
+    e.querySelectorAll('mark').forEach(mark=>{
+      if(!mark.getAttribute('style')){const frag=document.createDocumentFragment();while(mark.firstChild)frag.appendChild(mark.firstChild);mark.replaceWith(frag);}
+    });
+    saveSelection();syncSource();updateMeta();updateButtons();
+  }
+  function toggleHighlight(){
+    if(selectionIsHighlighted())removeHighlight();
+    else applyHighlightColor(localStorage.getItem('shkHighlightColor')||'#F3D987');
+  }
   function strike(){exec('strikeThrough')}
-  function applyFontFamily(label){const e=editor(),family=FONT_FAMILIES[label];if(!e||!family)return;restoreSelection();e.focus();try{document.execCommand('fontName',false,label)}catch(_){}saveSelection();syncSource();updateMeta();updateButtons();}
+  function applyFontFamily(label){
+    const e=editor(),family=FONT_FAMILIES[label];if(!e||!family)return;
+    restoreSelection();e.focus();
+    try{document.execCommand('fontName',false,label)}catch(_){}
+    e.querySelectorAll('font[face]').forEach(font=>{
+      const safe=safeFontFamily(font.getAttribute('face')||'');
+      if(!safe)return;
+      const span=document.createElement('span');
+      span.style.fontFamily=safe;
+      while(font.firstChild)span.appendChild(font.firstChild);
+      font.replaceWith(span);
+    });
+    saveSelection();syncSource();updateMeta();updateButtons();
+  }
   function updateMeta(){const e=editor(),out=document.getElementById('richWordCount');if(!out||!e)return;const txt=editorText();const n=txt?txt.split(/\s+/).filter(Boolean).length:0;const mins=Math.max(1,Math.ceil(n/220));out.textContent=`${n.toLocaleString()} words · ~${mins} min read`;}
-  function currentFontName(){try{const value=String(document.queryCommandValue('fontName')||'').toLowerCase();const hit=Object.keys(FONT_FAMILIES).find(name=>value.includes(name.toLowerCase()));return hit||'Cormorant Garamond'}catch(_){return 'Cormorant Garamond'}}
-  function updateButtons(){const e=editor();if(!e)return;document.querySelectorAll('.rich-editor-toolbar .rte-tool[data-cmd]').forEach(b=>{let on=false;try{on=document.queryCommandState(b.dataset.cmd)}catch(_){}if(b.dataset.cmd==='hiliteColor'){on=selectionIsHighlighted();b.title=on?'Highlight (On) — click to remove':'Highlight (Off) — click to apply';b.setAttribute('aria-label',on?'Highlight on — click to remove highlight':'Highlight off — click to apply highlight')}b.classList.toggle('active',!!on)});const fs=document.querySelector('.rte-font-select');if(fs)fs.value=currentFontName();const chosen=localStorage.getItem('shkHighlightColor')||'#F3D987';const chip=document.querySelector('.rte-color-chip');if(chip)chip.style.background=chosen;document.querySelectorAll('.rte-color-swatch').forEach(sw=>sw.classList.toggle('active',sw.dataset.color===chosen));}
-  function setEditorHTML(html){
-    const e=editor(),s=source();if(!e||!s)return;
-    const clean=sanitizeRichHTML(html);
-    e.innerHTML=clean||'';s.value=clean;updateMeta();updateButtons();
+  function currentFontName(){
+    const e=editor();if(!e)return 'Cormorant Garamond';
+    try{
+      const value=String(document.queryCommandValue('fontName')||'').toLowerCase();
+      const hit=Object.keys(FONT_FAMILIES).find(name=>value.includes(name.toLowerCase()));
+      if(hit)return hit;
+    }catch(_){}
+    const sel=getSelection(),el=sel?.anchorNode?.nodeType===1?sel.anchorNode:sel?.anchorNode?.parentElement;
+    const styled=el?.closest?.('[style*="font-family"]');
+    const raw=styled?.style?.fontFamily||'';
+    const hit=Object.entries(FONT_FAMILIES).find(([name,value])=>String(raw).toLowerCase().includes(name.toLowerCase())||String(raw).toLowerCase()===value.toLowerCase());
+    return hit?hit[0]:'Cormorant Garamond';
   }
-  function setEditorFromSource(){
-    const s=source();if(!s)return;
-    const value=String(s.value||'');
-    const looksRich=/<(?:p|div|h[1-3]|strong|b|em|i|u|s|strike|mark|span|blockquote|br)(?:\s|>)/i.test(value);
-    setEditorHTML(looksRich?value:plainTextToRichHTML(value));
+  function updateButtons(){
+    const e=editor();if(!e)return;
+    document.querySelectorAll('.rich-editor-toolbar .rte-tool[data-cmd]').forEach(b=>{
+      let on=false;
+      if(b.dataset.cmd==='hiliteColor'){
+        on=selectionIsHighlighted();
+        b.title=on?'Highlight (On) — click to remove':'Highlight (Off) — click to apply';
+        b.setAttribute('aria-label',on?'Highlight on — click to remove highlight':'Highlight off — click to apply highlight');
+      }else{
+        try{on=!!document.queryCommandState(b.dataset.cmd)}catch(_){}
+      }
+      b.classList.toggle('active',!!on);
+      b.setAttribute('aria-pressed',on?'true':'false');
+    });
+    const fs=document.querySelector('.rte-font-select');if(fs)fs.value=currentFontName();
+    const chosen=localStorage.getItem('shkHighlightColor')||'#F3D987';
+    const chip=document.querySelector('.rte-color-chip');if(chip)chip.style.background=chosen;
+    document.querySelectorAll('.rte-color-swatch').forEach(sw=>sw.classList.toggle('active',sw.dataset.color===chosen));
   }
-  function toolbarButton(label,cmd,cls){const b=document.createElement('button');b.type='button';b.className='rte-tool'+(cls?' '+cls:'');b.dataset.cmd=cmd;b.textContent=label;b.title=label;b.setAttribute('aria-label',label);b.addEventListener('mousedown',ev=>{ev.preventDefault();saveSelection();if(cmd==='hiliteColor'){toggleHighlight();return}if(cmd==='clear'){clearFormatting();return}if(cmd==='indent'){indent();return}if(cmd==='outdent'){outdent();return}if(cmd==='strikeThrough'){strike();return}exec(cmd)});return b;}
-  function makeFontSelect(){const wrap=document.createElement('span');wrap.className='rte-select-wrap';const sel=document.createElement('select');sel.className='rte-font-select';sel.title='Change font';sel.setAttribute('aria-label','Change font');Object.keys(FONT_FAMILIES).forEach(name=>{const o=document.createElement('option');o.value=name;o.textContent=name;sel.appendChild(o)});sel.value='Cormorant Garamond';sel.addEventListener('mousedown',saveSelection);sel.addEventListener('change',()=>{restoreSelection();applyFontFamily(sel.value)});wrap.appendChild(sel);return wrap;}
-  function makeColorControls(){const wrap=document.createElement('span');wrap.className='rte-color-wrap';const btn=document.createElement('button');btn.type='button';btn.className='rte-color-button';btn.title='Choose highlight color';btn.setAttribute('aria-label','Choose highlight color');btn.innerHTML='<span class="rte-color-chip"></span><span>Color</span>';const palette=document.createElement('div');palette.className='rte-color-palette';palette.setAttribute('role','group');palette.setAttribute('aria-label','Highlight colors');const current=localStorage.getItem('shkHighlightColor')||'#F3D987';HIGHLIGHT_COLORS.forEach(item=>{const sw=document.createElement('button');sw.type='button';sw.className='rte-color-swatch';sw.dataset.color=item.value;sw.title=item.name+' highlight';sw.setAttribute('aria-label',item.name+' highlight');sw.style.background=item.value;if(item.value===current)sw.classList.add('active');sw.addEventListener('mousedown',ev=>{ev.preventDefault();saveSelection();localStorage.setItem('shkHighlightColor',item.value);applyHighlightColor(item.value);wrap.classList.remove('open')});palette.appendChild(sw)});btn.addEventListener('mousedown',ev=>{ev.preventDefault();saveSelection();wrap.classList.toggle('open')});wrap.append(btn,palette);return wrap;}
+  function toolbarButton(label,cmd,cls){
+    const b=document.createElement('button');b.type='button';b.className='rte-tool'+(cls?' '+cls:'');b.dataset.cmd=cmd;b.textContent=label;b.title=label;b.setAttribute('aria-label',label);b.setAttribute('aria-pressed','false');
+    b.addEventListener('mousedown',ev=>{
+      ev.preventDefault();saveSelection();
+      if(cmd==='hiliteColor'){toggleHighlight();return}
+      if(cmd==='clear'){clearFormatting();return}
+      if(cmd==='indent'){indent();return}
+      if(cmd==='outdent'){outdent();return}
+      if(cmd==='strikeThrough'){strike();return}
+      exec(cmd);
+    });
+    return b;
+  }
+  function makeFontSelect(){
+    const wrap=document.createElement('span');wrap.className='rte-select-wrap';
+    const sel=document.createElement('select');sel.className='rte-font-select';sel.title='Change font';sel.setAttribute('aria-label','Change font');
+    Object.keys(FONT_FAMILIES).forEach(name=>{const o=document.createElement('option');o.value=name;o.textContent=name;sel.appendChild(o)});
+    sel.value='Cormorant Garamond';
+    sel.addEventListener('mousedown',saveSelection);
+    sel.addEventListener('change',()=>{restoreSelection();applyFontFamily(sel.value);setTimeout(()=>{saveSelection();updateButtons()},0)});
+    wrap.appendChild(sel);return wrap;
+  }
+  function hsvToHex(h,s,v){
+    h=((h%360)+360)%360;
+    const c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c;
+    let r=0,g=0,b=0;
+    if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}
+    return '#'+[r,g,b].map(n=>Math.round((n+m)*255).toString(16).padStart(2,'0')).join('').toUpperCase();
+  }
+  function hexToHsv(hex){
+    const raw=String(hex||'#F3D987').replace('#','').match(/^([0-9a-f]{6})$/i);if(!raw)return {h:45,s:.28,v:.85};
+    const n=parseInt(raw[1],16),r=((n>>16)&255)/255,g=((n>>8)&255)/255,b=(n&255)/255,max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
+    let h=0;
+    if(d){if(max===r)h=60*(((g-b)/d)%6);else if(max===g)h=60*((b-r)/d+2);else h=60*((r-g)/d+4);if(h<0)h+=360}
+    return {h,s:max?d/max:0,v:max};
+  }
+  function hsvFromPoint(canvas,clientX,clientY){
+    const rect=canvas.getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2,dx=clientX-cx,dy=clientY-cy;
+    const radius=Math.min(rect.width,rect.height)/2,dist=Math.min(radius,Math.hypot(dx,dy));
+    return {h:(Math.atan2(dy,dx)*180/Math.PI+360)%360,s:Math.max(0,Math.min(1,dist/radius))};
+  }
+  function drawColorWheel(canvas,hsv){
+    const size=240,dpr=window.devicePixelRatio||1,w=Math.round(size*dpr),hgt=Math.round(size*dpr);
+    canvas.width=w;canvas.height=hgt;
+    const ctx=canvas.getContext('2d'),img=ctx.createImageData(w,hgt),cx=w/2,cy=hgt/2,radius=Math.min(w,hgt)/2,v=Math.max(.15,Math.min(1,hsv.v));
+    for(let y=0;y<hgt;y++)for(let x=0;x<w;x++){
+      const dx=x-cx,dy=y-cy,dist=Math.hypot(dx,dy),idx=(y*w+x)*4;
+      if(dist>radius){img.data[idx+3]=0;continue}
+      const sat=dist/radius,hue=(Math.atan2(dy,dx)*180/Math.PI+360)%360,num=parseInt(hsvToHex(hue,sat,v).slice(1),16);
+      img.data[idx]=(num>>16)&255;img.data[idx+1]=(num>>8)&255;img.data[idx+2]=num&255;img.data[idx+3]=255;
+    }
+    ctx.putImageData(img,0,0);
+    const angle=hsv.h*Math.PI/180,rad=hsv.s*radius,px=cx+Math.cos(angle)*rad,py=cy+Math.sin(angle)*rad;
+    ctx.beginPath();ctx.arc(px,py,8*dpr,0,Math.PI*2);ctx.lineWidth=2*dpr;ctx.strokeStyle='#fff';ctx.stroke();ctx.beginPath();ctx.arc(px,py,10*dpr,0,Math.PI*2);ctx.lineWidth=1*dpr;ctx.strokeStyle='rgba(36,27,23,.55)';ctx.stroke();
+  }
+  function makeColorControls(){
+    const wrap=document.createElement('span');wrap.className='rte-color-wrap';
+    const btn=document.createElement('button');btn.type='button';btn.className='rte-color-button';btn.title='Choose highlight color';btn.setAttribute('aria-label','Choose highlight color');btn.innerHTML='<span class="rte-color-chip"></span><span>Color</span>';
+    let dialog=null,canvas=null,brightness=null,native=null,previewChip=null,hexLabel=null,pending='#F3D987',hsv=hexToHsv(pending),dragging=false;
+    function ensureDialog(){
+      if(dialog)return;
+      dialog=document.createElement('div');dialog.className='rte-color-dialog-backdrop';
+      dialog.innerHTML='<div class="rte-color-dialog" role="dialog" aria-modal="true" aria-label="Choose highlight color">'+
+        '<div class="rte-color-dialog-head"><div><strong>Highlight Color</strong><span>Pick a color from the wheel or use a preset.</span></div><button class="rte-color-dialog-close" type="button" aria-label="Close">×</button></div>'+
+        '<div class="rte-color-wheel-row"><canvas class="rte-color-wheel" aria-label="Color wheel"></canvas></div>'+
+        '<input class="rte-color-brightness" type="range" min="15" max="100" value="100" aria-label="Color brightness">'+
+        '<div class="rte-color-preview"><span class="rte-color-preview-chip"></span><div><strong>Selected color</strong><span class="rte-color-hex">#F3D987</span></div></div>'+
+        '<div class="rte-color-presets-title">Presets</div><div class="rte-color-presets" role="group" aria-label="Highlight color presets"></div>'+
+        '<div class="rte-color-native-row"><label for="rteNativeColor">Custom color</label><input id="rteNativeColor" class="rte-color-native" type="color" value="#F3D987" aria-label="Custom highlight color"></div>'+
+        '<div class="rte-color-dialog-actions"><button type="button" class="rte-color-cancel">Cancel</button><button type="button" class="rte-color-clear">Remove highlight</button><button type="button" class="rte-color-apply">Apply</button></div></div>';
+      document.body.appendChild(dialog);
+      canvas=dialog.querySelector('.rte-color-wheel');brightness=dialog.querySelector('.rte-color-brightness');native=dialog.querySelector('.rte-color-native');previewChip=dialog.querySelector('.rte-color-preview-chip');hexLabel=dialog.querySelector('.rte-color-hex');
+      const presets=dialog.querySelector('.rte-color-presets');
+      HIGHLIGHT_COLORS.forEach(item=>{
+        const sw=document.createElement('button');sw.type='button';sw.className='rte-color-swatch';sw.dataset.color=item.value;sw.title=item.name+' highlight';sw.setAttribute('aria-label',item.name+' highlight');sw.style.background=item.value;
+        sw.addEventListener('mousedown',ev=>ev.preventDefault());sw.addEventListener('click',()=>setColor(item.value));presets.appendChild(sw);
+      });
+      function render(){
+        drawColorWheel(canvas,hsv);pending=hsvToHex(hsv.h,hsv.s,hsv.v);previewChip.style.background=pending;hexLabel.textContent=pending;native.value=pending;brightness.value=Math.round(hsv.v*100);
+        presets.querySelectorAll('.rte-color-swatch').forEach(sw=>sw.classList.toggle('active',sw.dataset.color===pending));
+      }
+      function setColor(color){pending=String(color||'#F3D987').toUpperCase();hsv=hexToHsv(pending);render();}
+      function pick(ev){const point=hsvFromPoint(canvas,ev.clientX,ev.clientY);hsv.h=point.h;hsv.s=point.s;render();}
+      canvas.addEventListener('pointerdown',ev=>{dragging=true;canvas.setPointerCapture?.(ev.pointerId);pick(ev)});
+      canvas.addEventListener('pointermove',ev=>{if(dragging)pick(ev)});
+      canvas.addEventListener('pointerup',()=>{dragging=false});
+      canvas.addEventListener('pointercancel',()=>{dragging=false});
+      brightness.addEventListener('input',()=>{hsv.v=Math.max(.15,Math.min(1,Number(brightness.value)/100));render()});
+      native.addEventListener('input',()=>setColor(native.value));
+      const close=()=>dialog.classList.remove('open');
+      dialog.querySelector('.rte-color-dialog-close').addEventListener('click',close);
+      dialog.querySelector('.rte-color-cancel').addEventListener('click',close);
+      dialog.querySelector('.rte-color-clear').addEventListener('click',()=>{removeHighlight();close()});
+      dialog.querySelector('.rte-color-apply').addEventListener('click',()=>{localStorage.setItem('shkHighlightColor',pending);applyHighlightColor(pending);close()});
+      dialog.addEventListener('mousedown',ev=>{if(ev.target===dialog)close()});
+      dialog.addEventListener('keydown',ev=>{if(ev.key==='Escape'){ev.preventDefault();close()}});
+      dialog.__setColor=setColor;
+    }
+    function open(){saveSelection();ensureDialog();pending=localStorage.getItem('shkHighlightColor')||'#F3D987';dialog.__setColor(pending);dialog.classList.add('open');setTimeout(()=>dialog.querySelector('.rte-color-dialog-close')?.focus(),0);}
+    btn.addEventListener('mousedown',ev=>{ev.preventDefault();open()});
+    wrap.appendChild(btn);return wrap;
+  }
   function initRichEditor(){
     const form=document.getElementById('createForm'),s=source();
     if(!form||!s||document.getElementById('postContentEditor'))return;
@@ -6258,12 +6480,18 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
     wrap.append(toolbar,ed,status);s.insertAdjacentElement('beforebegin',wrap);    setEditorFromSource();
 
     ed.addEventListener('input',()=>{syncSource();updateMeta();updateButtons();});
-    ed.addEventListener('keyup',()=>{saveSelection();updateButtons()});ed.addEventListener('mouseup',()=>{saveSelection();updateButtons()});ed.addEventListener('focus',()=>{saveSelection();updateButtons()});
+    ed.addEventListener('keyup',()=>{saveSelection();updateButtons()});
+    ed.addEventListener('mouseup',()=>{saveSelection();updateButtons()});
+    ed.addEventListener('focus',()=>{saveSelection();updateButtons()});
+    ed.addEventListener('blur',()=>{saveSelection()});
     ed.addEventListener('keydown',ev=>{
       saveSelection();
       if(ev.key==='Tab'){ev.preventDefault();ev.shiftKey?outdent():indent();return}
       if((ev.ctrlKey||ev.metaKey)&&ev.shiftKey&&ev.key.toLowerCase()==='x'){ev.preventDefault();strike();return}
-      if((ev.ctrlKey||ev.metaKey)&&ev.shiftKey&&ev.key.toLowerCase()==='h'){ev.preventDefault();highlight();return}
+      if((ev.ctrlKey||ev.metaKey)&&ev.shiftKey&&ev.key.toLowerCase()==='h'){ev.preventDefault();toggleHighlight();return}
+    });
+    document.addEventListener('selectionchange',()=>{
+      if(document.activeElement===ed)updateButtons();
     });
     ed.addEventListener('paste',ev=>{
       const cd=ev.clipboardData;if(!cd)return;
