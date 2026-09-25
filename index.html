@@ -1803,6 +1803,14 @@ function rememberRead(work){
 }
 function clearHistory(){history[historyKey()]=[];persistSessionData();renderHistory();showToast('Reading history cleared.')}
 
+async function syncMyWorksNow(){
+  if(!currentUser){openAccount();return;}
+  const ok=await syncOwnedPublicWorksToCloud();
+  try{await hydrateCloudWorks()}catch(_e){}
+  renderMyWorks();
+  showToast(ok?'Your published works are synced to the cloud.':'Some works could not sync yet. Please check your internet/Firebase login.');
+}
+
 function renderMyWorks(){
  const mine=currentUser?works.filter(w=>userMatchesWork(currentUser,w)):[];
  const mineDrafts=currentUser?drafts.filter(d=>d.email===currentUser.email):[];
@@ -1811,6 +1819,7 @@ function renderMyWorks(){
  if(mine.length)html+='<div class="grid3">'+mine.map(cardHTML).join('')+'</div>';else html+='<div class="empty"><h4>No published works yet</h4><p>Create your first literature post.</p></div>';
  if(mineDrafts.length)html+='<div class="section"><div class="kicker">Drafts</div><div class="grid3">'+mineDrafts.map(d=>`<article class="card"><div class="card-body"><div class="meta"><span>Draft</span><span class="tag">${escapeHTML(d.genre)}</span></div><h4>${escapeHTML(d.title||'Untitled')}</h4><p>${escapeHTML(d.excerpt||'')}</p><div class="work-management"><button class="secondary" onclick="loadDraft('${escapeAttr(d.id)}')">Continue Writing</button><button class="danger-btn" onclick="deleteDraft('${escapeAttr(d.id)}')">Delete Draft</button></div></div></article>`).join('')+'</div></div>';
  document.getElementById('myWorksPanel').innerHTML=html;
+ if(currentUser){const panel=document.getElementById('myWorksPanel');if(panel&&!panel.querySelector('.cloud-sync-my-works')){const row=document.createElement('div');row.className='cloud-sync-my-works';row.style='display:flex;justify-content:flex-end;margin:0 0 14px';row.innerHTML='<button type=\"button\" class=\"secondary\" onclick=\"syncMyWorksNow()\">☁ Sync My Works</button>';panel.insertAdjacentElement('afterbegin',row);}}
 }
 function loadDraft(id){const d=drafts.find(x=>x.id===id&&x.email===currentUser?.email);if(!d||!currentUser)return;editingWorkId=null;editingDraftId=d.id;document.getElementById('postTitle').value=d.title||'';document.getElementById('postGenre').value=d.genre||'Poetry';document.getElementById('postTags').value=(d.tags||[]).join(', ');document.getElementById('postExcerpt').value=d.excerpt||'';document.getElementById('postContent').value=d.content||'';document.getElementById('postCover').value=d.cover||'';document.getElementById('postPrivacy').value=d.privacy||'public';syncCreateEditUI();showPage('create');showToast('Draft loaded. Your edits will stay in this same draft.');}
 function deleteDraft(id){drafts=drafts.filter(d=>d.id!==id);saveState();renderMyWorks();showToast('Draft deleted.')}
@@ -2107,7 +2116,7 @@ function saveEditedWorkAndBack(){
   const old=works[idx];
   const payload={title:document.getElementById('postTitle').value.trim()||'Untitled',author:publicNameOf(currentUser),email:currentUser.email,genre:document.getElementById('postGenre').value,tags:document.getElementById('postTags').value.split(',').map(x=>x.trim()).filter(Boolean),excerpt:document.getElementById('postExcerpt').value.trim(),content:document.getElementById('postContent').value,cover:document.getElementById('postCover').value.trim(),privacy:document.getElementById('postPrivacy').value};
   works[idx]=normalizeWork({...old,...payload,updatedAt:now});
-  queueCloudWorkSync(works[idx]);
+  syncPublishedWorkToCloud(works[idx]).catch(()=>{});
   addMyActivity('writing',`You edited “${works[idx].title}”.`,{workId:works[idx].id,workTitle:works[idx].title});
   closeModal('saveEditModal');
   resetCreateForm();
@@ -2155,9 +2164,9 @@ document.getElementById('createForm').addEventListener('submit',async function(e
   const idx=works.findIndex(w=>w.id===editingWorkId&&userMatchesWork(currentUser,w));
   if(idx<0){showToast('Work not found.');return}
   works[idx]=normalizeWork({...works[idx],...payload,updatedAt:now});
-  queueCloudWorkSync(works[idx]);
-  if(hasStableCloudIdentity())await pushWorkToCloud(works[idx]);
-  showToast('Your work was updated.');
+  const cloudSaved=await syncPublishedWorkToCloud(works[idx]);
+  if(!cloudSaved)console.warn('Work update is still local; cloud retry will continue.');
+  showToast(cloudSaved?'Your work was updated and synced to the cloud.':'Your work was updated. Cloud sync will retry automatically.');
  }else if(editingDraftId){
   const draftIdx=drafts.findIndex(d=>d.id===editingDraftId&&canonicalEmail(d.email)===canonicalEmail(currentUser.email));
   if(draftIdx<0){showToast('Draft not found.');return}
@@ -2174,15 +2183,15 @@ document.getElementById('createForm').addEventListener('submit',async function(e
    updatedAt:now
   });
   if(existingWorkIdx>=0)works[existingWorkIdx]=publishedWork;else works.unshift(publishedWork);
-  queueCloudWorkSync(publishedWork);
-  if(hasStableCloudIdentity())await pushWorkToCloud(publishedWork);
+  const cloudSaved=await syncPublishedWorkToCloud(publishedWork);
+  if(!cloudSaved)console.warn('Published draft is still local; cloud retry will continue.');
   drafts=drafts.filter(d=>d.id!==editingDraftId);
-  showToast('Your draft was published as the same work.');
+  showToast(cloudSaved?'Your draft was published and synced to the cloud.':'Your draft was published. Cloud sync will retry automatically.');
  }else{
   const newWork=normalizeWork({id:'work-'+now,...payload,likes:[],reactions:emptyReactions(),comments:[],views:0,createdAt:now,updatedAt:now,ownerUid:cloudAuthUid()});
   works.unshift(newWork);
-  queueCloudWorkSync(newWork);
-  if(hasStableCloudIdentity())await pushWorkToCloud(newWork);
+  const cloudSaved=await syncPublishedWorkToCloud(newWork);
+  if(!cloudSaved)console.warn('New work is still local; cloud retry will continue.');
   addMyActivity('writing',`You published “${newWork.title}”.`,{workId:newWork.id,workTitle:newWork.title});
   if(newWork.privacy==='public')notifyFollowersAboutNewWork(newWork);
   showToast('Your literature has been published.');
@@ -3228,27 +3237,92 @@ function cloudWorkPayload(work){
   };
 }
 
-async function pushWorkToCloud(work){
-  try{
-    if(!work||work.privacy!=='public')return false;
-    if(!window.firebaseDB||!window.firebaseDoc||!window.firebaseSetDoc||!cloudWorksCollection())return false;
-    if(window.firebaseReady)await window.firebaseReady;
-    const authUid=cloudAuthUid();
-    if(!authUid||!hasStableCloudIdentity())return false;
-    const ownerUid=String(work.ownerUid||authUid||'');
-    if(!ownerUid || ownerUid!==authUid)return false;
-    const payload=cloudWorkPayload({...work,ownerUid});
-    await window.firebaseSetDoc(window.firebaseDoc(window.firebaseDB,'works',String(work.id)),payload);
-    return true;
-  }catch(err){
-    console.warn('Cloud work sync failed:',err);
-    return false;
+let cloudWorkWriteQueue=Promise.resolve();
+async function waitForStableCloudIdentity(maxAttempts=12){
+  try{if(window.firebaseReady)await window.firebaseReady}catch(_e){}
+  try{if(window.firebaseAuthReady)await window.firebaseAuthReady}catch(_e){}
+  for(let attempt=0;attempt<maxAttempts;attempt++){
+    const authUser=window.firebaseAuth?.currentUser;
+    if(authUser && !authUser.isAnonymous){
+      // Keep the app session aligned with Firebase Auth before writing.
+      if(!currentUser || String(currentUser.uid||'')!==String(authUser.uid)){
+        try{
+          const cloudProfile=await readCloudUserProfile(authUser.uid);
+          const cloudData=cloudProfile.data||{};
+          const cached=findUser(authUser.uid)||findUser(authUser.email||'');
+          currentUser=normalizeUser({
+            ...cached, ...cloudData,
+            uid:authUser.uid,
+            email:authUser.email||cached?.email||'',
+            name:cloudData.displayName||cached?.name||authUser.displayName||'Student Account',
+            penName:cloudData.penName||cached?.penName||'Anonymous Author',
+            username:cloudData.username||cached?.username||((authUser.email||'student').split('@')[0]||'student'),
+            photoURL:authUser.photoURL||cloudData.photoURL||cached?.photoURL||cached?.photo||'',
+            photo:authUser.photoURL||cloudData.photoURL||cached?.photo||cached?.photoURL||'',
+            bio:cloudData.bio||cached?.bio||'Student writer in 12-SHAKESPEARE.',
+            followers:cached?.followers||[],
+            following:cloudData.following||cloudData.followingUids||cached?.following||[],
+            identity:cloudData.identity||cached?.identity||'reader'
+          });
+          const idx=users.findIndex(u=>userIdOf(u)===String(authUser.uid)||canonicalEmail(u.email)===canonicalEmail(currentUser.email));
+          if(idx>=0)users[idx]=normalizeUser({...users[idx],...currentUser});else users.push(currentUser);
+          sessionUnlocked=true;
+          sessionStorage.setItem('shkSessionUnlocked','1');
+        }catch(_e){}
+      }
+      if(currentUser?.uid && String(currentUser.uid)===String(authUser.uid))return String(authUser.uid);
+    }
+    await new Promise(r=>setTimeout(r,150*(attempt+1)));
   }
+  return "";
 }
+
+async function pushWorkToCloud(work){
+  const candidate=normalizeWork(work);
+  if(!candidate?.id || candidate.privacy!=='public')return {ok:false,reason:'not-public-or-missing'};
+  const authUid=await waitForStableCloudIdentity();
+  if(!authUid)return {ok:false,reason:'auth-not-ready'};
+  if(!window.firebaseDB||!window.firebaseDoc||!window.firebaseSetDoc||!cloudWorksCollection())return {ok:false,reason:'firestore-unavailable'};
+  const ownerUid=String(candidate.ownerUid||authUid||'');
+  if(ownerUid!==authUid){
+    candidate.ownerUid=authUid;
+  }
+  const payload=cloudWorkPayload({...candidate,ownerUid:authUid});
+  let lastError='';
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      if(window.firebaseReady)await window.firebaseReady;
+      await window.firebaseSetDoc(window.firebaseDoc(window.firebaseDB,'works',String(candidate.id)),payload,{merge:false});
+      return {ok:true,id:String(candidate.id)};
+    }catch(err){
+      lastError=err?.message||String(err);
+      // Give Auth/Firestore a moment to settle after account transitions.
+      await new Promise(r=>setTimeout(r,250*(attempt+1)));
+    }
+  }
+  console.warn('Cloud work sync failed:',lastError);
+  return {ok:false,reason:lastError};
+}
+
 function queueCloudWorkSync(work){
   if(!work||work.privacy!=='public')return;
-  // Fire-and-forget: local UI should never wait for network I/O.
-  Promise.resolve().then(()=>pushWorkToCloud(work));
+  cloudWorkWriteQueue=cloudWorkWriteQueue.then(()=>pushWorkToCloud(work)).catch(()=>({ok:false,reason:'queue-error'}));
+  return cloudWorkWriteQueue;
+}
+
+async function syncPublishedWorkToCloud(work){
+  if(!work)return false;
+  const result=await queueCloudWorkSync(work);
+  if(result?.ok){
+    if(String(work.ownerUid||'')!==String(currentCloudUid()||'')){
+      work.ownerUid=currentCloudUid();
+    }
+    const idx=works.findIndex(w=>w.id===work.id);
+    if(idx>=0)works[idx]=normalizeWork(work);
+    localStorage.setItem('shkWorks',JSON.stringify(works));
+    return true;
+  }
+  return false;
 }
 async function deleteCloudWork(id){
   try{
@@ -3311,15 +3385,25 @@ async function migrateOwnedPublicWorksToCloud(){
 }
 
 async function syncOwnedPublicWorksToCloud(){
-  if(!hasStableCloudIdentity())return;
-  const authUid=cloudAuthUid();
+  const authUid=await waitForStableCloudIdentity();
+  if(!authUid)return false;
   const email=canonicalEmail(currentUser?.email);
-  if(!authUid||!email)return;
-  const ownPublic=works.filter(w=>w.privacy==='public'&&canonicalEmail(w.email)===email).map(w=>normalizeWork({...w,ownerUid:authUid}));
-  let changed=false;
-  ownPublic.forEach(w=>{const i=works.findIndex(x=>x.id===w.id);if(i>=0){works[i]=w;changed=true}});
-  if(changed)localStorage.setItem('shkWorks',JSON.stringify(works));
-  if(ownPublic.length)await Promise.all(ownPublic.map(w=>pushWorkToCloud(w)));
+  const ownPublic=works.filter(w=>w&&w.privacy==='public'&&(
+    String(w.ownerUid||'')===authUid ||
+    (email && canonicalEmail(w.email)===email)
+  )).map(w=>normalizeWork({...w,ownerUid:authUid}));
+  if(!ownPublic.length)return true;
+  let anyFailed=false;
+  for(const work of ownPublic){
+    const result=await queueCloudWorkSync(work);
+    if(!result?.ok)anyFailed=true;
+    else{
+      const idx=works.findIndex(w=>w.id===work.id);
+      if(idx>=0)works[idx]=normalizeWork(work);
+    }
+  }
+  localStorage.setItem('shkWorks',JSON.stringify(works));
+  return !anyFailed;
 }
 
 function startCloudWorkSync(){
@@ -3327,26 +3411,47 @@ function startCloudWorkSync(){
   cloudWorksStarted=true;
   Promise.resolve(window.firebaseReady).then(async()=>{
     if(window.firebaseAuthReady)await window.firebaseAuthReady;
-    // Firestore rules require request.auth. Waiting for Firebase Auth state
-    // restoration prevents a startup race where the first getDocs() runs
-    // before the signed-in user is available.
-    await hydrateCloudWorks();
-    if(!window.firebaseOnSnapshot||!cloudWorksCollection())return;
-    cloudWorksUnsubscribe=window.firebaseOnSnapshot(cloudWorksCollection(),snap=>{
-      let changed=false;
-      snap.docChanges().forEach(change=>{
-        if(change.type==='removed'){
-          const idx=works.findIndex(w=>w.id===change.doc.id);
-          if(idx>=0&&works[idx].privacy==='public'){works.splice(idx,1);changed=true;}
-          return;
-        }
-        changed=mergeCloudWorkIntoLocal({...change.doc.data(),id:change.doc.id})||changed;
+
+    const refreshCloudWorks=async()=>{
+      try{
+        await hydrateCloudWorks();
+        if(await waitForStableCloudIdentity())await syncOwnedPublicWorksToCloud();
+      }catch(err){console.warn('Cloud work refresh failed:',err)}
+    };
+
+    // Auth can transition from anonymous -> real account after the initial
+    // page load. That transition is the critical moment for migrating the
+    // laptop's old local-only works into Firestore.
+    if(window.firebaseOnAuthStateChanged&&window.firebaseAuth){
+      window.firebaseOnAuthStateChanged(window.firebaseAuth,async authUser=>{
+        if(!authUser)return;
+        await refreshCloudWorks();
       });
-      if(changed){
-        localStorage.setItem('shkWorks',JSON.stringify(works));
-        renderAll();
-      }
-    },err=>console.warn('Cloud work listener failed:',err));
+    }
+
+    await refreshCloudWorks();
+
+    if(window.firebaseOnSnapshot&&cloudWorksCollection()){
+      cloudWorksUnsubscribe=window.firebaseOnSnapshot(cloudWorksCollection(),snap=>{
+        let changed=false;
+        snap.docChanges().forEach(change=>{
+          if(change.type==='removed'){
+            const idx=works.findIndex(w=>w.id===change.doc.id);
+            if(idx>=0&&works[idx].privacy==='public'){works.splice(idx,1);changed=true;}
+            return;
+          }
+          changed=mergeCloudWorkIntoLocal({...change.doc.data(),id:change.doc.id})||changed;
+        });
+        if(changed){
+          localStorage.setItem('shkWorks',JSON.stringify(works));
+          renderAll();
+        }
+      },err=>console.warn('Cloud work listener failed:',err));
+    }
+
+    window.addEventListener('online',refreshCloudWorks);
+    window.addEventListener('focus',refreshCloudWorks);
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshCloudWorks()});
   }).catch(err=>console.warn('Cloud work sync unavailable:',err));
 }
 
@@ -3966,6 +4071,11 @@ restoreFirebaseSession().finally(()=>{
   startCloudUserSync();
   startCloudWorkSync();
   startCloudNotificationSync();
+  // Extra migration passes cover browsers where Firebase Auth finishes
+  // restoring a little after the initial render.
+  setTimeout(()=>migrateOwnedPublicWorksToCloud().catch(()=>{}),800);
+  setTimeout(()=>migrateOwnedPublicWorksToCloud().catch(()=>{}),2200);
+  setTimeout(()=>migrateOwnedPublicWorksToCloud().catch(()=>{}),5000);
   // Give newly restored/authenticated sessions an immediate shared-data pass.
   hydrateCloudUsers();
   setTimeout(()=>hydrateCloudUsers(),900);
