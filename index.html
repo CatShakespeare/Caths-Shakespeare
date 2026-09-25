@@ -2676,6 +2676,10 @@ function startCloudWorkSync(){
   if(cloudWorksStarted)return;
   cloudWorksStarted=true;
   Promise.resolve(window.firebaseReady).then(async()=>{
+    if(window.firebaseAuthReady)await window.firebaseAuthReady;
+    // Firestore rules require request.auth. Waiting for Firebase Auth state
+    // restoration prevents a startup race where the first getDocs() runs
+    // before the signed-in user is available.
     await hydrateCloudWorks();
     if(!window.firebaseOnSnapshot||!cloudWorksCollection())return;
     cloudWorksUnsubscribe=window.firebaseOnSnapshot(cloudWorksCollection(),snap=>{
@@ -2733,6 +2737,10 @@ function startCloudUserSync(){
   if(cloudUsersStarted)return;
   cloudUsersStarted=true;
   Promise.resolve(window.firebaseReady).then(async()=>{
+    if(window.firebaseAuthReady)await window.firebaseAuthReady;
+    // Do not query users until Firebase has restored the current auth state.
+    // Otherwise Firestore correctly returns permission-denied because the
+    // rules require request.auth != null.
     await hydrateCloudUsers();
     if(!window.firebaseOnSnapshot||!cloudUsersCollection())return;
     cloudUsersUnsubscribe=window.firebaseOnSnapshot(cloudUsersCollection(),snap=>{
@@ -3211,7 +3219,13 @@ async function restoreFirebaseSession(){
   }
 }
 document.addEventListener('click',(e)=>{if(!e.target.closest('.reaction-wrap'))document.querySelectorAll('.reaction-picker.open').forEach(closeReactionPicker);if(!e.target.closest('.comment-reaction-wrap'))document.querySelectorAll('.comment-reaction-picker.open').forEach(p=>p.classList.remove('open'));});
-switchAuthDefault();applyDarkMode();renderAll();initShkNavigationSounds();restoreFirebaseSession();startCloudUserSync();startCloudWorkSync();
+switchAuthDefault();applyDarkMode();renderAll();initShkNavigationSounds();
+// Restore Firebase authentication first, then hydrate shared users/works.
+// This guarantees the first Firestore reads are authenticated on every device.
+restoreFirebaseSession().finally(()=>{
+  startCloudUserSync();
+  startCloudWorkSync();
+});
 </script>
 </body>
 </html>
