@@ -593,6 +593,36 @@ button,input,textarea,select{max-width:100%}
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
 
+
+/* =========================
+   Notification list layout
+   ========================= */
+.notifications-list{display:grid;gap:8px;margin-top:6px;padding:2px 2px 6px}
+.notification{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 13px;border:1px solid var(--line);border-radius:14px;background:#fff;transition:.2s var(--ease);position:relative}
+.notification:hover{background:#FBF8F5;transform:translateY(-1px)}
+.notification.unread{background:#FFFBF5;border-color:#E4D7C7;box-shadow:0 5px 16px rgba(36,27,23,.045)}
+.notification.unread:before{content:"";position:absolute;left:5px;top:17px;width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.notification-avatar{width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:linear-gradient(145deg,#8A5E63,#32191B);color:#F7EAD6;font-weight:800;flex:none}
+.notification-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.notification-main{min-width:0}
+.notification-head{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;line-height:1.25}
+.notification-name{font-size:.82rem;font-weight:800;color:var(--wine);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.notification-username{font-size:.64rem;color:#9A9089;white-space:nowrap}
+.notification-activity{margin-top:4px;color:#5F534C;font-size:.72rem;line-height:1.55}
+.notification-activity b{color:var(--wine);font-weight:800}
+.notification-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:6px;color:#9A9089;font-size:.61rem;line-height:1.35}
+.notification-time-relative{color:#756B65;font-weight:700}
+.notification-date{color:#AAA099}
+.notification-arrow{width:26px;height:26px;border:1px solid var(--line);border-radius:8px;background:#fff;color:#8B817B;display:grid;place-items:center;font-size:.78rem;flex:none}
+@media(max-width:560px){
+  .notification{grid-template-columns:38px minmax(0,1fr);gap:10px;padding:11px}
+  .notification-avatar{width:38px;height:38px}
+  .notification-arrow{display:none}
+  .notification-name{font-size:.78rem}
+  .notification-activity{font-size:.69rem}
+  .notification-meta{font-size:.58rem}
+}
+
 </style>
 </head>
 <body>
@@ -2153,10 +2183,87 @@ function renderGlobalSearch(){
 function useRecentSearch(q){const input=document.getElementById('globalSearchInput');if(!input)return;input.value=q;renderGlobalSearch();input.focus()}
 function handleGlobalSearchKey(e){if(e.key==='Enter'){e.preventDefault();renderGlobalSearch()}}
 
-function addNotification(to,text,workTitle){notifications.unshift({id:'n-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),to,text,workTitle,at:Date.now(),read:false});notifications=notifications.slice(0,100);persistSessionData();renderNotificationsBadge()}
+function notificationActivityOf(text){
+ const value=String(text||'').trim();
+ if(!value)return 'Activity on your account';
+ const followed=value.match(/followed you/i); if(followed)return 'followed you';
+ const reacted=value.match(/reacted with\s+(.+?)(?:\s+on your work)?$/i); if(reacted)return 'reacted with '+reacted[1].trim();
+ const commented=value.match(/commented on your work/i); if(commented)return 'commented on your work';
+ const replied=value.match(/replied to (?:a comment|your comment).*$/i); if(replied)return value.replace(/^.*?\s/i,'');
+ const liked=value.match(/liked your work/i); if(liked)return 'liked your work';
+ return value;
+}
+function notificationActorOf(n){
+ const actorKey=n?.actorUid||n?.actorEmail||n?.fromUid||n?.fromEmail||'';
+ const actor=findUser(actorKey);
+ if(actor)return actor;
+ const text=String(n?.text||'');
+ const match=text.match(/^(.+?)\s+(?:reacted with|commented on|replied to|followed you|liked your work)/i);
+ const name=(n?.actorName||match?.[1]||'Anonymous Author').trim();
+ return {penName:name,username:n?.actorUsername||'reader',photo:n?.actorPhoto||'',photoURL:n?.actorPhotoURL||''};
+}
+function relativeTimeFrom(ts){
+ const diff=Math.max(0,Date.now()-Number(ts||Date.now()));
+ const mins=Math.floor(diff/60000);
+ if(mins<1)return 'Just now';
+ if(mins<60)return `${mins} minute${mins===1?'':'s'} ago`;
+ const hrs=Math.floor(mins/60);
+ if(hrs<24)return `${hrs} hour${hrs===1?'':'s'} ago`;
+ const days=Math.floor(hrs/24);
+ if(days<7)return `${days} day${days===1?'':'s'} ago`;
+ const weeks=Math.floor(days/7);
+ if(weeks<5)return `${weeks} week${weeks===1?'':'s'} ago`;
+ const months=Math.floor(days/30);
+ if(months<12)return `${months} month${months===1?'':'s'} ago`;
+ const years=Math.floor(days/365);
+ return `${years} year${years===1?'':'s'} ago`;
+}
+function notificationDateTime(ts){
+ return new Date(Number(ts||Date.now())).toLocaleString([],{
+   year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'
+ });
+}
+function addNotification(to,text,workTitle){
+ const actor=currentUser?normalizeUser(currentUser):null;
+ notifications.unshift({
+   id:'n-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),
+   to,text,workTitle,at:Date.now(),read:false,
+   actorUid:actor?.uid||'',actorEmail:actor?.email||'',
+   actorName:actor?.penName||publicNameOf(actor||{}),
+   actorUsername:actor?.username||'reader',
+   actorPhoto:actor?.photo||actor?.photoURL||''
+ });
+ notifications=notifications.slice(0,100);
+ persistSessionData();
+ renderNotificationsBadge();
+}
 function renderNotificationsBadge(){const badge=document.getElementById('notificationBadge');if(!badge)return;const count=currentUser?notifications.filter(n=>n.to===currentUser.email&&!n.read).length:0;badge.textContent=count>9?'9+':String(count);badge.classList.toggle('hidden',count===0)}
 function openNotifications(){if(!currentUser){showToast('Sign in to view notifications.');openAccount();return}renderNotifications();document.getElementById('notificationsModal').classList.add('open')}
-function renderNotifications(){const root=document.getElementById('notificationsList');if(!root)return;const list=notifications.filter(n=>n.to===currentUser?.email).sort((a,b)=>(b.at||0)-(a.at||0));root.innerHTML=list.length?list.map(n=>`<div class="notification ${n.read?'':'unread'}"><div class="avatar">12</div><div class="notification-copy"><strong>${escapeHTML(n.text)}</strong><span>${escapeHTML(n.workTitle||'')}</span></div><div class="notification-time">${escapeHTML(new Date(n.at||Date.now()).toLocaleDateString())}</div></div>`).join(''):'<div class="empty"><h4>No notifications</h4><p>You are all caught up.</p></div>'}
+function renderNotifications(){
+ const root=document.getElementById('notificationsList');
+ if(!root)return;
+ const list=notifications.filter(n=>n.to===currentUser?.email).sort((a,b)=>(b.at||0)-(a.at||0));
+ root.innerHTML=list.length?list.map(n=>{
+   const actor=notificationActorOf(n);
+   const name=publicNameOf(actor);
+   const username=usernameOf(actor);
+   const photo=actor?.photoURL||actor?.photo||'';
+   const title=n.workTitle?` on <b>${escapeHTML(n.workTitle)}</b>`:'';
+   const activity=notificationActivityOf(n.text).replace(/\s+on your work$/i,'');
+   const avatar=photo
+     ? `<img src="${escapeAttr(photo)}" alt="${escapeAttr(name)} profile picture">`
+     : `<span>${escapeHTML(initialsOf(name))}</span>`;
+   return `<article class="notification ${n.read?'':'unread'}" data-notification-id="${escapeAttr(n.id||'')}">
+     <div class="notification-avatar">${avatar}</div>
+     <div class="notification-main">
+       <div class="notification-head"><strong class="notification-name">${escapeHTML(name)}</strong><span class="notification-username">@${escapeHTML(username)}</span></div>
+       <div class="notification-activity">${escapeHTML(activity)}${title}</div>
+       <div class="notification-meta"><span class="notification-time-relative">${escapeHTML(relativeTimeFrom(n.at))}</span><span aria-hidden="true">·</span><span class="notification-date">${escapeHTML(notificationDateTime(n.at))}</span></div>
+     </div>
+     <div class="notification-arrow" aria-hidden="true">›</div>
+   </article>`;
+ }).join(''):'<div class="empty"><h4>No notifications</h4><p>You are all caught up.</p></div>';
+}
 function markNotificationsRead(){if(!currentUser)return;notifications=notifications.map(n=>n.to===currentUser.email?{...n,read:true}:n);persistSessionData();renderNotifications();renderNotificationsBadge()}
 function applyDarkMode(){document.documentElement.classList.toggle('dark',darkMode)}
 function toggleDarkMode(){darkMode=!darkMode;persistSessionData();applyDarkMode();showToast(darkMode?'Dark mode enabled.':'Light mode enabled.')}
