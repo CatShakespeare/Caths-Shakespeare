@@ -40,10 +40,11 @@
 (function(){try{
   // Fresh installation / migration starts in LIGHT mode.
   // After the user manually chooses a theme, that choice can persist.
-  var themeReady='shkThemePreferenceReadyV4';
-  // Light mode is always the default on this build. If an older build left
-  // a dark-mode preference behind, reset it once; after that, the user's
-  // manual theme-toggle choice can persist normally.
+  // V5 intentionally resets any older saved dark-mode preference once,
+  // so this build opens in LIGHT mode first before the user chooses dark.
+  var themeReady='shkThemePreferenceReadyV5';
+  // Do not follow the device/browser color-scheme automatically.
+  // The site's first-load default is always light.
   if(localStorage.getItem(themeReady)!=='1'){
     localStorage.setItem('shkThemePreference','light');
     localStorage.setItem(themeReady,'1');
@@ -6173,6 +6174,8 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
   ];
   let savedRange=null;
   let highlightEnabled=false;
+  let pendingTypingRange=null;
+  let applyingHighlight=false;
   const DROP_TAGS=new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','LINK','META','FORM','INPUT','TEXTAREA','BUTTON']);
 
   function escapeHtmlText(v){
@@ -6245,6 +6248,17 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
   function editorText(){const e=editor();return e?String(e.innerText||e.textContent||'').replace(/\u00a0/g,' ').trim():String(source()?.value||'').replace(/\u00a0/g,' ').trim()}
   function editorHTML(){const e=editor();return e?sanitizeRichHTML(e.innerHTML):String(source()?.value||'')}
   function syncSource(){const e=editor(),s=source();if(!e||!s)return;const html=sanitizeRichHTML(e.innerHTML);s.value=html;return html}
+  function setEditorFromSource(){
+    const e=editor(),s=source();if(!e||!s)return;
+    const raw=String(s.value||'');
+    const sanitized=sanitizeRichHTML(raw);
+    e.innerHTML=sanitized||'';
+    highlightEnabled=false;
+    pendingTypingRange=null;
+    savedRange=null;
+    updateMeta();
+    updateButtons();
+  }
   function placeCaretEnd(el){el.focus();const r=document.createRange();r.selectNodeContents(el);r.collapse(false);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);saveSelection();}
   function saveSelection(){const e=editor(),sel=getSelection();if(!e||!sel||!sel.rangeCount||!e.contains(sel.anchorNode))return;savedRange=sel.getRangeAt(0).cloneRange();}
   function restoreSelection(){const e=editor();if(!e||!savedRange)return false;try{e.focus();const sel=getSelection();sel.removeAllRanges();sel.addRange(savedRange);return true}catch(_){return false}}
@@ -6288,35 +6302,216 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
   function clearFormatting(){exec('removeFormat');}
   function indent(){exec('indent')}
   function outdent(){exec('outdent')}
+  function isHighlightElement(el){
+    if(!el||el===editor()||el.nodeType!==1)return false;
+    if(el.tagName==='MARK')return true;
+    const bg=(el.style?.backgroundColor||'').toLowerCase();
+    return !!bg&&bg!=='transparent'&&bg!=='rgba(0, 0, 0, 0)'&&bg!=='rgb(255, 255, 255)'&&bg!=='#ffffff';
+  }
+  function highlightAncestorAtCaret(){
+    const e=editor(),sel=getSelection();
+    if(!e||!sel||!sel.rangeCount||!sel.isCollapsed||!e.contains(sel.anchorNode))return null;
+    let el=sel.anchorNode?.nodeType===1?sel.anchorNode:sel.anchorNode?.parentElement;
+    while(el&&el!==e){
+      if(isHighlightElement(el))return el;
+      el=el.parentElement;
+    }
+    return null;
+  }
+  function plainTypingBoundaryAtCaret(){
+    const e=editor(),sel=getSelection();
+    if(!e||!sel||!sel.rangeCount||!sel.isCollapsed||!e.contains(sel.anchorNode))return null;
+    const el=sel.anchorNode?.nodeType===1?sel.anchorNode:sel.anchorNode?.parentElement;
+    return el?.closest?.('[data-rte-plain-typing="1"]')||null;
+  }
+  function ensurePlainTypingBoundary(){
+    const e=editor(),sel=getSelection();
+    if(!e||!sel||!sel.rangeCount||!sel.isCollapsed||!e.contains(sel.anchorNode))return null;
+    const existing=plainTypingBoundaryAtCaret();
+    if(existing)return existing;
+    /* Split any old highlight at the caret first so the plain typing island is
+       inserted outside the highlighted run, not inside it. */
+    splitHighlightAtCaret();
+    const current=getSelection();
+    if(!current?.rangeCount||!current.isCollapsed)return null;
+    const marker=document.createElement('span');
+    marker.setAttribute('data-rte-plain-typing','1');
+    marker.setAttribute('aria-hidden','true');
+    const r=current.getRangeAt(0).cloneRange();
+    r.insertNode(marker);
+    const caret=document.createRange();
+    caret.setStart(marker,0);caret.collapse(true);
+    current.removeAllRanges();current.addRange(caret);saveSelection();
+    return marker;
+  }
+  function leavePlainTypingBoundary(){
+    const marker=plainTypingBoundaryAtCaret();
+    if(!marker||!marker.parentNode)return false;
+    const sel=getSelection(),parent=marker.parentNode;
+    try{
+      const markerIndex=[...parent.childNodes].indexOf(marker);
+      const children=[...marker.childNodes];
+      children.forEach((node,i)=>parent.insertBefore(node,marker));
+      marker.remove();
+      const caret=document.createRange();
+      caret.setStart(parent,Math.max(0,markerIndex+children.length));caret.collapse(true);
+      sel.removeAllRanges();sel.addRange(caret);saveSelection();
+      return true;
+    }catch(_){return false}
+  }
+  function stripHighlightFromNode(root){
+    if(!root)return;
+    const unwrapMark=mark=>{
+      const parent=mark.parentNode;if(!parent)return;
+      while(mark.firstChild)parent.insertBefore(mark.firstChild,mark);
+      mark.remove();
+    };
+    if(root.nodeType===1 && root.tagName==='MARK')unwrapMark(root);
+    const marks=[...root.querySelectorAll?.('mark')||[]];
+    marks.forEach(unwrapMark);
+    const styled=[...(root.nodeType===1&&root.matches?.('[style*="background-color"]')?[root]:[]),...(root.querySelectorAll?.('[style*="background-color"]')||[])];
+    styled.forEach(el=>{
+      el.style.removeProperty('background-color');
+      if(!el.getAttribute('style'))el.removeAttribute('style');
+    });
+  }
+  function stripHighlightFromPlainTypingBoundary(){
+    const marker=plainTypingBoundaryAtCaret();
+    if(!marker)return;
+    stripHighlightFromNode(marker);
+  }
+
+  function insertPlainTextAtSelection(text){
+    const e=editor(),sel=getSelection();
+    if(!e||!sel||!sel.rangeCount||!e.contains(sel.anchorNode))return false;
+    const r=sel.getRangeAt(0).cloneRange();
+    r.deleteContents();
+    const value=String(text??'');
+    if(!value)return false;
+    const frag=document.createDocumentFragment();
+    const parts=value.replace(/\r\n?/g,'\n').split('\n');
+    let last=null;
+    parts.forEach((part,i)=>{
+      if(part){const node=document.createTextNode(part);frag.appendChild(node);last=node;}
+      if(i<parts.length-1){const br=document.createElement('br');frag.appendChild(br);last=br;}
+    });
+    r.insertNode(frag);
+    const caret=document.createRange();
+    if(last){caret.setStartAfter(last);caret.collapse(true);}else{caret.collapse(true);}
+    sel.removeAllRanges();sel.addRange(caret);saveSelection();
+    syncSource();updateMeta();updateButtons();
+    return true;
+  }
+  function insertPlainBreakAtSelection(){
+    const e=editor(),sel=getSelection();
+    if(!e||!sel||!sel.rangeCount||!e.contains(sel.anchorNode))return false;
+    const r=sel.getRangeAt(0).cloneRange();r.deleteContents();
+    const br=document.createElement('br');r.insertNode(br);
+    const caret=document.createRange();caret.setStartAfter(br);caret.collapse(true);
+    sel.removeAllRanges();sel.addRange(caret);saveSelection();
+    syncSource();updateMeta();updateButtons();
+    return true;
+  }
+
+  function splitHighlightAtCaret(){
+    const e=editor(),sel=getSelection();
+    const mark=highlightAncestorAtCaret();
+    if(!e||!sel||!sel.rangeCount||!sel.isCollapsed||!mark||!mark.parentNode)return false;
+    const caretNode=sel.anchorNode,caretOffset=sel.anchorOffset;
+    const toEnd=document.createRange();
+    try{
+      toEnd.setStart(caretNode,caretOffset);
+      toEnd.setEnd(mark,mark.childNodes.length);
+      const after=toEnd.extractContents();
+      const hasAfter=!!after.childNodes.length;
+      let clone=null;
+      if(hasAfter){
+        clone=mark.cloneNode(false);
+        clone.removeAttribute('data-rte-typing-highlight');
+        clone.appendChild(after);
+        mark.parentNode.insertBefore(clone,mark.nextSibling);
+      }
+      const next=document.createRange();
+      if(hasAfter){
+        next.setStartAfter(mark);next.collapse(true);
+      }else{
+        next.setStartAfter(mark);next.collapse(true);
+      }
+      sel.removeAllRanges();sel.addRange(next);
+      if(!mark.textContent && !mark.childNodes.length)mark.remove();
+      saveSelection();
+      return true;
+    }catch(_){return false}
+  }
+  function applyHighlightToRange(range,color){
+    const e=editor();
+    if(!e||!range||range.collapsed)return false;
+    const sel=getSelection();
+    if(!sel)return false;
+    applyingHighlight=true;
+    try{
+      const endRange=range.cloneRange();
+      sel.removeAllRanges();sel.addRange(range);
+      const hex=String(color||'#F3D987');
+      let ok=false;
+      try{ok=!!document.execCommand('hiliteColor',false,hex)}catch(_){}
+      if(!ok){try{ok=!!document.execCommand('backColor',false,hex)}catch(_){} }
+      sel.removeAllRanges();sel.addRange(endRange);saveSelection();
+      return ok;
+    }finally{
+      applyingHighlight=false;
+    }
+  }
   function applyHighlightColor(color){
     const e=editor();if(!e)return;
     restoreSelection();e.focus();
+    const sel=getSelection();
+    if(!sel||!sel.rangeCount||!e.contains(sel.anchorNode))return;
     const hex=String(color||'#F3D987');
-    try{
-      if(!document.execCommand('hiliteColor',false,hex))document.execCommand('backColor',false,hex);
-    }catch(_){try{document.execCommand('backColor',false,hex)}catch(__){}}
+    if(sel.isCollapsed){
+      /* Leave the plain typing island before enabling the highlight tool again. */
+      leavePlainTypingBoundary();
+      try{document.execCommand('hiliteColor',false,hex)}catch(_){}
+      highlightEnabled=true;
+      saveSelection();updateButtons();return;
+    }
+    applyHighlightToRange(sel.getRangeAt(0).cloneRange(),hex);
     highlightEnabled=true;
     saveSelection();syncSource();updateMeta();updateButtons();
   }
   function removeHighlight(){
     const e=editor();if(!e)return;
     restoreSelection();e.focus();
+    const sel=getSelection();
+    if(!sel||!sel.rangeCount||!e.contains(sel.anchorNode))return;
+    if(sel.isCollapsed){
+      /* Reset the browser command plus create an explicit unhighlighted typing
+         boundary. The boundary prevents Chromium from reusing the old highlight span. */
+      try{
+        if(!document.execCommand('hiliteColor',false,'transparent'))document.execCommand('backColor',false,'transparent');
+      }catch(_){try{document.execCommand('backColor',false,'transparent')}catch(__){}}
+      splitHighlightAtCaret();
+      highlightEnabled=false;
+      pendingTypingRange=null;
+      ensurePlainTypingBoundary();
+      saveSelection();updateButtons();return;
+    }
+    applyingHighlight=true;
     try{
-      if(!document.execCommand('hiliteColor',false,'transparent'))document.execCommand('backColor',false,'transparent');
-    }catch(_){try{document.execCommand('backColor',false,'transparent')}catch(__){}}
+      try{
+        if(!document.execCommand('hiliteColor',false,'transparent'))document.execCommand('backColor',false,'transparent');
+      }catch(_){try{document.execCommand('backColor',false,'transparent')}catch(__){}}
+    }finally{applyingHighlight=false;}
+    /* Only clean transparent backgrounds; do not unwrap every existing mark in the document. */
     e.querySelectorAll('[style*="background-color"]').forEach(el=>{
       const bg=(el.style.backgroundColor||'').toLowerCase();
       if(!bg||bg==='transparent'||bg==='rgba(0, 0, 0, 0)'){el.style.removeProperty('background-color');if(!el.getAttribute('style'))el.removeAttribute('style');}
     });
-    e.querySelectorAll('mark').forEach(mark=>{
-      if(!mark.getAttribute('style')){const frag=document.createDocumentFragment();while(mark.firstChild)frag.appendChild(mark.firstChild);mark.replaceWith(frag);}
-    });
     highlightEnabled=false;
+    pendingTypingRange=null;
     saveSelection();syncSource();updateMeta();updateButtons();
   }
   function toggleHighlight(){
-    // Use our own on/off state for collapsed selections. Browser queryCommandState
-    // can report stale hiliteColor state and was causing the button to refuse to turn off.
     if(selectionIsCollapsed()){
       if(highlightEnabled)removeHighlight();
       else applyHighlightColor(localStorage.getItem('shkHighlightColor')||'#F3D987');
@@ -6324,6 +6519,18 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
     }
     if(selectionIsHighlighted())removeHighlight();
     else applyHighlightColor(localStorage.getItem('shkHighlightColor')||'#F3D987');
+  }
+  function highlightInsertedText(startRange){
+    const e=editor(),sel=getSelection();
+    if(!e||!sel||!sel.rangeCount||!e.contains(sel.anchorNode)||!startRange||!highlightEnabled||!sel.isCollapsed)return;
+    const endRange=sel.getRangeAt(0).cloneRange();
+    const r=startRange.cloneRange();
+    try{
+      r.setEnd(endRange.endContainer,endRange.endOffset);
+      if(r.collapsed)return;
+      applyHighlightToRange(r,localStorage.getItem('shkHighlightColor')||'#F3D987');
+      sel.removeAllRanges();sel.addRange(endRange);saveSelection();
+    }catch(_){ }
   }
   function strike(){exec('strikeThrough')}
   function applyFontFamily(label){
@@ -6360,7 +6567,6 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
       let on=false;
       if(b.dataset.cmd==='hiliteColor'){
         on=selectionIsCollapsed()?highlightEnabled:selectionIsHighlighted();
-        highlightEnabled=selectionIsCollapsed()?highlightEnabled:on;
         b.title=on?'Highlight (On) — click to turn off':'Highlight (Off) — click to turn on';
         b.setAttribute('aria-label',on?'Highlight on — click to turn off':'Highlight off — click to turn on');
       }else{
@@ -6489,7 +6695,43 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
     const status=document.createElement('div');status.className='rich-editor-status';status.innerHTML='<span>Formatting is saved with your literature.</span><strong id="richWordCount">0 words · ~1 min read</strong>';
     wrap.append(toolbar,ed,status);s.insertAdjacentElement('beforebegin',wrap);    setEditorFromSource();
 
-    ed.addEventListener('input',()=>{syncSource();updateMeta();updateButtons();});
+    ed.addEventListener('beforeinput',ev=>{
+      if(applyingHighlight||!selectionIsCollapsed())return;
+      const type=String(ev.inputType||'');
+      if(!highlightEnabled){
+        /* When Highlight is OFF, don't let Chromium reuse the previous
+           highlighted typing style. Insert the keystroke directly as plain text. */
+        if(type==='insertText'&&ev.data!=null){
+          ev.preventDefault();
+          restoreSelection();
+          insertPlainTextAtSelection(ev.data);
+          return;
+        }
+        if(type==='insertParagraph'||type==='insertLineBreak'){
+          ev.preventDefault();
+          restoreSelection();
+          insertPlainBreakAtSelection();
+          return;
+        }
+        return;
+      }
+      if(type==='insertText'||type==='insertCompositionText'||type==='insertFromComposition'){
+        const sel=getSelection();
+        if(sel?.rangeCount&&ed.contains(sel.anchorNode))pendingTypingRange=sel.getRangeAt(0).cloneRange();
+      }
+    });
+    ed.addEventListener('input',()=>{
+      if(!applyingHighlight&&highlightEnabled&&pendingTypingRange){
+        const start=pendingTypingRange;pendingTypingRange=null;
+        highlightInsertedText(start);
+      }else if(!applyingHighlight&&!highlightEnabled){
+        /* Clean any background that the browser may have inherited into the
+           explicit plain typing boundary. Other formatting such as fonts/bold
+           remains untouched. */
+        stripHighlightFromPlainTypingBoundary();
+      }
+      syncSource();updateMeta();updateButtons();
+    });
     ed.addEventListener('keyup',()=>{saveSelection();updateButtons()});
     ed.addEventListener('mouseup',()=>{saveSelection();updateButtons()});
     ed.addEventListener('focus',()=>{saveSelection();updateButtons()});
@@ -6506,7 +6748,22 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
     ed.addEventListener('paste',ev=>{
       const cd=ev.clipboardData;if(!cd)return;
       const text=cd.getData('text/plain');
-      if(text!==undefined){ev.preventDefault();restoreSelection();document.execCommand('insertText',false,text);saveSelection();syncSource();updateMeta();updateButtons();}
+      if(text!==undefined){
+        ev.preventDefault();restoreSelection();
+        if(!highlightEnabled){
+          insertPlainTextAtSelection(text);
+          return;
+        }
+        const sel=getSelection();
+        const start=sel?.rangeCount?sel.getRangeAt(0).cloneRange():null;
+        document.execCommand('insertText',false,text);
+        if(start&&sel?.rangeCount){
+          const end=sel.getRangeAt(0).cloneRange();
+          end.setStart(start.startContainer,start.startOffset);
+          applyHighlightToRange(end,localStorage.getItem('shkHighlightColor')||'#F3D987');
+        }
+        saveSelection();syncSource();updateMeta();updateButtons();
+      }
     });
 
     const oldLoadDraft=window.loadDraft;
@@ -6588,6 +6845,193 @@ html.dark .wine-surface{background:#2A1F22!important;color:#F7EFEA!important}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else setTimeout(boot,0);
 })();
 </script>
+
+
+<style id="dark-mode-final-contrast-polish">
+/* ==========================================================
+   FINAL DARK-MODE CONTRAST POLISH
+   Keep late-added / injected UI surfaces consistent with the
+   dark theme instead of allowing old light-mode declarations
+   to leave bright white controls behind.
+   ========================================================== */
+html.dark .reaction-people-btn,
+html.dark .reaction-person,
+html.dark .reaction-people-filter,
+html.dark .lit-collection-btn,
+html.dark .lit-profile-tab,
+html.dark .lit-settings-row button,
+html.dark .lit-continue-card,
+html.dark .lit-suggest-card,
+html.dark .lit-quiet-row select,
+html.dark .upgrade-milestone-card,
+html.dark .upgrade-notif-pref-row{
+  background:#211C1E!important;
+  color:var(--ink)!important;
+  border-color:var(--line)!important;
+}
+
+html.dark .reaction-people-btn:hover,
+html.dark .reaction-people-filter:hover,
+html.dark .lit-collection-btn:hover,
+html.dark .lit-profile-tab:hover,
+html.dark .lit-settings-row button:hover,
+html.dark .lit-continue-card:hover,
+html.dark .lit-suggest-card:hover,
+html.dark .upgrade-milestone-card:hover{
+  background:#2A2426!important;
+  color:#FFF7F2!important;
+  border-color:#5A494D!important;
+}
+
+html.dark .reaction-people-filter.active,
+html.dark .lit-collection-btn.active,
+html.dark .lit-profile-tab.active{
+  background:#6E2F34!important;
+  color:#FFFFFF!important;
+  border-color:#824047!important;
+}
+
+html.dark .reaction-people-filters{
+  background:#1A1719!important;
+  border-color:var(--line)!important;
+}
+
+html.dark .reaction-person-name strong,
+html.dark .reaction-people-title,
+html.dark .reaction-people-empty h4,
+html.dark .lit-home-shelf-head h4,
+html.dark .lit-continue-card .lit-continue-title,
+html.dark .lit-suggest-card strong,
+html.dark .lit-profile-activity-item strong,
+html.dark .upgrade-milestone-head strong,
+html.dark .upgrade-milestone-card h4{
+  color:var(--wine)!important;
+}
+
+html.dark .reaction-person-handle,
+html.dark .reaction-people-meta,
+html.dark .reaction-people-empty,
+html.dark .reaction-people-foot,
+html.dark .lit-home-shelf-head span,
+html.dark .lit-continue-card .lit-continue-meta,
+html.dark .lit-suggest-card span,
+html.dark .lit-profile-activity-item span,
+html.dark .lit-text-settings p,
+html.dark .upgrade-milestone-head span,
+html.dark .upgrade-milestone-card p,
+html.dark .upgrade-milestone-card small,
+html.dark .upgrade-notif-pref-box p{
+  color:var(--muted)!important;
+}
+
+/* Late-created reading / writer surfaces. */
+html.dark .reader-upgrade-progress,
+html.dark .upgrade-milestones,
+html.dark .lit-follow-suggest,
+html.dark .lit-text-settings,
+html.dark .lit-tip,
+html.dark .lit-new-since,
+html.dark .lit-notif-digest{
+  background:#211C1E!important;
+  border-color:var(--line)!important;
+  color:var(--ink)!important;
+}
+
+html.dark .reader-upgrade-progress-track,
+html.dark .upgrade-milestone-progress{
+  background:#393032!important;
+}
+
+/* Focus / exit control in reader focus mode. */
+html.dark .reader-upgrade-focus-exit{
+  background:rgba(33,28,30,.96)!important;
+  color:var(--ink)!important;
+  border-color:var(--line)!important;
+}
+
+/* Rich editor controls: no white buttons in dark mode. */
+html.dark .rich-editor-toolbar,
+html.dark .rich-editor,
+html.dark .rte-font-select,
+html.dark .rte-color-button{
+  background:#1B181A!important;
+  color:#F5EDE8!important;
+  border-color:#463B3E!important;
+}
+
+html.dark .rich-editor-toolbar .rte-tool{
+  background:#252023!important;
+  color:#F5EDE8!important;
+  border-color:#4A3C40!important;
+}
+
+html.dark .rich-editor-toolbar .rte-tool:hover{
+  background:#30292D!important;
+  color:#FFF8F3!important;
+  border-color:#C8A56A!important;
+}
+
+html.dark .rich-editor-toolbar .rte-tool.active{
+  background:#87434C!important;
+  color:#FFF9F6!important;
+  border-color:#B96A73!important;
+}
+
+html.dark .rich-editor-toolbar .rte-tool.rte-highlight{
+  background:linear-gradient(180deg,#E7C45F,#B28A2E)!important;
+  color:#1D1714!important;
+  border-color:#C4A243!important;
+}
+
+html.dark .rich-editor-toolbar .rte-tool.rte-highlight.active{
+  background:linear-gradient(180deg,#D6B551,#A98626)!important;
+  color:#17120E!important;
+  border-color:#F0D47B!important;
+}
+
+html.dark .rte-color-dialog{
+  background:#1E1A1D!important;
+  color:#F5EDE8!important;
+  border-color:#4A3C40!important;
+}
+
+html.dark .rte-color-dialog-close,
+html.dark .rte-color-native,
+html.dark .rte-color-cancel{
+  background:#252023!important;
+  color:#F5EDE8!important;
+  border-color:#4A3C40!important;
+}
+
+html.dark .rte-color-preview{
+  background:#252023!important;
+  color:#F5EDE8!important;
+  border-color:#4A3C40!important;
+}
+
+html.dark .rte-color-preview strong{color:#F5EDE8!important}
+html.dark .rte-color-preview span,
+html.dark .rte-color-native-row label,
+html.dark .rte-color-presets-title{color:#B8ACA6!important}
+html.dark .rte-color-palette{background:#1A181A!important;border-color:#4B4246!important}
+
+/* Common controls added after the base dark theme. */
+html.dark .upgrade-milestone-icon{
+  background:#30282A!important;
+  color:var(--gold2)!important;
+}
+html.dark .upgrade-notif-toggle span{background:#4A4143!important}
+html.dark .upgrade-notif-toggle span:before{background:#F7F0EC!important}
+html.dark .lit-continue-track{background:#3B3334!important}
+html.dark .lit-new-since button{color:var(--gold2)!important}
+html.dark .lit-quiet-row select{color:var(--ink)!important}
+
+/* Any inline white surface created by the richer community UI. */
+html.dark .reaction-person[style*="background"],
+html.dark .lit-suggest-card[style*="background"]{
+  background:#211C1E!important;
+}
+</style>
 
 </body>
 </html>
